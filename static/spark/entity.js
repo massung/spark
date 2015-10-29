@@ -32,6 +32,10 @@ spark.module().requires('spark.collision').defines({
 // Sprites extend pivot.
 __MODULE__.Sprite.prototype = Object.create(spark.entity.Pivot.prototype);
 
+// Set constructors.
+__MODULE__.Pivot.prototype.constructor = __MODULE__.Pivot;
+__MODULE__.Sprite.prototype.constructor = __MODULE__.Sprite;
+
 // Set the absolute translation of a sprite.
 __MODULE__.Pivot.prototype.setPosition = function(x, y) {
   this.m.p = [x, y];
@@ -47,40 +51,15 @@ __MODULE__.Pivot.prototype.setScale = function(x, y) {
   this.m.s = [x || 1.0, y || x || 1.0];
 };
 
-// Look in a particular direction.
-__MODULE__.Pivot.prototype.lookAt = function(x, y, angle) {
-  var dx = x - this.m.p.x;
-  var dy = y - this.m.p.y;
-
-  var s = Math.sqrt(dx * dx + dy * dy);
-
-  // This is the new angle.
-  this.m.r.x = -dx / s;
-  this.m.r.y = dy / s;
-
-  // Apply a local angle offset.
-  if (angle !== undefined) {
-    this.rotate(angle);
-  }
-};
-
 // Translate a pivot entity.
-__MODULE__.Pivot.prototype.translate = function(s, angle, local) {
-  var r = (angle || 0.0) * Math.PI / 180.0;
-
-  var rx = Math.cos(r);
-  var ry = Math.sin(r);
-  var cx = rx;
-  var cy = ry;
-
+__MODULE__.Pivot.prototype.translate = function(v, local) {
   if (local) {
-    cx = (this.m.r.x * rx) - (this.m.r.y * ry);
-    cy = (this.m.r.y * rx) + (this.m.r.x * ry);
+    v = spark.vec.vrotate(v, this.m.r);
   }
 
   // Update the translation vector.
-  this.m.p.x += s * cx;
-  this.m.p.y -= s * cy;
+  this.m.p.x += v.x;
+  this.m.p.y += v.y;
 };
 
 // Turn a pivot entity.
@@ -109,7 +88,12 @@ __MODULE__.Pivot.prototype.transform = function() {
 
 // Convert an <x,y> pair (array) from local space to world space.
 __MODULE__.Pivot.prototype.localToWorld = function(p) {
-  return spark.vec.vadd(spark.vec.vrotate(p, this.m.r), this.m.p);
+  return this.m.transform(p);
+};
+
+// Convery a world <x,y> pair into local space.
+__MODULE__.Pivot.prototype.worldToLocal = function(p) {
+  return this.m.transformInv(p);
 };
 
 // The image is any texture class, and frame is optional.
@@ -138,37 +122,19 @@ __MODULE__.Sprite.prototype.addCollision = function(filter, oncollision) {
   }
 };
 
-// Add a collision shape to the entity.
-__MODULE__.Sprite.prototype.addCollisionShape = function(shape) {
-  this.collision.shapes.push(shape);
+// Add a segment collision shape to the entity.
+__MODULE__.Sprite.prototype.addSegmentShape = function(p1, p2) {
+  this.collision.shapes.push(new spark.collision.Segment(this, p1, p2));
 };
 
-// Called once per frame - if needed - to update shape vertices.
-__MODULE__.Sprite.prototype.updateCollisionShapeVertices = function() {
-  var a =  this.rotx * this.sx;
-  var b = -this.roty * this.sy;
-  var c =  this.roty * this.sx;
-  var d =  this.rotx * this.sy;
+// Add a circle collision shape to the entity.
+__MODULE__.Sprite.prototype.addCircleShape = function(c, r) {
+  this.collision.shapes.push(new spark.collision.Circle(this, c, r));
+};
 
-  // Allocate a cached array.
-  if (this.wvs === undefined || this.wvs.length !== this.verts.length + 2) {
-    this.wvs = [0, 0].concat(this.verts);
-  }
-
-  for(var i = 0;i < this.verts.length;i += 2) {
-    var x = this.verts[i];
-    var y = this.verts[i + 1];
-
-    // Transform from local to world space.
-    this.wvs[i + 0] = (a * x) + (c * y) + this.x;
-    this.wvs[i + 1] = (b * x) + (d * y) + this.y;
-  }
-
-  // If a closed polygon, duplicate the first vertex again.
-  if (this.closedPoly) {
-    this.wvs[i++] = this.wvs[0];
-    this.wvs[i++] = this.wvs[1];
-  }
+// Add an axis-aligned, bounding box collision shape to the entity.
+__MODULE__.Sprite.prototype.addBoxShape = function(x, y, w, h) {
+  this.collision.shapes.push(new spark.collision.Box(this, x, y, w, h));
 };
 
 // Called once per frame to advance the gameplay simulation.
@@ -176,6 +142,11 @@ __MODULE__.Sprite.prototype.update = function() {
   this.behaviors.forEach((function(behavior) {
     behavior.call(this);
   }).bind(this));
+
+  // Update all the collision shapes.
+  this.collision.shapes.forEach(function(shape) {
+    shape.updateShapeCache();
+  });
 };
 
 // Called once per frame to render.
@@ -187,6 +158,9 @@ __MODULE__.Sprite.prototype.draw = function() {
   // Render the sprite.
   spark.view.save();
   {
+    spark.view.globalAlpha = this.alpha;
+
+    // Set the transform and render.
     this.transform();
     this.image.blit(this.frame);
   }

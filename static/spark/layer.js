@@ -21,6 +21,10 @@ spark.module().requires('spark.entity').defines({
 // A SpriteLayer is just an array of sprites with added properties.
 __MODULE__.SpriteLayer.prototype = Object.create(Array.prototype);
 
+// Set constructors.
+__MODULE__.SpriteLayer.prototype.constructor = __MODULE__.SpriteLayer;
+__MODULE__.TilemapLayer.prototype.constructor = __MODULE__.TilemapLayer;
+
 // Process gameplay and collisions.
 __MODULE__.SpriteLayer.prototype.update = function() {
 
@@ -41,13 +45,13 @@ __MODULE__.SpriteLayer.prototype.update = function() {
 
 // Add sprites to the collision spacial hash.
 __MODULE__.SpriteLayer.prototype.updateCollisions = function(space) {
-  this.forEach((function(sprite) {
-    if (sprite.visible === true && sprite.shapes !== undefined) {
-      sprite.shapes.forEach((function(shape) {
-        this.quadtree.push(shape, true);
-      }).bind(this));
+  this.forEach(function(sprite) {
+    if (sprite.visible === true) {
+      sprite.collision.shapes.forEach(function(shape) {
+        space.push(shape, true);
+      });
     }
-  }).bind(this));
+  });
 };
 
 // Render all the sprites onto the view.
@@ -56,9 +60,6 @@ __MODULE__.SpriteLayer.prototype.draw = function() {
     sprite.draw();
   });
 };
-
-/* TilemapLayer
- */
 
 __MODULE__.TilemapLayer.prototype.update = function() {
   // TODO:

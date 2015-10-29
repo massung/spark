@@ -42,6 +42,9 @@ __MODULE__.stepFrame = function(now) {
   this.update();
   this.draw();
 
+  // Add all pending entities to the scene.
+  this.scene.post();
+
   // Clear hit counts.
   spark.input.flush();
 

@@ -31,21 +31,14 @@ spark.module().defines({
   },
 });
 
+// Set constructors.
+__MODULE__.Image.prototype.constructor = __MODULE__.Image;
+__MODULE__.Atlas.prototype.constructor = __MODULE__.Atlas;
+
 // Render the entire texture image to the canvas.
 __MODULE__.Image.prototype.blit = function(x, y, rx, ry, sx, sy) {
   var w = this.source.width;
   var h = this.source.height;
-
-  /*
-  // Default arguments.
-  rx = rx || 1.0;
-  ry = ry || 0.0;
-  sx = sx || 1.0;
-  sy = sy || 1.0;
-
-  // Set the render transform.
-  view.setTransform(rx * sx, -ry * sy, ry * sx, rx * sy, x, y);
-  */
 
   // Render it using the center of the image as its pivot.
   spark.view.drawImage(this.source, 0, 0, w, h, -w / 2, -h / 2, w, h);
@@ -59,9 +52,11 @@ __MODULE__.Atlas.prototype.blit = function(frame) {
     return;
   }
 
-  var x = -f.frame.w * f.pivot.x;
-  var y = -f.frame.w * f.pivot.y;
+  var w = Math.floor(f.frame.w);
+  var h = Math.floor(f.frame.h);
+  var x = Math.round(-w * f.pivot.x);
+  var y = Math.round(-h * f.pivot.y);
 
   // Render at <x, y>.
-  spark.view.drawImage(this.image.source, f.frame.x, f.frame.y, f.frame.w, f.frame.h, x, y, f.frame.w, f.frame.h);
+  spark.view.drawImage(this.image.source, f.frame.x, f.frame.y, w, h, x, y, w, h);
 };

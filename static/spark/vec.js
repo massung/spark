@@ -19,6 +19,9 @@ spark.module().defines({
   },
 });
 
+// Set constructors.
+__MODULE__.Mat.prototype.constructor = __MODULE__.Mat;
+
 // Create accessors for <x,y> of array pairs.
 Array.prototype.__defineGetter__('x', function() {
   return this[0];
@@ -38,7 +41,7 @@ Array.prototype.__defineSetter__('y', function(y) {
 
 // Transform a vector by this.
 __MODULE__.Mat.prototype.transform = function(v) {
-  return spark.vec.vadd(spark.vector.vrotate(spark.vec.vmult(v, this.s), this.r), this.p);
+  return spark.vec.vadd(spark.vec.vrotate(spark.vec.vmult(v, this.s), this.r), this.p);
 };
 
 // Transform a vector by the inverse of this matrix.
@@ -53,12 +56,12 @@ __MODULE__.__defineGetter__('ZERO', function() {
 
 // <1,1> uniform vector.
 __MODULE__.__defineGetter__('ONE', function() {
-  return new Array(0.0, 0.0);
+  return new Array(1.0, 1.0);
 });
 
 // <1,0> right vector.
 __MODULE__.__defineGetter__('RIGHT', function() {
-  return new Array(0.0, 0.0);
+  return new Array(1.0, 0.0);
 });
 
 // <0,1> up vector.
@@ -111,19 +114,29 @@ __MODULE__.vmag = function(v) {
   return Math.sqrt((v.x * v.x) + (v.y * v.y));
 };
 
+// Distance squared between two vectors.
+__MODULE__.vdistsq = function(a, b) {
+  return spark.vec.vmagsq(spark.vec.vsub(a, b));
+};
+
 // Distance between two vectors.
 __MODULE__.vdist = function(a, b) {
-  return spark.vec.vmag(spark.vec.vsub(a,b));
+  return spark.vec.vmag(spark.vec.vsub(a, b));
 };
 
 // Multiple a vector by a scalar.
-__MODULE__.vmult = function(v, s) {
+__MODULE__.vscale = function(v, s) {
   return [v.x * s, v.y * s];
+};
+
+// Multiply two vectors.
+__MODULE__.vmult = function(a, b) {
+  return [a.x * b.x, a.y * b.y];
 };
 
 // Normalize a vector.
 __MODULE__.vnorm = function(v) {
-  return spark.vec.vmult(spark.vec.vmag(v));
+  return spark.vec.vscale(spark.vec.vmag(v));
 };
 
 // Project vector p0->p1 (a) onto p0->p2 (b).
@@ -169,5 +182,5 @@ __MODULE__.vunrotate = function(v, r) {
 
 // Linearly interpolate along p->q by k [0,1].
 __MODULE__.vlerp = function(p, q, k) {
-  return spark.vec.vadd(spark.vec.vmult(p, k - 1.0), spark.vec.vmult(q, k));
+  return spark.vec.vadd(spark.vec.vscale(p, k - 1.0), spark.vec.vscale(q, k));
 };

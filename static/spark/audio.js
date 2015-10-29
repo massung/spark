@@ -35,6 +35,9 @@ spark.module().defines({
   },
 });
 
+// Set constructors.
+__MODULE__.Clip.prototype.constructor = __MODULE__.Clip;
+
 // Play the sound associated with this audio clip.
 __MODULE__.Clip.prototype.woof = function() {
   var clone = this.sound.cloneNode(true);

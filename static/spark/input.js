@@ -190,6 +190,11 @@ __MODULE__.keyHits = function(key) {
   return this.keys[key].hits;
 };
 
+// True if the key was hit at all during the frame.
+__MODULE__.keyHit = function(key) {
+  return this.keys[key].hits > 0;
+};
+
 // True if the key is currently down.
 __MODULE__.keyDown = function(key) {
   return this.keys[key].down;
@@ -198,6 +203,11 @@ __MODULE__.keyDown = function(key) {
 // Returns how many times a mouse button has been hit this frame.
 __MODULE__.mouseHits = function(button) {
   return this.buttons[button || 0].hits;
+};
+
+// Returns true if the mouse button was hit at all this frame.
+__MODULE__.mouseHit = function(button) {
+  return this.buttons[button || 0].hits > 0;
 };
 
 // True if the mouse button is currently down.

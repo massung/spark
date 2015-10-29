@@ -5,6 +5,7 @@
  */
 
 spark.module().requires('spark.layer').defines({
+  pending: [],
   layers: [],
 });
 
@@ -20,16 +21,16 @@ __MODULE__.init = function() {
 
 // Called once per frame to advance each layer.
 __MODULE__.update = function() {
-  var space = new spark.collision.Quadtree(0, 0, spark.view.canvas.width, spark.view.canvas.height, 0);
+  this.space = new spark.collision.Quadtree(0, 0, spark.view.canvas.width, spark.view.canvas.height, 0);
 
   // Update all the layers and allow each layer to push onto the spacial hash.
-  this.layers.forEach(function(layer) {
+  this.layers.forEach((function(layer) {
     layer.update();
-    layer.updateCollisions(space);
-  });
+    layer.updateCollisions(this.space);
+  }).bind(this));
 
   // Process collisions between layers.
-  space.processCollisions();
+  this.space.processCollisions();
 };
 
 // Called once per frame to draw each layer.
@@ -49,6 +50,9 @@ __MODULE__.draw = function() {
 
   // Render the GUI for the scene.
   this.gui();
+
+  // Debugging of collision shapes and spacial hash.
+  this.space.draw();
 };
 
 // Render the GUI for the scene. Default just renders framerate.
@@ -60,14 +64,24 @@ __MODULE__.gui = function() {
 
 // Spawn a new game sprite into the scene.
 __MODULE__.spawn = function(sprite) {
-  this.layers[0].push(sprite);
+  this.pending.push(sprite);
+};
 
-  // Set the layer and scene of the sprite.
-  sprite.layer = this.layers[0];
-  sprite.scene = this;
+//
+__MODULE__.post = function() {
+  this.pending.forEach((function(sprite) {
+    this.layers[0].push(sprite);
 
-  // Initialize the sprite now that it's in the scene.
-  if (sprite.init !== undefined) {
-    sprite.init();
-  }
+    // Set the layer and scene this sprite is in.
+    sprite.layer = this.layers[0];
+    sprite.scene = this;
+
+    // Initialize the sprite now that it's in the scene.
+    if (sprite.init !== undefined) {
+      sprite.init();
+    }
+  }).bind(this));
+
+  // Clear the pending list.
+  this.pending = [];
 };
