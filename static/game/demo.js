@@ -15,6 +15,7 @@ __MODULE__.init = function () {
     scene.atlas = new spark.texture.Atlas(scene.sprites, 'assets/sprites.json');
     scene.thrust = new spark.audio.Clip('assets/thrust.ogg');
     scene.laser = new spark.audio.Clip('assets/laser.wav');
+    scene.boom = new spark.audio.Clip('assets/boom.wav');
 
     game.demo.createPlayer();
 
@@ -54,25 +55,41 @@ __MODULE__.createPlayer = function() {
   spark.game.scene.spawn(sprite);
 };
 
-__MODULE__.createAsteroid = function(images) {
+__MODULE__.createAsteroid = function(images, x, y) {
   var sprite = new spark.entity.Sprite();
 
   // Initial properties.
   sprite.direction = [Math.random() * 200 - 100, Math.random() * 200 - 100];
   sprite.rot = Math.random() * 360 - 180;
-  sprite.children = images;
+  sprite.children = images.slice(0);
 
   // Sprite rendering.
   sprite.setImage(spark.game.scene.atlas, sprite.children.shift());
-  sprite.setPosition(Math.random() * spark.view.canvas.width, Math.random() * spark.view.canvas.height);
+  sprite.setPosition(x || Math.random() * spark.view.canvas.width, y || Math.random() * spark.view.canvas.height);
 
   // Add some callback behaviors.
   sprite.addBehavior(game.demo.spin);
   sprite.addBehavior(game.demo.spaceObject);
 
   // Add a collision filter and callback.
-  sprite.addCollision('asteroid', function(filter) {
-    // TODO: if (filter == 'bullet') die();
+  sprite.addCollision('asteroid', function(c) {
+    if (c.collision.filter == 'bullet') {
+      this.dead = true;
+
+      // Spawn 2-4 smaller asteroids.
+      if (this.children.length > 0) {
+        var n = 2 + Math.round(Math.random() * 2);
+
+        for(var i = 0;i < n;i++) {
+          game.demo.createAsteroid(this.children, this.m.p.x, this.m.p.y);
+        }
+      }
+
+      // TODO: Spawn some particles.
+
+      // Play the explosion sound.
+      this.scene.boom.woof();
+    }
   });
 
   // Add a simple collider shape.
@@ -132,8 +149,8 @@ __MODULE__.playerControls = function() {
     bullet.addBehavior(game.demo.bullet);
 
     // Add a collision filter and callback.
-    bullet.addCollision('bullet', function(sprite) {
-      if (sprite.collision.filter === 'asteroid') {
+    bullet.addCollision('bullet', function(c) {
+      if (c.collision.filter === 'asteroid') {
         this.dead = true;
       }
     });
