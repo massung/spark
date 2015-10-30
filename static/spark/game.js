@@ -42,6 +42,10 @@ __MODULE__.stepFrame = function(now) {
   this.update();
   this.draw();
 
+  // Show performance graph.
+  spark.perf.trace(this.framecount);
+  spark.perf.reset();
+
   // Clear hit counts.
   spark.input.flush();
 

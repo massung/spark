@@ -4,7 +4,7 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.layer').defines({
+spark.module().requires('spark.layer', 'spark.perf').defines({
   layers: [],
 });
 
@@ -24,12 +24,14 @@ __MODULE__.update = function() {
 
   // Update all the layers and allow each layer to push onto the spacial hash.
   this.layers.forEach((function(layer) {
-    layer.update();
-    layer.updateCollisions(this.space);
+    spark.perf.updateTime += spark.perf.sample(layer.update.bind(layer));
+    spark.perf.collisionTime += spark.perf.sample((function() {
+      layer.updateCollisions(this.space);
+    }).bind(this));
   }).bind(this));
 
   // Process collisions between layers.
-  this.space.processCollisions();
+  spark.perf.collisionTime += spark.perf.sample(this.space.processCollisions.bind(this.space));
 };
 
 // Called once per frame to draw each layer.
@@ -41,7 +43,7 @@ __MODULE__.draw = function() {
 
   // Render each layer relative to the camera.
   this.layers.forEach(function(layer) {
-    layer.draw();
+    spark.perf.drawTime += spark.perf.sample(layer.draw.bind(layer));
   });
 
   // Put everything back.
@@ -51,7 +53,7 @@ __MODULE__.draw = function() {
   this.gui();
 
   // Debugging of collision shapes and spacial hash.
-  this.space.draw();
+  //this.space.draw();
 };
 
 // Render the GUI for the scene. Default just renders framerate.

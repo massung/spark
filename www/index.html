@@ -12,10 +12,15 @@
       padding: 0;
     }
 
+    h1 {
+      color: #fff;
+      font-family: monospace;
+    }
+
     /* center the canvas */
     canvas {
       background: #000;
-			position: absolute;
+			position: fixed;
 			left: 0;
 			right: 0;
 			top: 0;
@@ -26,6 +31,9 @@
   </style>
 </head>
 <body>
+  <center><h1>Spark Demo</h1></center>
+
+  <!-- this is where all the fun happens -->
   <canvas id="canvas"></canvas>
 
   <!-- must be after the canvas -->

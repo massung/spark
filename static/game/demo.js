@@ -26,6 +26,9 @@ __MODULE__.init = function () {
         'asteroid_tiny.png',
       ]);
     }
+
+    // Start performance profiling.
+    spark.perf.start();
   });
 };
 
