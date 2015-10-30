@@ -50,10 +50,8 @@ __MODULE__.SpriteLayer.prototype.update = function() {
 // Add sprites to the collision spacial hash.
 __MODULE__.SpriteLayer.prototype.updateCollisions = function(space) {
   this.forEach(function(sprite) {
-    if (sprite.visible === true) {
-      sprite.collision.shapes.forEach(function(shape) {
-        space.push(shape, true);
-      });
+    if (sprite.visible === true && sprite.collider !== undefined) {
+      sprite.collider.addToQuadtree(space);
     }
   });
 };

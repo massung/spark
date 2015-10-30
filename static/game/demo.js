@@ -44,12 +44,12 @@ __MODULE__.createPlayer = function() {
   sprite.addBehavior(game.demo.spaceObject);
 
   // Add a collision filter and callback.
-  sprite.addCollision('player', function(filter) {
+  sprite.addCollider('player', function(filter) {
     // TODO: if (filter === 'asteroid') die();
   });
 
   // Add a simple collider shape.
-  sprite.addCircleShape([0, 0], 15);
+  sprite.collider.addCircleShape([0, 0], 15);
 
   // Add it to the scene.
   spark.game.scene.spawn(sprite);
@@ -72,8 +72,8 @@ __MODULE__.createAsteroid = function(images, x, y) {
   sprite.addBehavior(game.demo.spaceObject);
 
   // Add a collision filter and callback.
-  sprite.addCollision('asteroid', function(c) {
-    if (c.collision.filter == 'bullet') {
+  sprite.addCollider('asteroid', function(c) {
+    if (c.filter == 'bullet') {
       this.dead = true;
 
       // Spawn 2-4 smaller asteroids.
@@ -93,7 +93,7 @@ __MODULE__.createAsteroid = function(images, x, y) {
   });
 
   // Add a simple collider shape.
-  sprite.addBoxShape(-10, -10, 20, 20);
+  sprite.collider.addBoxShape(-10, -10, 20, 20);
 
   // Add it to the scene.
   spark.game.scene.spawn(sprite);
@@ -149,14 +149,14 @@ __MODULE__.playerControls = function() {
     bullet.addBehavior(game.demo.bullet);
 
     // Add a collision filter and callback.
-    bullet.addCollision('bullet', function(c) {
-      if (c.collision.filter === 'asteroid') {
+    bullet.addCollider('bullet', function(c) {
+      if (c.filter === 'asteroid') {
         this.dead = true;
       }
     });
 
     // Add a simple collider shape.
-    bullet.addSegmentShape([0, -10], [0, 10]);
+    bullet.collider.addSegmentShape([0, -10], [0, 10]);
 
     // Add the bullet to the scene and play a sound.
     this.scene.spawn(bullet);

@@ -17,13 +17,8 @@ spark.module().requires('spark.collision').defines({
     this.visible = true;
     this.alpha = 1.0;
 
-    // Update behaviors and optional collision.
+    // Update behaviors.
     this.behaviors = [];
-    this.collision = {
-      shapes: [],
-      callback: undefined,
-      filter: undefined,
-    };
 
     // Initialize the pivot transform.
     spark.entity.Pivot.call(this);
@@ -114,34 +109,14 @@ __MODULE__.Sprite.prototype.addBehavior = function(behavior) {
 };
 
 // Add a collision callback to the entity.
-__MODULE__.Sprite.prototype.addCollision = function(filter, oncollision) {
-  this.collision.filter = filter;
-
-  // Set the collision callback if one was provided.
-  if (oncollision !== undefined) {
-    this.collision.callback = oncollision;
-  }
-};
-
-// Add a segment collision shape to the entity.
-__MODULE__.Sprite.prototype.addSegmentShape = function(p1, p2) {
-  this.collision.shapes.push(new spark.collision.Segment(this, p1, p2));
-};
-
-// Add a circle collision shape to the entity.
-__MODULE__.Sprite.prototype.addCircleShape = function(c, r) {
-  this.collision.shapes.push(new spark.collision.Circle(this, c, r));
-};
-
-// Add an axis-aligned, bounding box collision shape to the entity.
-__MODULE__.Sprite.prototype.addBoxShape = function(x, y, w, h) {
-  this.collision.shapes.push(new spark.collision.Box(this, x, y, w, h));
+__MODULE__.Sprite.prototype.addCollider = function(filter, oncollision) {
+  this.collider = new spark.collision.Collider(this, filter, oncollision);
 };
 
 __MODULE__.Sprite.prototype.updateShapeColliders = function() {
-  this.collision.shapes.forEach(function(shape) {
-    shape.updateShapeCache();
-  });
+  if (this.collider !== undefined) {
+    this.collider.updateShapes(this.m);
+  }
 };
 
 // Called once per frame to advance the gameplay simulation.

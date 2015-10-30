@@ -8,6 +8,9 @@ spark.module().requires('spark.vec').defines({
   QUADTREE_DEPTH_LIMIT: 4,
   QUADTREE_SHAPE_LIMIT: 8,
 
+  // Every collision object and shape has a unique ID.
+  NEXT_COLLIDER_ID: 1,
+
   // Collision spacial hash.
   Quadtree: function(x, y, w, h, depth) {
     this.x1 = x;
@@ -23,38 +26,47 @@ spark.module().requires('spark.vec').defines({
     this.nodes = [];
   },
 
+  // A collider can have many shapes.
+  Collider: function(owner, filter, oncollision) {
+    this.id = spark.collision.NEXT_COLLIDER_ID++;
+    this.owner = owner;
+    this.filter = filter;
+    this.oncollision = oncollision;
+    this.shapes = [];
+  },
+
   // A shape is a simple, axis-aligned bounding box.
-  Shape: function(body) {
-    this.body = body;
+  Shape: function(collider) {
+    this.collider = collider;
   },
 
   // A line segment shape.
-  Segment: function(body, p1, p2) {
+  Segment: function(collider, p1, p2) {
     this.p1 = p1;
     this.p2 = p2;
 
     // Shape constructor.
-    spark.collision.Shape.call(this, body);
+    spark.collision.Shape.call(this, collider);
   },
 
   // A circle shape.
-  Circle: function(body, c, r) {
+  Circle: function(collider, c, r) {
     this.c = c;
     this.r = r;
 
     // Shape constructor.
-    spark.collision.Shape.call(this, body);
+    spark.collision.Shape.call(this, collider);
   },
 
   // An axis-aligned, box shape.
-  Box: function(body, x, y, w, h) {
+  Box: function(collider, x, y, w, h) {
     this.x = x;
     this.y = y;
     this.w = w;
     this.h = h;
 
     // Shape constructor.
-    spark.collision.Shape.call(this, body);
+    spark.collision.Shape.call(this, collider);
   },
 });
 
@@ -64,6 +76,9 @@ __MODULE__.Circle.prototype = Object.create(spark.collision.Shape.prototype);
 __MODULE__.Box.prototype = Object.create(spark.collision.Shape.prototype);
 
 // Set constructors.
+__MODULE__.Quadtree.prototype.constructor = __MODULE__.Quadtree;
+__MODULE__.Collider.prototype.constructor = __MODULE__.Collider;
+__MODULE__.Shape.prototype.constructor = __MODULE__.Shape;
 __MODULE__.Segment.prototype.constructor = __MODULE__.Segment;
 __MODULE__.Circle.prototype.constructor = __MODULE__.Circle;
 __MODULE__.Box.prototype.constructor = __MODULE__.Box;
@@ -113,45 +128,67 @@ __MODULE__.Quadtree.prototype.push = function(shape) {
   return true;
 };
 
-// Process all collisions.
+// Collect all collisions.
 __MODULE__.Quadtree.prototype.processCollisions = function() {
-  for(var i = 0;i < this.shapes.length;i++) {
-    var a = this.shapes[i];
+  var contacts = [];
+  var nodes = [this];
 
-    for(var j = i + 1;j < this.shapes.length;j++) {
-      var b = this.shapes[j];
+  // Breadth-first run over all the nodes in the spacial hash.
+  while(nodes.length > 0) {
+    var node = nodes.pop();
 
-      if (a.body !== b.body && a.shapeQuery(b)) {
-        a.collide(b);
-        b.collide(a);
-      }
-    }
+    for(var i = 0;i < node.shapes.length;i++) {
+      var a = node.shapes[i];
+      var m = [];
 
-    // Create a copy of all the child nodes to search.
-    var nodes = this.nodes.concat([]);
+      // Search this node for any collisions.
+      for(var j = i + 1;j < node.shapes.length;j++) {
+        var b = node.shapes[j];
 
-    // Walk all child nodes until they are all tested.
-    while(nodes.length > 0) {
-      var node = nodes.pop();
-
-      // Test against all the shapes in the child node.
-      node.shapes.forEach(function(b) {
-        if (a.body !== b.body && a.shapeQuery(b)) {
-          a.collide(b);
-          b.collide(a);
+        if (a.collider !== b.collider && m.indexOf(b.collider) < 0 && a.shapeQuery(b)) {
+          m.push(b.collider);
         }
-      });
+      }
 
-      // Append all the child nodes and keep searching.
-      if (node.nodes.length > 0) {
-        nodes = nodes.concat(node.nodes);
+      // Create a copy of all the child nodes to search.
+      var children = node.nodes.concat([]);
+
+      // Walk all child nodes until they are all tested.
+      while(children.length > 0) {
+        var child = children.pop();
+
+        // Test against all the shapes in the child node.
+        child.shapes.forEach(function(b) {
+          if (a.collider !== b.collider && m.indexOf(b.collider) < 0 && a.shapeQuery(b)) {
+            m.push(b.collider);
+          }
+        });
+
+        // Append all the child nodes and keep searching.
+        if (child.nodes.length > 0) {
+          children = children.concat(child.nodes);
+        }
+      }
+
+      // Add the manifold to the list of contacts.
+      if (m.length > 0) {
+        contacts.push([a.collider, m]);
       }
     }
+
+    // Collect collisions in the child nodes.
+    nodes = nodes.concat(node.nodes);
   }
 
-  // Look at all the shapes in the child nodes.
-  this.nodes.forEach(function(node) {
-    node.processCollisions();
+  // Loop over all the contact manifolds and call callbacks.
+  contacts.forEach(function(c) {
+    var a = c[0];
+    var m = c[1];
+
+    m.forEach(function(b) {
+      a.collide(b);
+      b.collide(a);
+    });
   });
 };
 
@@ -177,10 +214,39 @@ __MODULE__.Quadtree.prototype.draw = function(color) {
   spark.view.restore();
 };
 
+// Add all the shapes of a collider to a spacial hash.
+__MODULE__.Collider.prototype.addToQuadtree = function(space) {
+  this.shapes.forEach(function(shape) {
+    space.push(shape);
+  });
+};
+
+// Add a segment collision shape to the entity.
+__MODULE__.Collider.prototype.addSegmentShape = function(p1, p2) {
+  this.shapes.push(new spark.collision.Segment(this, p1, p2));
+};
+
+// Add a circle collision shape to the entity.
+__MODULE__.Collider.prototype.addCircleShape = function(c, r) {
+  this.shapes.push(new spark.collision.Circle(this, c, r));
+};
+
+// Add an axis-aligned, bounding box collision shape to the entity.
+__MODULE__.Collider.prototype.addBoxShape = function(x, y, w, h) {
+  this.shapes.push(new spark.collision.Box(this, x, y, w, h));
+};
+
+// Called once per frame to transform shapes from local to world space.
+__MODULE__.Collider.prototype.updateShapes = function(m) {
+  this.shapes.forEach(function(shape) {
+    shape.updateShapeCache(m);
+  });
+};
+
 // Call the collision callback of the shape body if there is one.
-__MODULE__.Shape.prototype.collide = function(shape) {
-  if (this.body.collision.callback !== undefined) {
-    this.body.collision.callback.call(this.body, shape.body);
+__MODULE__.Collider.prototype.collide = function(collider) {
+  if (this.oncollision !== undefined) {
+    this.oncollision.call(this.owner, collider);
   }
 };
 
@@ -195,7 +261,7 @@ __MODULE__.Shape.prototype.shapeQuery = function(shape) {
 
 // Base prototype shape querying functions.
 __MODULE__.Shape.prototype.draw = function() { };
-__MODULE__.Shape.prototype.updateShapeCache = function() { };
+__MODULE__.Shape.prototype.updateShapeCache = function(m) { };
 __MODULE__.Shape.prototype.within = function(x1, y1, x2, y2) { return false; };
 __MODULE__.Shape.prototype.segmentQuery = function(s) { return false; };
 __MODULE__.Shape.prototype.circleQuery = function(s) { return false; };
@@ -211,9 +277,9 @@ __MODULE__.Segment.prototype.draw = function() {
 };
 
 // Update the world coordinates of the segment shape.
-__MODULE__.Segment.prototype.updateShapeCache = function() {
-  this.tp1 = this.body.m.transform(this.p1);
-  this.tp2 = this.body.m.transform(this.p2);
+__MODULE__.Segment.prototype.updateShapeCache = function(m) {
+  this.tp1 = m.transform(this.p1);
+  this.tp2 = m.transform(this.p2);
 };
 
 // True if the shape is completely within the bounding box.
@@ -277,8 +343,8 @@ __MODULE__.Circle.prototype.draw = function() {
 };
 
 // Update the world coordinates of the circle shape.
-__MODULE__.Circle.prototype.updateShapeCache = function() {
-  this.tc = this.body.m.transform(this.c);
+__MODULE__.Circle.prototype.updateShapeCache = function(m) {
+  this.tc = m.transform(this.c);
 };
 
 // Is a circle shape completely within the bounds.
@@ -346,11 +412,11 @@ __MODULE__.Box.prototype.draw = function() {
 };
 
 // Update the world coordinates of the circle shape.
-__MODULE__.Box.prototype.updateShapeCache = function() {
-  var v0 = this.body.m.transform([this.x,          this.y]);
-  var v1 = this.body.m.transform([this.x + this.w, this.y]);
-  var v2 = this.body.m.transform([this.x,          this.y + this.h]);
-  var v3 = this.body.m.transform([this.x + this.w, this.y + this.h]);
+__MODULE__.Box.prototype.updateShapeCache = function(m) {
+  var v0 = m.transform([this.x,          this.y]);
+  var v1 = m.transform([this.x + this.w, this.y]);
+  var v2 = m.transform([this.x,          this.y + this.h]);
+  var v3 = m.transform([this.x + this.w, this.y + this.h]);
 
   // Extend the box to keep it axis-aligned.
   this.tp1 = [Math.min(v0.x, v1.x, v2.x, v3.x), Math.min(v0.y, v1.y, v2.y, v3.y)];
