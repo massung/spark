@@ -27,11 +27,15 @@ __MODULE__.TilemapLayer.prototype.constructor = __MODULE__.TilemapLayer;
 
 // Process gameplay and collisions.
 __MODULE__.SpriteLayer.prototype.update = function() {
+  var i = 0;
 
-  // Remove all dead sprites from the layer (unsorted).
-  for(var i = 0;i < this.length;) {
+  for(i = 0;i < this.length;) {
     if (this[i].dead) {
-      this[i] = this[this.pop()];
+      var x = this.pop();
+
+      if (i < this.length) {
+        this[i] = x;
+      }
     } else {
       i++;
     }

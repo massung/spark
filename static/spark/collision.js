@@ -201,6 +201,15 @@ __MODULE__.Shape.prototype.segmentQuery = function(s) { return false; };
 __MODULE__.Shape.prototype.circleQuery = function(s) { return false; };
 __MODULE__.Shape.prototype.boxQuery = function(s) { return false; };
 
+// Render the segment shape.
+__MODULE__.Segment.prototype.draw = function() {
+  spark.view.strokeStyle = '#ff0';
+  spark.view.beginPath();
+  spark.view.moveTo(this.tp1.x, this.tp1.y);
+  spark.view.lineTo(this.tp2.x, this.tp2.y);
+  spark.view.stroke();
+};
+
 // Update the world coordinates of the segment shape.
 __MODULE__.Segment.prototype.updateShapeCache = function() {
   this.tp1 = this.body.m.transform(this.p1);

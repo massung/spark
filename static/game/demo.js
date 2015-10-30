@@ -98,8 +98,8 @@ __MODULE__.spin = function() {
 
 // Handle player input.
 __MODULE__.playerControls = function() {
-  if (spark.input.keyDown(spark.input.KEY.LEFT)) this.rotate(180 * spark.game.step);
-  if (spark.input.keyDown(spark.input.KEY.RIGHT)) this.rotate(-180 * spark.game.step);
+  if (spark.input.keyDown(spark.input.KEY.LEFT)) this.rotate(-180 * spark.game.step);
+  if (spark.input.keyDown(spark.input.KEY.RIGHT)) this.rotate(180 * spark.game.step);
 
   // Thrusting.
   if (spark.input.keyDown(spark.input.KEY.UP)) {
@@ -125,7 +125,7 @@ __MODULE__.playerControls = function() {
     bullet.setImage(spark.game.scene.atlas, 'bullet.png');
 
     // Spawn in front of the player.
-    bullet.m.p = this.localToWorld([0, -12]);
+    bullet.m.p = this.localToWorld([0, -20]);
     bullet.m.r = this.m.r;
 
     // Add some callback behaviors.
@@ -133,7 +133,9 @@ __MODULE__.playerControls = function() {
 
     // Add a collision filter and callback.
     bullet.addCollision('bullet', function(sprite) {
-      if (sprite.collision.filter === 'asteroid') {}
+      if (sprite.collision.filter === 'asteroid') {
+        this.dead = true;
+      }
     });
 
     // Add a simple collider shape.
@@ -154,7 +156,7 @@ __MODULE__.playerControls = function() {
 
 // Advance the bullet, slowly die off.
 __MODULE__.bullet = function() {
-  if (this.alpha -= game.step < 0) {
+  if ((this.alpha -= spark.game.step) < 0) {
     this.dead = true;
   }
 

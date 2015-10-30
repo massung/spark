@@ -15,6 +15,7 @@ spark.module().requires('spark.collision').defines({
   Sprite: function() {
     this.dead = false;
     this.visible = true;
+    this.alpha = 1.0;
 
     // Update behaviors and optional collision.
     this.behaviors = [];
@@ -62,7 +63,7 @@ __MODULE__.Pivot.prototype.translate = function(v, local) {
   this.m.p.y += v.y;
 };
 
-// Turn a pivot entity.
+// Turn a pivot entity. Positive angle = clockwise.
 __MODULE__.Pivot.prototype.rotate = function(angle) {
   var r = angle * Math.PI / 180.0;
 
@@ -137,6 +138,12 @@ __MODULE__.Sprite.prototype.addBoxShape = function(x, y, w, h) {
   this.collision.shapes.push(new spark.collision.Box(this, x, y, w, h));
 };
 
+__MODULE__.Sprite.prototype.updateShapeColliders = function() {
+  this.collision.shapes.forEach(function(shape) {
+    shape.updateShapeCache();
+  });
+};
+
 // Called once per frame to advance the gameplay simulation.
 __MODULE__.Sprite.prototype.update = function() {
   this.behaviors.forEach((function(behavior) {
@@ -144,9 +151,7 @@ __MODULE__.Sprite.prototype.update = function() {
   }).bind(this));
 
   // Update all the collision shapes.
-  this.collision.shapes.forEach(function(shape) {
-    shape.updateShapeCache();
-  });
+  this.updateShapeColliders();
 };
 
 // Called once per frame to render.

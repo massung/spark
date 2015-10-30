@@ -5,7 +5,6 @@
  */
 
 spark.module().requires('spark.layer').defines({
-  pending: [],
   layers: [],
 });
 
@@ -64,24 +63,17 @@ __MODULE__.gui = function() {
 
 // Spawn a new game sprite into the scene.
 __MODULE__.spawn = function(sprite) {
-  this.pending.push(sprite);
-};
+  sprite.layer = this.layers[0];
+  sprite.scene = this;
 
-//
-__MODULE__.post = function() {
-  this.pending.forEach((function(sprite) {
-    this.layers[0].push(sprite);
+  // Add it to the scene.
+  this.layers[0].push(sprite);
 
-    // Set the layer and scene this sprite is in.
-    sprite.layer = this.layers[0];
-    sprite.scene = this;
+  // Update the shapes of the sprite.
+  sprite.updateShapeColliders();
 
-    // Initialize the sprite now that it's in the scene.
-    if (sprite.init !== undefined) {
-      sprite.init();
-    }
-  }).bind(this));
-
-  // Clear the pending list.
-  this.pending = [];
+  // Initialize the sprite now that it's in the scene.
+  if (sprite.init !== undefined) {
+    sprite.init();
+  }
 };

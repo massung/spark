@@ -172,12 +172,12 @@ __MODULE__.vrperp = function(v) {
 
 // Rotate a vector.
 __MODULE__.vrotate = function(v, r) {
-  return [(v.x * r.x) - (v.y * r.y), (v.y * r.x) + (v.x * r.y)];
+  return [(v.x * r.x) + (v.y * r.y), (v.y * r.x) - (v.x * r.y)];
 };
 
 // Unrotate a vector.
 __MODULE__.vunrotate = function(v, r) {
-  return [(v.x * r.x) + (v.y * r.y), (v.y * r.x) - (v.x * r.y)];
+  return [(v.x * r.x) - (v.y * r.y), (v.y * r.x) + (v.x * r.y)];
 };
 
 // Linearly interpolate along p->q by k [0,1].
