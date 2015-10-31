@@ -108,11 +108,11 @@ __MODULE__.trace = function(frame) {
   spark.view.lineWidth = 1;
   spark.view.font = 'bold 10px "Courier New", sans-serif';
   spark.view.fillStyle = '#66b2ff';
-  spark.view.fillText('Update', 10, spark.view.canvas.height - y - 48);
+  spark.view.fillText('Update', 10, spark.view.canvas.height - y - 24);
   spark.view.fillStyle = '#c354ff';
   spark.view.fillText('Collision', 10, spark.view.canvas.height - y - 36);
   spark.view.fillStyle = '#2dffb2';
-  spark.view.fillText('Draw', 10, spark.view.canvas.height - y - 24);
+  spark.view.fillText('Draw', 10, spark.view.canvas.height - y - 48);
   spark.view.fillStyle = '#ccc';
   spark.view.fillText('60 FPS', 10, spark.view.canvas.height - y - 2);
 };
