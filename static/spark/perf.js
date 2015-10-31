@@ -12,14 +12,23 @@ spark.module().defines({
 
 // Create an offscreen canvas to render performance data to.
 __MODULE__.start = function() {
-  this.canvas = document.createElement('canvas');
+  if (this.canvas === undefined) {
+    this.canvas = document.createElement('canvas');
 
-  // Set the dimensions of the canvas.
-  this.canvas.width = 0;
-  this.canvas.height= 200;
+    // Set the dimensions of the canvas.
+    this.canvas.width = 0;
+    this.canvas.height= 200;
+  }
 
   // Get the context to render with.
   this.view = this.canvas.getContext('2d');
+};
+
+// Stop profiling.
+__MODULE__.stop = function() {
+  this.view = undefined;
+
+  // NOTE: Don't clear the canvas, because why re-create it?
 };
 
 // Track some time.
@@ -42,7 +51,7 @@ __MODULE__.reset = function() {
 
 // Draw a trace on the performance canvas.
 __MODULE__.trace = function(frame) {
-  if (this.canvas === undefined) {
+  if (this.view === undefined) {
     return;
   }
 
