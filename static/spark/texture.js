@@ -7,8 +7,11 @@
 spark.module().defines({
 
   // A single image.
-  Image: function(src) {
+  Image: function(src, pivot) {
     this.source = new Image();
+
+    // Set the pivot.
+    this.pivot = pivot || [0.5, 0.5];
 
     // Handle registeration when done loading.
     this.source.onload = (function() {
@@ -39,9 +42,11 @@ __MODULE__.Atlas.prototype.constructor = __MODULE__.Atlas;
 __MODULE__.Image.prototype.blit = function(x, y, rx, ry, sx, sy) {
   var w = this.source.width;
   var h = this.source.height;
+  var x = -w * this.pivot.x;
+  var y = -h * this.pivot.y;
 
   // Render it using the center of the image as its pivot.
-  spark.view.drawImage(this.source, 0, 0, w, h, -w / 2, -h / 2, w, h);
+  spark.view.drawImage(this.source, 0, 0, w, h, x, y, w, h);
 };
 
 // Blit a sprite from an atlas to the canvas.
