@@ -69,9 +69,9 @@ __MODULE__.trace = function(frame) {
   var y = h / 2;
 
   // Determine the vertical slice of time spent in update.
-  var updateY = Math.round(this.updateTime * y);
-  var collisionY = Math.round(this.collisionTime * y);
-  var drawY = Math.round(this.drawTime * y);
+  var updateY = Math.round(this.updateTime * y / (1000 / 60));
+  var collisionY = Math.round(this.collisionTime * y / (1000 / 60));
+  var drawY = Math.round(this.drawTime * y / (1000 / 60));
 
   // Clear an around around the draw section.
   this.view.clearRect(x, 0, 10, h);
@@ -115,13 +115,17 @@ __MODULE__.trace = function(frame) {
 
   // Show the legend.
   spark.view.lineWidth = 1;
+  spark.view.shadowOffsetX = 0;
+  spark.view.shadowOffsetY = 1;
+  spark.view.shadowBlur = 3;
+  spark.view.shadowColor = '#000';
   spark.view.font = 'bold 10px "Courier New", sans-serif';
   spark.view.fillStyle = '#66b2ff';
-  spark.view.fillText('Update', 10, spark.view.canvas.height - y - 24);
+  spark.view.fillText('Update    : ' + this.updateTime.toFixed(2) + 'ms', 10, spark.view.canvas.height - y - 24);
   spark.view.fillStyle = '#c354ff';
-  spark.view.fillText('Collision', 10, spark.view.canvas.height - y - 36);
+  spark.view.fillText('Collision : ' + this.collisionTime.toFixed(2) + 'ms', 10, spark.view.canvas.height - y - 36);
   spark.view.fillStyle = '#2dffb2';
-  spark.view.fillText('Draw', 10, spark.view.canvas.height - y - 48);
+  spark.view.fillText('Draw      : ' + this.drawTime.toFixed(2) + 'ms', 10, spark.view.canvas.height - y - 48);
   spark.view.fillStyle = '#ccc';
   spark.view.fillText('60 FPS', 10, spark.view.canvas.height - y - 2);
 };
