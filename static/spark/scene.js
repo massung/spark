@@ -119,7 +119,7 @@ __MODULE__.draw = function() {
   }).bind(this));
 
   // Debugging of collision shapes and spacial hash.
-  this.space.draw();
+  //this.space.draw();
 
   // Put everything back.
   spark.view.restore();
