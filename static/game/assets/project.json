@@ -1,0 +1,21 @@
+{
+  "title": "Spark Demo",
+  "version": 1.0,
+  "assetRelativePath": "",
+  "assets": {
+    "starfield":     { "class": "spark.texture.Image", "source": "background.png" },
+    "asteroid_0":    { "class": "spark.texture.Image", "source": "asteroid_big_1.png" },
+    "asteroid_1":    { "class": "spark.texture.Image", "source": "asteroid_big_2.png" },
+    "asteroid_2":    { "class": "spark.texture.Image", "source": "asteroid_big_3.png" },
+    "asteroid_3":    { "class": "spark.texture.Image", "source": "asteroid_big_4.png" },
+    "particle_0":    { "class": "spark.texture.Image", "source": "asteroid_particle_1.png" },
+    "particle_1":    { "class": "spark.texture.Image", "source": "asteroid_particle_2.png" },
+    "player_ship":   { "class": "spark.texture.Image", "source": "player.png" },
+    "player_thrust": { "class": "spark.texture.Image", "source": "thrust.png" },
+    "player_laser":  { "class": "spark.texture.Image", "source": "laser.png" },
+    "player_shield": { "class": "spark.texture.Image", "source": "shield.png" },
+    "pickup_sound":  { "class": "spark.audio.Clip", "source": "pickup.ogg" },
+    "laser_sound":   { "class": "spark.audio.Clip", "source": "laser.ogg" },
+    "rumble_sound":  { "class": "spark.audio.Clip", "source": "rumble.ogg" }
+  }
+}

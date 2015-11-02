@@ -7,11 +7,8 @@
 spark.module().defines({
 
   // A single image.
-  Image: function(src, pivot) {
+  Image: function(src) {
     this.source = new Image();
-
-    // Set the pivot.
-    this.pivot = pivot || [0, 0];
 
     // Handle registeration when done loading.
     this.source.onload = (function() {

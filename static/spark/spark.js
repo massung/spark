@@ -114,6 +114,9 @@
     this.registeredAssets = [];
     this.modules = [];
 
+    // Set the true for visualization, entity selection, etc.
+    this.DEBUG = false;
+
     // Loop over all modules and initialize/load those whose dependencies are loaded.
     this.importModules = function() {
       do {
@@ -174,17 +177,22 @@
       req.send();
     };
 
-    // Load a file as XML.
-    this.loadXML = function(src, onload) {
-      this.loadText(src, function(text) {
-        onload((new DOMParser()).parseFromString(text, 'text/xml'));
-      });
-    };
-
     // Load a file as JSON.
     this.loadJSON = function(src, onload) {
       this.loadText(src, function(text) {
-        onload(JSON.parse(text));
+        var json;
+
+        try {
+          json = JSON.parse(text);
+        }
+
+        // JSON errors can be difficult to differentiate.
+        catch(e) {
+          throw 'Syntax error parsing JSON (' + src + '): "' + e+ '"';
+        }
+
+        // Callback with parsed JSON object.
+        onload(json);
       });
     };
 

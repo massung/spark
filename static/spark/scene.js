@@ -4,7 +4,7 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.layer', 'spark.manifest', 'spark.perf').defines({
+spark.module().requires('spark.layer', 'spark.perf', 'spark.project').defines({
   layers: [],
 });
 
@@ -119,7 +119,9 @@ __MODULE__.draw = function() {
   }).bind(this));
 
   // Debugging of collision shapes and spacial hash.
-  //this.space.draw();
+  if (spark.DEBUG) {
+    this.space.draw();
+  }
 
   // Put everything back.
   spark.view.restore();

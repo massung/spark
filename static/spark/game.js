@@ -93,7 +93,7 @@ __MODULE__.loop = function() {
 };
 
 // Start the main game loop.
-__MODULE__.run = function(init) {
+__MODULE__.run = function(projectFile, onload) {
   this.quit();
 
   // Create a new scene.
@@ -102,10 +102,14 @@ __MODULE__.run = function(init) {
   // Initialize a new scene.
   this.scene.init();
 
-  // Perform user-defined setup for this scene.
-  if (init !== undefined) {
-    init(this.scene);
-  }
+  // Load the project file, and call onload once loaded.
+  this.project = spark.project.load(projectFile, (function() {
+
+    // TODO: Additional setup from project file?
+
+    // Allow the game to setup the scene.
+    onload(this.scene);
+  }).bind(this));
 
   // Run the main game loop.
   this.loop();

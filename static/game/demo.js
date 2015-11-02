@@ -10,40 +10,12 @@ __MODULE__.init = function () {
   spark.main('canvas', 640, 480);
 
   // Start the game.
-  spark.game.run(function(scene) {
-
-    // Starfield background.
-    scene.starfield = new spark.texture.Image('game/assets/background.png');
-
-    // Big asteroids.
-    scene.asteroid = [
-      new spark.texture.Image('game/assets/asteroid_big_1.png'),
-      new spark.texture.Image('game/assets/asteroid_big_2.png'),
-      new spark.texture.Image('game/assets/asteroid_big_3.png'),
-      new spark.texture.Image('game/assets/asteroid_big_4.png'),
-    ];
-
-    // Particle asteroids.
-    scene.asteroid_particle = [
-      new spark.texture.Image('game/assets/asteroid_particle_1.png'),
-      new spark.texture.Image('game/assets/asteroid_particle_2.png'),
-    ];
-
-    // The player spaceship images.
-    scene.player_ship = new spark.texture.Image('game/assets/player.png');
-    scene.player_thrust = new spark.texture.Image('game/assets/thrust.png');
-    scene.player_laser = new spark.texture.Image('game/assets/laser.png');
-    scene.player_shield = new spark.texture.Image('game/assets/shield.png');
-
-    // Audio clips.
-    scene.pickup_sound = new spark.audio.Clip('game/assets/pickup.ogg');
-    scene.laser_sound = new spark.audio.Clip('game/assets/laser.ogg');
-    scene.rumble_sound = new spark.audio.Clip('game/assets/rumble.ogg');
+  spark.game.run('game/assets/project.json', function(scene) {
 
     // Change the projection so the origin is in the middle.
     scene.setProjection(0.5, 'middle');
 
-    // Spawn the player.
+    // Create the player.
     game.demo.createPlayer();
 
     // Spawn 3 large asteroids.
@@ -60,7 +32,7 @@ __MODULE__.createPlayer = function() {
   sprite.thrust = spark.vec.ZERO;
 
   // Sprite rendering.
-  sprite.setImage(spark.game.scene.player_ship);
+  sprite.setImage(spark.game.project.assets.player_ship);
   sprite.setPosition(0, 0);
 
   // Add some callback behaviors.
@@ -87,7 +59,7 @@ __MODULE__.createAsteroid = function(x, y, scale) {
   sprite.rot = Math.random() * 360 - 180;
 
   // Sprite initialization.
-  sprite.setImage(spark.game.scene.asteroid[Math.floor(Math.random() * spark.game.scene.asteroid.length)]);
+  sprite.setImage(spark.game.project.assets.asteroid_1);
   sprite.setPosition(
     x || Math.random() * spark.game.scene.width + spark.game.scene.left,
     y || Math.random() * spark.game.scene.height + spark.game.scene.top);
@@ -116,7 +88,7 @@ __MODULE__.createAsteroid = function(x, y, scale) {
       // TODO: Spawn some particles.
 
       // Play the explosion sound.
-      spark.game.scene.rumble_sound.woof();
+      spark.game.project.assets.rumble_sound.woof();
     }
   });
 
@@ -160,8 +132,8 @@ __MODULE__.playerControls = function() {
 
   // Thrusting.
   if (spark.input.keyDown(spark.input.KEY.UP)) {
-    this.thrust.x += 400.0 * spark.game.step * -this.m.r.y;
-    this.thrust.y -= 400.0 * spark.game.step * this.m.r.x;
+    this.thrust.x += 800.0 * spark.game.step * -this.m.r.y;
+    this.thrust.y -= 800.0 * spark.game.step * this.m.r.x;
 
     // Change the sprite image to one that shows the ship thrusting.
     //this.setImage(spark.game.scene.atlas, 'ship_thrust.png');
@@ -179,7 +151,7 @@ __MODULE__.playerControls = function() {
     var bullet = new spark.entity.Sprite();
 
     // Sprite rendering.
-    bullet.setImage(spark.game.scene.player_laser);
+    bullet.setImage(spark.game.project.assets.player_laser);
 
     // Spawn in front of the player.
     bullet.m.p = this.localToWorld([0, -30]);
@@ -200,7 +172,7 @@ __MODULE__.playerControls = function() {
 
     // Add the bullet to the scene and play a sound.
     this.scene.spawn(bullet);
-    this.scene.laser_sound.woof();
+    spark.game.project.assets.laser_sound.woof();
   }
 
   // Move the player.
@@ -218,5 +190,5 @@ __MODULE__.bullet = function() {
   }
 
   // Move the bullet forward.
-  this.translate([0, -600 * spark.game.step], true);
+  this.translate([0, -1200 * spark.game.step], true);
 };
