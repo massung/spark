@@ -88,14 +88,14 @@ __MODULE__.trace = function(frame) {
   // Purple for collision time.
   this.view.strokeStyle = '#c354ff';
   this.view.beginPath();
-  this.view.moveTo(x, h - updateY - 1);
+  this.view.moveTo(x, h - updateY);
   this.view.lineTo(x, h - updateY - collisionY);
   this.view.stroke();
 
   // Green for draw time.
   this.view.strokeStyle = '#2dffb2';
   this.view.beginPath();
-  this.view.moveTo(x, h - updateY - collisionY - 1);
+  this.view.moveTo(x, h - updateY - collisionY);
   this.view.lineTo(x, h - updateY - collisionY - drawY);
   this.view.stroke();
 
