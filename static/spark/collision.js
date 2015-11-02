@@ -5,7 +5,7 @@
  */
 
 spark.module().requires('spark.vec').defines({
-  QUADTREE_DEPTH_LIMIT: 4,
+  QUADTREE_DEPTH_LIMIT: 3,
   QUADTREE_SHAPE_LIMIT: 8,
 
   // Every collision object and shape has a unique ID.
@@ -195,7 +195,6 @@ __MODULE__.Quadtree.prototype.processCollisions = function() {
 // Debug render the quadtree.
 __MODULE__.Quadtree.prototype.draw = function(color) {
   spark.view.save();
-  spark.view.setTransform(1, 0, 0, 1, 0, 0);
 
   // Render the bounding area of this quadtree node.
   spark.view.strokeStyle = color || '#f00';
@@ -211,6 +210,7 @@ __MODULE__.Quadtree.prototype.draw = function(color) {
     shape.draw();
   });
 
+  // Done.
   spark.view.restore();
 };
 
@@ -278,8 +278,8 @@ __MODULE__.Segment.prototype.draw = function() {
 
 // Update the world coordinates of the segment shape.
 __MODULE__.Segment.prototype.updateShapeCache = function(m) {
-  this.tp1 = m.transform(this.p1);
-  this.tp2 = m.transform(this.p2);
+  this.tp1 = m.vtransform(this.p1);
+  this.tp2 = m.vtransform(this.p2);
 };
 
 // True if the shape is completely within the bounding box.
@@ -344,7 +344,7 @@ __MODULE__.Circle.prototype.draw = function() {
 
 // Update the world coordinates of the circle shape.
 __MODULE__.Circle.prototype.updateShapeCache = function(m) {
-  this.tc = m.transform(this.c);
+  this.tc = m.vtransform(this.c);
 };
 
 // Is a circle shape completely within the bounds.
@@ -413,10 +413,10 @@ __MODULE__.Box.prototype.draw = function() {
 
 // Update the world coordinates of the circle shape.
 __MODULE__.Box.prototype.updateShapeCache = function(m) {
-  var v0 = m.transform([this.x,          this.y]);
-  var v1 = m.transform([this.x + this.w, this.y]);
-  var v2 = m.transform([this.x,          this.y + this.h]);
-  var v3 = m.transform([this.x + this.w, this.y + this.h]);
+  var v0 = m.vtransform([this.x,          this.y]);
+  var v1 = m.vtransform([this.x + this.w, this.y]);
+  var v2 = m.vtransform([this.x,          this.y + this.h]);
+  var v3 = m.vtransform([this.x + this.w, this.y + this.h]);
 
   // Extend the box to keep it axis-aligned.
   this.tp1 = [Math.min(v0.x, v1.x, v2.x, v3.x), Math.min(v0.y, v1.y, v2.y, v3.y)];

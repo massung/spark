@@ -4,27 +4,51 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.game', 'spark.texture', 'spark.audio');
+spark.module().requires('spark.game');
 
 __MODULE__.init = function () {
   spark.main('canvas', 640, 480);
 
   // Start the game.
   spark.game.run(function(scene) {
-    scene.sprites = new spark.texture.Image('assets/sprites.png');
-    scene.atlas = new spark.texture.Atlas(scene.sprites, 'assets/sprites.json');
-    scene.thrust = new spark.audio.Clip('assets/thrust.ogg');
-    scene.laser = new spark.audio.Clip('assets/laser.wav');
-    scene.boom = new spark.audio.Clip('assets/boom.wav');
 
+    // Starfield background.
+    scene.starfield = new spark.texture.Image('game/assets/background.png');
+
+    // Big asteroids.
+    scene.asteroid = [
+      new spark.texture.Image('game/assets/asteroid_big_1.png'),
+      new spark.texture.Image('game/assets/asteroid_big_2.png'),
+      new spark.texture.Image('game/assets/asteroid_big_3.png'),
+      new spark.texture.Image('game/assets/asteroid_big_4.png'),
+    ];
+
+    // Particle asteroids.
+    scene.asteroid_particle = [
+      new spark.texture.Image('game/assets/asteroid_particle_1.png'),
+      new spark.texture.Image('game/assets/asteroid_particle_2.png'),
+    ];
+
+    // The player spaceship images.
+    scene.player_ship = new spark.texture.Image('game/assets/player.png');
+    scene.player_thrust = new spark.texture.Image('game/assets/thrust.png');
+    scene.player_laser = new spark.texture.Image('game/assets/laser.png');
+    scene.player_shield = new spark.texture.Image('game/assets/shield.png');
+
+    // Audio clips.
+    scene.pickup_sound = new spark.audio.Clip('game/assets/pickup.ogg');
+    scene.laser_sound = new spark.audio.Clip('game/assets/laser.ogg');
+    scene.rumble_sound = new spark.audio.Clip('game/assets/rumble.ogg');
+
+    // Change the projection so the origin is in the middle.
+    scene.setProjection(0.5, 'middle');
+
+    // Spawn the player.
     game.demo.createPlayer();
 
+    // Spawn 3 large asteroids.
     for(var i = 0;i < 3;i++) {
-      game.demo.createAsteroid([
-        'asteroid_large.png',
-        'asteroid_small.png',
-        'asteroid_tiny.png',
-      ]);
+      game.demo.createAsteroid();
     }
   });
 };
@@ -36,64 +60,68 @@ __MODULE__.createPlayer = function() {
   sprite.thrust = spark.vec.ZERO;
 
   // Sprite rendering.
-  sprite.setImage(spark.game.scene.atlas, 'ship.png');
-  sprite.setPosition(spark.view.canvas.width / 2, spark.view.canvas.height / 2);
+  sprite.setImage(spark.game.scene.player_ship);
+  sprite.setPosition(0, 0);
 
   // Add some callback behaviors.
   sprite.addBehavior(game.demo.playerControls);
   sprite.addBehavior(game.demo.spaceObject);
 
   // Add a collision filter and callback.
-  sprite.addCollider('player', function(filter) {
+  var collider = sprite.addCollider('player', function(filter) {
     // TODO: if (filter === 'asteroid') die();
   });
 
   // Add a simple collider shape.
-  sprite.collider.addCircleShape([0, 0], 15);
+  collider.addCircleShape([0, 0], 30);
 
   // Add it to the scene.
   spark.game.scene.spawn(sprite);
 };
 
-__MODULE__.createAsteroid = function(images, x, y) {
+__MODULE__.createAsteroid = function(x, y, scale) {
   var sprite = new spark.entity.Sprite();
 
   // Initial properties.
   sprite.direction = [Math.random() * 200 - 100, Math.random() * 200 - 100];
   sprite.rot = Math.random() * 360 - 180;
-  sprite.children = images.slice(0);
 
-  // Sprite rendering.
-  sprite.setImage(spark.game.scene.atlas, sprite.children.shift());
-  sprite.setPosition(x || Math.random() * spark.view.canvas.width, y || Math.random() * spark.view.canvas.height);
+  // Sprite initialization.
+  sprite.setImage(spark.game.scene.asteroid[Math.floor(Math.random() * spark.game.scene.asteroid.length)]);
+  sprite.setPosition(
+    x || Math.random() * spark.game.scene.width + spark.game.scene.left,
+    y || Math.random() * spark.game.scene.height + spark.game.scene.top);
+
+  // Set the scale
+  sprite.setScale(scale || 1.0);
 
   // Add some callback behaviors.
   sprite.addBehavior(game.demo.spin);
   sprite.addBehavior(game.demo.spaceObject);
 
   // Add a collision filter and callback.
-  sprite.addCollider('asteroid', function(c) {
+  var collider = sprite.addCollider('asteroid', function(c) {
     if (c.filter == 'bullet') {
       this.dead = true;
 
       // Spawn 2-4 smaller asteroids.
-      if (this.children.length > 0) {
+      if (this.m.s.x > 0.6) {
         var n = 2 + Math.round(Math.random() * 2);
 
         for(var i = 0;i < n;i++) {
-          game.demo.createAsteroid(this.children, this.m.p.x, this.m.p.y);
+          game.demo.createAsteroid(this.m.p.x, this.m.p.y, this.m.s.x * 0.75);
         }
       }
 
       // TODO: Spawn some particles.
 
       // Play the explosion sound.
-      this.scene.boom.woof();
+      spark.game.scene.rumble_sound.woof();
     }
   });
 
   // Add a simple collider shape.
-  sprite.collider.addBoxShape(-10, -10, 20, 20);
+  collider.addBoxShape(-30, -30, 60, 60);
 
   // Add it to the scene.
   spark.game.scene.spawn(sprite);
@@ -101,10 +129,22 @@ __MODULE__.createAsteroid = function(images, x, y) {
 
 // All space objects wrap around the viewport.
 __MODULE__.spaceObject = function() {
-  if (this.m.p.x > spark.view.canvas.width) this.m.p.x -= spark.view.canvas.width + this.width;
-  if (this.m.p.x + this.width / 2 < 0) this.m.p.x += spark.view.canvas.width + this.width;
-  if (this.m.p.y > spark.view.canvas.height) this.m.p.y -= spark.view.canvas.height + this.height;
-  if (this.m.p.y + this.height / 2 < 0) this.m.p.y += spark.view.canvas.height + this.height;
+
+  // Wrap right to left.
+  if (this.m.p.x - this.width / 2 > this.scene.right)
+    this.m.p.x -= this.scene.width + this.width;
+
+  // Wrap left to right.
+  if (this.m.p.x + this.width / 2 < this.scene.left)
+    this.m.p.x += this.scene.width + this.width;
+
+  // Wrap bottom to top.
+  if (this.m.p.y - this.height / 2 > this.scene.bottom)
+    this.m.p.y -= this.scene.height + this.height;
+
+  // Wrap top to bottom.
+  if (this.m.p.y + this.height / 2 < this.scene.top)
+    this.m.p.y += this.scene.height + this.height;
 };
 
 // Asteroids consistently move and spin.
@@ -124,22 +164,22 @@ __MODULE__.playerControls = function() {
     this.thrust.y -= 400.0 * spark.game.step * this.m.r.x;
 
     // Change the sprite image to one that shows the ship thrusting.
-    this.setImage(spark.game.scene.atlas, 'ship_thrust.png');
+    //this.setImage(spark.game.scene.atlas, 'ship_thrust.png');
 
-    this.scene.thrust.play();
+    //this.scene.thrust.play();
   } else {
 
     // Change back to the idle ship.
-    this.setImage(spark.game.scene.atlas, 'ship.png');
-    this.scene.thrust.pause();
+    //this.setImage(spark.game.scene.atlas, 'ship.png');
+    //this.scene.thrust.pause();
   }
 
   // Shooting.
-  if (spark.input.keyHit(spark.input.KEY.SPACE) || spark.input.keyHit(spark.input.KEY.X)) {
+  if (spark.input.keyHit(spark.input.KEY.SPACE)) {
     var bullet = new spark.entity.Sprite();
 
     // Sprite rendering.
-    bullet.setImage(spark.game.scene.atlas, 'bullet.png');
+    bullet.setImage(spark.game.scene.player_laser);
 
     // Spawn in front of the player.
     bullet.m.p = this.localToWorld([0, -20]);
@@ -149,18 +189,18 @@ __MODULE__.playerControls = function() {
     bullet.addBehavior(game.demo.bullet);
 
     // Add a collision filter and callback.
-    bullet.addCollider('bullet', function(c) {
+    var collider = bullet.addCollider('bullet', function(c) {
       if (c.filter === 'asteroid') {
         this.dead = true;
       }
     });
 
     // Add a simple collider shape.
-    bullet.collider.addSegmentShape([0, -10], [0, 10]);
+    collider.addSegmentShape([0, -10], [0, 10]);
 
     // Add the bullet to the scene and play a sound.
     this.scene.spawn(bullet);
-    this.scene.laser.woof();
+    this.scene.laser_sound.woof();
   }
 
   // Move the player.

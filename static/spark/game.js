@@ -28,6 +28,14 @@ __MODULE__.draw = function() {
   // Erase the display.
   spark.view.clearRect(0, 0, spark.view.canvas.width, spark.view.canvas.height);
 
+  // Reset everything that can cause FPS issues.
+  spark.view.globalAlpha = 1;
+  spark.view.globalCompositeOperation = 'source-over';
+  spark.view.shadowBlur = 0;
+  spark.view.lineWidth = 1;
+  spark.view.fillStyle = '#000';
+  spark.view.strokeStyle = '#fff';
+
   // Draw all the layers.
   this.scene.draw();
 };

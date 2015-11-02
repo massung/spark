@@ -11,7 +11,7 @@ spark.module().defines({
     this.source = new Image();
 
     // Set the pivot.
-    this.pivot = pivot || [0.5, 0.5];
+    this.pivot = pivot || [0, 0];
 
     // Handle registeration when done loading.
     this.source.onload = (function() {
@@ -39,29 +39,34 @@ __MODULE__.Image.prototype.constructor = __MODULE__.Image;
 __MODULE__.Atlas.prototype.constructor = __MODULE__.Atlas;
 
 // Render the entire texture image to the canvas.
-__MODULE__.Image.prototype.blit = function(x, y, rx, ry, sx, sy) {
+__MODULE__.Image.prototype.blit = function(frame, pivot) {
   var w = this.source.width;
   var h = this.source.height;
-  var x = -w * this.pivot.x;
-  var y = -h * this.pivot.y;
+  var x = 0;
+  var y = 0;
+
+  // If a subframe was passed in, use that.
+  if (frame !== undefined) {
+    w = frame.w || frame.width;
+    h = frame.h || frame.width;
+    x = frame.x;
+    y = frame.y;
+
+    // The frame might override a default pivot.
+    if (pivot === undefined && frame.pivot !== undefined) {
+      pivot = pivot || [frame.pivot.x, frame.pivot.y];
+    }
+  }
+
+  // Offset the blit destination pos by the pivot.
+  var dx = -w * (pivot ? pivot.x : 0);
+  var dy = -h * (pivot ? pivot.y : 0);
 
   // Render it using the center of the image as its pivot.
-  spark.view.drawImage(this.source, 0, 0, w, h, x, y, w, h);
+  spark.view.drawImage(this.source, x, y, w, h, dx, dy, w, h);
 };
 
 // Blit a sprite from an atlas to the canvas.
-__MODULE__.Atlas.prototype.blit = function(frame) {
-  var f = this.frames[frame];
-
-  if (f === undefined) {
-    return;
-  }
-
-  var w = Math.floor(f.frame.w);
-  var h = Math.floor(f.frame.h);
-  var x = Math.round(-w * f.pivot.x);
-  var y = Math.round(-h * f.pivot.y);
-
-  // Render at <x, y>.
-  spark.view.drawImage(this.image.source, f.frame.x, f.frame.y, w, h, x, y, w, h);
+__MODULE__.Atlas.prototype.blit = function(frame, pivot) {
+  this.image.blit(this.frames[frame], pivot);
 };

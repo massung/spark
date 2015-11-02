@@ -4,8 +4,50 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.layer', 'spark.perf').defines({
+spark.module().requires('spark.layer', 'spark.manifest', 'spark.perf').defines({
   layers: [],
+
+  // Cached (private) projection data.
+  _top: undefined,
+  _left: undefined,
+  _bottom: undefined,
+  _right: undefined,
+});
+
+// Read-only top pixel coordinate.
+__MODULE__.__defineGetter__('top', function() {
+  return this._top || this.projection.vtransform(spark.vec.ZERO).y;
+});
+
+// Read-only left pixel coordinate.
+__MODULE__.__defineGetter__('left', function() {
+  return this._left || this.projection.vtransform(spark.vec.ZERO).x;
+});
+
+// Read-only bottom pixel coordinate.
+__MODULE__.__defineGetter__('bottom', function() {
+  return this._bottom || this.projection.vtransform([
+    spark.view.canvas.width,
+    spark.view.canvas.height
+  ]).y;
+});
+
+// Read-only right pixel coordinate.
+__MODULE__.__defineGetter__('right', function() {
+  return this._right || this.projection.vtransform([
+    spark.view.canvas.width,
+    spark.view.canvas.height
+  ]).x;
+});
+
+// Read-only width of the scene in pixels.
+__MODULE__.__defineGetter__('width', function() {
+  return this.right - this.left;
+});
+
+// Read-only height of the scene in pixels.
+__MODULE__.__defineGetter__('height', function() {
+  return this.bottom - this.top;
 });
 
 // Initialize a new scene.
@@ -14,13 +56,58 @@ __MODULE__.init = function() {
   // The sprite layer is omni-present.
   this.layers.push(new spark.layer.SpriteLayer());
 
-  // Create a camera.
+  // Create an entity to use as the camera.
   this.camera = new spark.entity.Pivot();
+
+  // Setup the default projection.
+  this.setProjection();
+};
+
+// Define the projection matrix.
+__MODULE__.setProjection = function(scale, origin) {
+  origin = origin ? origin.toLowerCase() : 'topleft';
+
+  // Create a new projection.
+  var m = new spark.vec.Mat();
+
+  // Set the scale (must be uniform).
+  m.s = scale ? [scale, scale] : [1.0, 1.0];
+
+  // Discover the offset to 0,0 (the origin).
+  if (origin === 'topleft' || origin === 'top-left') {
+    m.p = [0, 0];
+  } else if (origin === 'topright' || origin === 'top-right') {
+    m.p = [spark.view.canvas.width, 0];
+  } else if (origin === 'bottomleft' || origin === 'bottom-left') {
+    m.p = [0, spark.view.canvas.height];
+  } else if (origin === 'bottomright' || origin === 'bottom-right') {
+    m.p = [spark.view.canvas.width, spark.view.canvas.height];
+  } else if (origin === 'middle' || origin === 'center') {
+    m.p = [spark.view.canvas.width / 2, spark.view.canvas.height / 2];
+  } else {
+    throw 'Invalid origin for projection. Use "topLeft", "middle", "bottomRight", etc.';
+  }
+
+  // The projection is the inverse.
+  this.projection = m.inverse;
 };
 
 // Called once per frame to advance each layer.
 __MODULE__.update = function() {
-  this.space = new spark.collision.Quadtree(0, 0, spark.view.canvas.width, spark.view.canvas.height, 0);
+  var topLeft = this.projection.vtransform([0, 0]);
+  var bottomRight = this.projection.vtransform([
+    spark.view.canvas.width,
+    spark.view.canvas.height,
+  ]);
+
+  // Update the cached projection data.
+  _top = topLeft.y;
+  _left = topLeft.x;
+  _bottom = bottomRight.y;
+  _right = bottomRight.x;
+
+  // Create a new spacial hash around the scene.
+  this.space = new spark.collision.Quadtree(_left, _top, this.width, this.height, 0);
 
   // Update all the layers and allow each layer to push onto the spacial hash.
   this.layers.forEach((function(layer) {
@@ -38,22 +125,30 @@ __MODULE__.update = function() {
 __MODULE__.draw = function() {
   spark.view.save();
 
-  // Transform by the inverse of the camera.
-  this.camera.setTransform();
+  // Setup the projection matrix.
+  spark.perf.drawTime += spark.perf.sample((function() {
+    spark.view.setTransform.apply(spark.view, this.projection.inverse.transform);
 
-  // Render each layer relative to the camera.
-  this.layers.forEach(function(layer) {
-    spark.perf.drawTime += spark.perf.sample(layer.draw.bind(layer));
-  });
+    // Transform by the inverse of the camera.
+    this.camera.applyInverseTransform();
+
+    // Turn off anti-aliasing of images (better performance?).
+    //spark.view.imageSmoothingEnabled = false;
+
+    // Render each layer relative to the camera.
+    this.layers.forEach(function(layer) {
+      layer.draw();
+    });
+  }).bind(this));
+
+  // Debugging of collision shapes and spacial hash.
+  this.space.draw();
 
   // Put everything back.
   spark.view.restore();
 
   // Render the GUI for the scene.
   this.gui();
-
-  // Debugging of collision shapes and spacial hash.
-  //this.space.draw();
 };
 
 // Render the GUI for the scene. Default just renders framerate.
