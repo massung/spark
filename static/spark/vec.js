@@ -206,6 +206,5 @@ __MODULE__.vlerp = function(p, q, k) {
 
 // Transform a vector by this.
 __MODULE__.Mat.prototype.vtransform = function(v) {
-  //return spark.vec.vadd(spark.vec.vrotate(spark.vec.vmult(v, this.s), this.r), this.p);
-  return spark.vec.vmult(spark.vec.vadd(spark.vec.vrotate(v, this.r), this.p), this.s);
+  return spark.vec.vadd(spark.vec.vrotate(spark.vec.vmult(v, this.s), this.r), this.p);
 };

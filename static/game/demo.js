@@ -182,7 +182,7 @@ __MODULE__.playerControls = function() {
     bullet.setImage(spark.game.scene.player_laser);
 
     // Spawn in front of the player.
-    bullet.m.p = this.localToWorld([0, -20]);
+    bullet.m.p = this.localToWorld([0, -30]);
     bullet.m.r = this.m.r;
 
     // Add some callback behaviors.

@@ -6,48 +6,36 @@
 
 spark.module().requires('spark.layer', 'spark.manifest', 'spark.perf').defines({
   layers: [],
-
-  // Cached (private) projection data.
-  _top: undefined,
-  _left: undefined,
-  _bottom: undefined,
-  _right: undefined,
 });
 
 // Read-only top pixel coordinate.
 __MODULE__.__defineGetter__('top', function() {
-  return this._top || this.projection.vtransform(spark.vec.ZERO).y;
+  return (0 + this.projection.p.y) * this.projection.s.y;
 });
 
 // Read-only left pixel coordinate.
 __MODULE__.__defineGetter__('left', function() {
-  return this._left || this.projection.vtransform(spark.vec.ZERO).x;
+  return (0 + this.projection.p.x) * this.projection.s.x;
 });
 
 // Read-only bottom pixel coordinate.
 __MODULE__.__defineGetter__('bottom', function() {
-  return this._bottom || this.projection.vtransform([
-    spark.view.canvas.width,
-    spark.view.canvas.height
-  ]).y;
+  return (0 - this.projection.p.y) * this.projection.s.y;
 });
 
 // Read-only right pixel coordinate.
 __MODULE__.__defineGetter__('right', function() {
-  return this._right || this.projection.vtransform([
-    spark.view.canvas.width,
-    spark.view.canvas.height
-  ]).x;
+  return (0 - this.projection.p.x) * this.projection.s.x;
 });
 
 // Read-only width of the scene in pixels.
 __MODULE__.__defineGetter__('width', function() {
-  return this.right - this.left;
+  return spark.view.canvas.width * this.projection.s.x;
 });
 
 // Read-only height of the scene in pixels.
 __MODULE__.__defineGetter__('height', function() {
-  return this.bottom - this.top;
+  return spark.view.canvas.height * this.projection.s.y;
 });
 
 // Initialize a new scene.
@@ -94,20 +82,9 @@ __MODULE__.setProjection = function(scale, origin) {
 
 // Called once per frame to advance each layer.
 __MODULE__.update = function() {
-  var topLeft = this.projection.vtransform([0, 0]);
-  var bottomRight = this.projection.vtransform([
-    spark.view.canvas.width,
-    spark.view.canvas.height,
-  ]);
-
-  // Update the cached projection data.
-  _top = topLeft.y;
-  _left = topLeft.x;
-  _bottom = bottomRight.y;
-  _right = bottomRight.x;
 
   // Create a new spacial hash around the scene.
-  this.space = new spark.collision.Quadtree(_left, _top, this.width, this.height, 0);
+  this.space = new spark.collision.Quadtree(this.left, this.top, this.width, this.height, 0);
 
   // Update all the layers and allow each layer to push onto the spacial hash.
   this.layers.forEach((function(layer) {
