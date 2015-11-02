@@ -6,16 +6,40 @@
 
 spark.module().defines({
   Mat: function(x, y, angle, sx, sy) {
-    var t = (angle || 0.0) * Math.PI / 180.0;
-
-    // Create a default position.
     this.p = [x || 0.0, y || 0.0];
 
     // Set the rotation vector.
-    this.r = [Math.cos(t), Math.sin(t)];
+    if (angle !== undefined) {
+      this.r = [
+        Math.cos(angle * Math.PI / 180.0),
+        Math.sin(angle * Math.PI / 180.0)
+      ];
+    } else {
+      this.r = spark.vec.RIGHT;
+    }
 
     // Set the scale vector.
     this.s = [sx || 1.0, sy || sx || 1.0];
+
+    // Returns a copy of this matrix that is its inverse.
+    Object.defineProperty(this, 'inverse', {
+      get: function() {
+        var m = new spark.vec.Mat(-this.p.x, -this.p.y, undefined, 1 / this.s.x, 1 / this.s.y);
+
+        // Transpose the rotation.
+        m.r.x = this.r.x;
+        m.r.y = -this.r.y;
+
+        return m;
+      }
+    });
+
+    // Returns the transform as a 3x3 matrix for a 2d context.
+    Object.defineProperty(this, 'transform', {
+      get: function() {
+        return [this.r.x * this.s.x, -this.r.y * this.s.y, this.r.y * this.s.x, this.r.x * this.s.y, this.p.x, this.p.y];
+      }
+    });
   },
 });
 
@@ -38,16 +62,6 @@ Array.prototype.__defineSetter__('x', function(x) {
 Array.prototype.__defineSetter__('y', function(y) {
   return this[1] = y;
 });
-
-// Transform a vector by this.
-__MODULE__.Mat.prototype.transform = function(v) {
-  return spark.vec.vadd(spark.vec.vrotate(spark.vec.vmult(v, this.s), this.r), this.p);
-};
-
-// Transform a vector by the inverse of this matrix.
-__MODULE__.Mat.prototype.transformInv = function(v) {
-  return spark.vec.vmult(spark.vec.vunrotate(spark.vec.vsub(v, this.p), this.r), this.s);
-};
 
 // <0,0> zero vector.
 __MODULE__.__defineGetter__('ZERO', function() {
@@ -91,7 +105,7 @@ __MODULE__.vneg = function(v) {
 
 // Invert a vector.
 __MODULE__.vinv = function(v) {
-  return [1/v.x, 1/v.y];
+  return [1 / v.x, 1 / v.y];
 };
 
 // Dot product of two vectors.
@@ -132,6 +146,11 @@ __MODULE__.vscale = function(v, s) {
 // Multiply two vectors.
 __MODULE__.vmult = function(a, b) {
   return [a.x * b.x, a.y * b.y];
+};
+
+// Divide two vectors.
+__MODULE__.vimult = function(a, b) {
+  return [a.x / b.x, a.y / b.y];
 };
 
 // Normalize a vector.
@@ -183,4 +202,9 @@ __MODULE__.vunrotate = function(v, r) {
 // Linearly interpolate along p->q by k [0,1].
 __MODULE__.vlerp = function(p, q, k) {
   return spark.vec.vadd(spark.vec.vscale(p, k - 1.0), spark.vec.vscale(q, k));
+};
+
+// Transform a vector by this.
+__MODULE__.Mat.prototype.vtransform = function(v) {
+  return spark.vec.vadd(spark.vec.vrotate(spark.vec.vmult(v, this.s), this.r), this.p);
 };

@@ -69,9 +69,9 @@ __MODULE__.trace = function(frame) {
   var y = h / 2;
 
   // Determine the vertical slice of time spent in update.
-  var updateY = Math.round(this.updateTime * y / (1000 / 60));
-  var collisionY = Math.round(this.collisionTime * y / (1000 / 60));
-  var drawY = Math.round(this.drawTime * y / (1000 / 60));
+  var updateY = Math.round(this.updateTime * 60 * y / 1000);
+  var collisionY = Math.round(this.collisionTime * 60 * y / 1000);
+  var drawY = Math.round(this.drawTime * 60 * y / 1000);
 
   // Clear an around around the draw section.
   this.view.clearRect(x, 0, 10, h);
