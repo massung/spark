@@ -212,8 +212,8 @@
 
       // Resize the canvas.
       if (this.canvas !== undefined) {
-        this.canvas.width = width || this.canvas.width || 640;
-        this.canvas.height = height || this.canvas.height || 480;
+        this.canvas.width = width || spark.platform.width || this.canvas.width;
+        this.canvas.height = height || spark.platform.height || this.canvas.height;
 
         // Hide the mouse over the canvas.
         this.canvas.style.cursor = 'none';

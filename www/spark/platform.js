@@ -18,10 +18,10 @@ __MODULE__.__defineGetter__('mobile', function() {
 
 // Return the screen width in pixels.
 __MODULE__.__defineGetter__('width', function() {
-  return 640;
+  return this.mobile ? screen.width : window.innerWidth;
 });
 
 // Return the screen height in pixels.
 __MODULE__.__defineGetter__('height', function() {
-  return 480;
+  return this.mobile ? screen.height : window.innerHeight;
 });
