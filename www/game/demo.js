@@ -13,7 +13,7 @@ __MODULE__.init = function () {
   spark.game.run('game/assets/project.json', function(scene) {
 
     // Change the projection so the origin is in the middle.
-    scene.setProjection(0.5, 'middle');
+    scene.setProjection('middle', 0.5);
 
     // Create the player.
     game.demo.createPlayer();

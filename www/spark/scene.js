@@ -52,14 +52,14 @@ __MODULE__.init = function() {
 };
 
 // Define the projection matrix.
-__MODULE__.setProjection = function(scale, origin) {
+__MODULE__.setProjection = function(origin, sx, sy) {
   origin = origin ? origin.toLowerCase() : 'topleft';
 
   // Create a new projection.
   var m = new spark.vec.Mat();
 
   // Set the scale (must be uniform).
-  m.s = scale ? [scale, scale] : [1.0, 1.0];
+  m.s = [sx || 1.0, sy || sx || 1.0];
 
   // Discover the offset to 0,0 (the origin).
   if (origin === 'topleft' || origin === 'top-left') {
