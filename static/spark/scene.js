@@ -8,24 +8,24 @@ spark.module().requires('spark.layer', 'spark.perf', 'spark.project').defines({
   layers: [],
 });
 
-// Read-only top pixel coordinate.
+// Read-only top pixel coordinate in projection space.
 __MODULE__.__defineGetter__('top', function() {
-  return (0 + this.projection.p.y) * this.projection.s.y;
+  return this.projection.p.y * this.projection.s.y;
 });
 
-// Read-only left pixel coordinate.
+// Read-only left pixel coordinate in projection space.
 __MODULE__.__defineGetter__('left', function() {
-  return (0 + this.projection.p.x) * this.projection.s.x;
+  return this.projection.p.x * this.projection.s.x;
 });
 
-// Read-only bottom pixel coordinate.
+// Read-only bottom pixel coordinate in projection space.
 __MODULE__.__defineGetter__('bottom', function() {
-  return (0 - this.projection.p.y) * this.projection.s.y;
+  return -this.projection.p.y * this.projection.s.y;
 });
 
-// Read-only right pixel coordinate.
+// Read-only right pixel coordinate in projection space.
 __MODULE__.__defineGetter__('right', function() {
-  return (0 - this.projection.p.x) * this.projection.s.x;
+  return -this.projection.p.x * this.projection.s.x;
 });
 
 // Read-only width of the scene in pixels.
@@ -82,9 +82,19 @@ __MODULE__.setProjection = function(scale, origin) {
 
 // Called once per frame to advance each layer.
 __MODULE__.update = function() {
+  var p1 = this.camera.m.vtransform([this.left, this.top]);
+  var p2 = this.camera.m.vtransform([this.right, this.top]);
+  var p3 = this.camera.m.vtransform([this.left, this.bottom]);
+  var p4 = this.camera.m.vtransform([this.right, this.bottom]);
 
-  // Create a new spacial hash around the scene.
-  this.space = new spark.collision.Quadtree(this.left, this.top, this.width, this.height, 0);
+  // Find the min/max extents of the visible area.
+  var x1 = Math.min(p1.x, p2.x, p3.x, p4.x);
+  var y1 = Math.min(p1.y, p2.y, p3.y, p4.y);
+  var x2 = Math.max(p1.x, p2.x, p3.x, p4.x);
+  var y2 = Math.max(p1.y, p2.y, p3.y, p4.y);
+
+  // Create a new spacial hash for the frame.
+  this.space = new spark.collision.Quadtree(x1, y1, x2 - x1, y2 - y1, 0);
 
   // Update all the layers and allow each layer to push onto the spacial hash.
   this.layers.forEach((function(layer) {
@@ -118,9 +128,13 @@ __MODULE__.draw = function() {
     });
   }).bind(this));
 
-  // Debugging of collision shapes and spacial hash.
+  // Debugging of spacial hash and scene box.
   if (spark.DEBUG) {
     this.space.draw();
+
+    // Draw the scene box.
+    spark.view.stokeStyle = '#fff';
+    spark.view.strokeRect(this.left, this.top, this.width, this.height);
   }
 
   // Put everything back.

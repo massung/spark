@@ -68,10 +68,10 @@ __MODULE__.Pivot.prototype.rotate = function(angle) {
   this.m.r = spark.vec.vrotate(this.m.r, [Math.cos(r), Math.sin(r)]);
 };
 
-// Scale a pivot entity.
+// Adjust the scale of a pivot entity.
 __MODULE__.Pivot.prototype.scale = function(x, y) {
-  this.m.s.x *= x || 1.0;
-  this.m.s.y *= y || x || 1.0;
+  this.m.s.x += x || 1.0;
+  this.m.s.y += y || x || 1.0;
 };
 
 // Multiply the canvas view transform.

@@ -130,6 +130,12 @@ __MODULE__.playerControls = function() {
   if (spark.input.keyDown(spark.input.KEY.LEFT)) this.rotate(-180 * spark.game.step);
   if (spark.input.keyDown(spark.input.KEY.RIGHT)) this.rotate(180 * spark.game.step);
 
+  // Rotate/zoom the camera for fun.
+  if (spark.input.keyDown(spark.input.KEY.A)) this.scene.camera.rotate(-180 * spark.game.step);
+  if (spark.input.keyDown(spark.input.KEY.D)) this.scene.camera.rotate(180 * spark.game.step);
+  if (spark.input.keyDown(spark.input.KEY.W)) this.scene.camera.scale(2.0 * spark.game.step);
+  if (spark.input.keyDown(spark.input.KEY.S)) this.scene.camera.scale(-2.0 * spark.game.step);
+
   // Thrusting.
   if (spark.input.keyDown(spark.input.KEY.UP)) {
     this.thrust.x += 800.0 * spark.game.step * -this.m.r.y;
