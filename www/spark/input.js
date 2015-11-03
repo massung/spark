@@ -4,7 +4,7 @@
  * All rights reserved.
  */
 
-spark.module().defines({
+spark.module().requires('spark.platform').defines({
   keys: [],
   buttons: [],
   x: 0,
