@@ -7,7 +7,11 @@
 spark.module().requires('spark.game');
 
 __MODULE__.init = function () {
-  spark.main('canvas', 640, 480);
+  if (cordova.platformId === "android") {
+    spark.main('canvas', screen.width, screen.height);
+  } else {
+    spark.main('canvas', 640, 480);
+  }
 
   // Start the game.
   spark.game.run('game/assets/project.json', function(scene) {

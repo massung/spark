@@ -7,6 +7,21 @@
 // Initialize the Spark framework.
 (function(window) {
 
+  function stripPlatformBasePath(pathname) {
+    var platformName = cordova.platformId
+
+    var sliceIndex = undefined;
+    if (platformName === "android") {
+      sliceIndex = 3;
+    } else if (platformName === "browser") {
+      sliceIndex = 1;
+    } else {
+      throw new Error("Unknown platform");
+    }
+
+    return pathname.split('/').slice(sliceIndex);
+  }
+
   // Returns the path to the script file being executed.
   window.__defineGetter__('__PATH__', function() {
     var parser = document.createElement('a');
@@ -15,7 +30,7 @@
     parser.href = document.currentScript.src;
 
     // Return the path.
-    return parser.pathname.split('/').slice(1);
+    return stripPlatformBasePath(parser.pathname);
   });
 
   // The last element in the __PATH__ is the actual filename.
