@@ -105,6 +105,11 @@ __MODULE__.run = function(projectFile, onload) {
   // Load the project file, and call onload once loaded.
   this.project = spark.project.load(projectFile, (function() {
 
+    // Initialize all input devices.
+    spark.input.enableMouse();
+    spark.input.enableKeyboard();
+    spark.input.enableTouch();
+
     // TODO: Additional setup from project file?
 
     // Allow the game to setup the scene.

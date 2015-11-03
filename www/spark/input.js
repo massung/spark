@@ -4,11 +4,14 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.platform').defines({
+spark.module().defines({
   keys: [],
   buttons: [],
+  touch: false,
   x: 0,
   y: 0,
+  relativeX: 0,
+  relativeY: 0,
 
   // Button constants.
   BUTTON: {
@@ -111,11 +114,6 @@ spark.module().requires('spark.platform').defines({
 
 // Attach this input module to a canvas control.
 __MODULE__.init = function() {
-  window.addEventListener('keydown', this.onKeyDown.bind(this), false);
-  window.addEventListener('keyup', this.onKeyUp.bind(this), false);
-  window.addEventListener('mousedown', this.onMouseDown.bind(this), false);
-  window.addEventListener('mouseup', this.onMouseUp.bind(this), false);
-  window.addEventListener('mousemove', this.onMouseMove.bind(this), false);
 
   // Initialize the array of keys.
   for(var i = 0;i < 256;i++) {
@@ -128,6 +126,26 @@ __MODULE__.init = function() {
   }
 };
 
+// Add mouse support.
+__MODULE__.enableMouse = function() {
+  window.addEventListener('mousedown', this.onMouseDown.bind(this), false);
+  window.addEventListener('mouseup', this.onMouseUp.bind(this), false);
+  window.addEventListener('mousemove', this.onMouseMove.bind(this), false);
+};
+
+// Add keyboard support.
+__MODULE__.enableKeyboard = function() {
+  window.addEventListener('keydown', this.onKeyDown.bind(this), false);
+  window.addEventListener('keyup', this.onKeyUp.bind(this), false);
+};
+
+// Add touch support on a mobile device.
+__MODULE__.enableTouch = function() {
+  spark.view.canvas.addEventListener('touchstart', this.onTouchStart.bind(this), false);
+  spark.view.canvas.addEventListener('touchend', this.onTouchEnd.bind(this), false);
+  spark.view.canvas.addEventListener('touchmove', this.onTouchMove.bind(this), false);
+};
+
 // Flush the key states every frame.
 __MODULE__.flush = function() {
   var flushState = function(state) {
@@ -136,6 +154,10 @@ __MODULE__.flush = function() {
 
   this.keys.forEach(flushState);
   this.buttons.forEach(flushState);
+
+  // Clear all relative motion.
+  this.relativeX = 0;
+  this.relativeY = 0;
 };
 
 // Handle keydown events.
@@ -179,10 +201,58 @@ __MODULE__.onMouseUp = function(event) {
 
 // Handle mouse movement events.
 __MODULE__.onMouseMove = function(event) {
-  if (window.view !== undefined) {
-    this.x = event.clientX - view.canvas.offsetLeft;
-    this.y = event.clientY - view.canvas.offsetTop;
+  var x = event.clientX - spark.view.canvas.offsetLeft;
+  var y = event.clientY - spark.view.canvas.offsetTop;
+
+  // Update relative motion.
+  this.relativeX += x - this.x;
+  this.relativeY += y - this.y;
+
+  // Update position.
+  this.x = x;
+  this.y = y;
+};
+
+// Handle touch down.
+__MODULE__.onTouchStart = function(event) {
+  if (event.targetTouches.length == 1) {
+    this.touch = true;
+
+    this.x = event.targetTouches[0].pageX - spark.view.canvas.offsetLeft;
+    this.y = event.targetTouches[0].pageY - spark.view.canvas.offsetTop;
+
+    // Reset relative motion.
+    this.relativeX = 0;
+    this.relativeY = 0;
   }
+
+  // Don't send mouse events.
+  event.preventDefault();
+};
+
+// Handle touch up.
+__MODULE__.onTouchEnd = function(event) {
+  this.touches[i].down = false;
+
+  // Don't send mouse events.
+  event.preventDefault();
+};
+
+// Handle touch motion.
+__MODULE__.onTouchMove = function(event) {
+  if (event.targetTouches.length == 1) {
+    var x = event.targetTouches[0].pageX - spark.view.canvas.offsetLeft;
+    var y = event.targetTouches[0].pageY - spark.view.canvas.offsetTop;
+
+    // Update the touch data.
+    this.touches[i].relativeX += x - this.touches[i].x;
+    this.touches[i].relativeY += x - this.touches[i].y;
+    this.touches[i].x = x;
+    this.touches[i].y = y;
+  }
+
+  // Don't send mouse events.
+  event.preventDefault();
 };
 
 // Returns how many times a key has been hit this frame.

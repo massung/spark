@@ -4,7 +4,7 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.texture', 'spark.audio');
+spark.module().requires('spark.platform', 'spark.texture', 'spark.audio');
 
 // Load a manifest XML file into an object.
 __MODULE__.load = function(src, onload) {
