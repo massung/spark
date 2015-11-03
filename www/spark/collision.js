@@ -128,7 +128,31 @@ __MODULE__.Quadtree.prototype.push = function(shape) {
   return true;
 };
 
-// Collect all collisions.
+// Find all collision objects at a given a shape in world space.
+__MODULE__.Quadtree.prototype.collect = function(shape) {
+  if (this.depth > 0 && shape.within(this.x1, this.y1, this.x2, this.y2) === false) {
+    return [];
+  }
+
+  // All overlapping colliders.
+  var m = [];
+
+  // Run over all the shapes in this tree and find overlaps.
+  this.shapes.forEach(function(s) {
+    if (m.indexOf(s.collider) < 0 && s.shapeQuery(shape)) {
+      m.push(s.collider);
+    }
+  });
+
+  // Run over all the sub-trees and recurse.
+  this.nodes.forEach(function(n) {
+    m.concat(n.collect(shape));
+  });
+
+  return m;
+};
+
+// Collect and process all collisions.
 __MODULE__.Quadtree.prototype.processCollisions = function() {
   var contacts = [];
   var nodes = [this];

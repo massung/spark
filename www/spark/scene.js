@@ -94,18 +94,21 @@ __MODULE__.update = function() {
   var y2 = Math.max(p1.y, p2.y, p3.y, p4.y);
 
   // Create a new spacial hash for the frame.
-  this.space = new spark.collision.Quadtree(x1, y1, x2 - x1, y2 - y1, 0);
+  var space = new spark.collision.Quadtree(x1, y1, x2 - x1, y2 - y1, 0);
 
   // Update all the layers and allow each layer to push onto the spacial hash.
   this.layers.forEach((function(layer) {
     spark.perf.updateTime += spark.perf.sample(layer.update.bind(layer));
-    spark.perf.collisionTime += spark.perf.sample((function() {
-      layer.updateCollisions(this.space);
-    }).bind(this));
+    spark.perf.collisionTime += spark.perf.sample(function() {
+      layer.updateCollisions(space);
+    });
   }).bind(this));
 
   // Process collisions between layers.
-  spark.perf.collisionTime += spark.perf.sample(this.space.processCollisions.bind(this.space));
+  spark.perf.collisionTime += spark.perf.sample(space.processCollisions.bind(space));
+
+  // Save the space for the draw and next frame's update (object picking).
+  this.space = space;
 };
 
 // Called once per frame to draw each layer.
@@ -166,4 +169,28 @@ __MODULE__.spawn = function(sprite) {
   if (sprite.init !== undefined) {
     sprite.init();
   }
+};
+
+// Perform a pick at a given point, find all sprites at that point.
+__MODULE__.pick = function(x, y, radius) {
+  if (this.space === undefined) {
+    return [];
+  }
+
+  // Get the world-space point from screen-space.
+  var c = this.camera.m.vtransform([
+    x * this.projection.s.x,
+    y * this.projection.s.y,
+  ]);
+
+  // Create a circle shape to collide against.
+  var shape = new spark.collision.Circle(null, c, radius);
+
+  // Update the shape cache for querying.
+  shape.updateShapeCache(spark.vec.IDENTITY);
+
+  // Return the owner of all the colliders picked.
+  return this.space.collect(shape).map(function(collider) {
+    return collider.owner;
+  });
 };

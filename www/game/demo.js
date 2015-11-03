@@ -136,6 +136,13 @@ __MODULE__.playerControls = function() {
   if (spark.input.keyDown(spark.input.KEY.W)) this.scene.camera.scale(2.0 * spark.game.step);
   if (spark.input.keyDown(spark.input.KEY.S)) this.scene.camera.scale(-2.0 * spark.game.step);
 
+  // Try and pick asteroids with the mouse.
+  if (spark.input.mouseDown()) {
+    this.scene.pick(spark.input.x, spark.input.y, 10).forEach(function(x) {
+      console.log(x);
+    });
+  }
+
   // Thrusting.
   if (spark.input.keyDown(spark.input.KEY.UP)) {
     this.thrust.x += 800.0 * spark.game.step * -this.m.r.y;
