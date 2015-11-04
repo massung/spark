@@ -94,6 +94,11 @@ __MODULE__.Pivot.prototype.worldToLocal = function(p) {
   return this.m.invserse.vtransform(p);
 };
 
+// Convert a local-space angle (in degrees) to a world-space angle.
+__MODULE__.Pivot.prototype.localToWorldAngle = function(angle) {
+  return angle + Math.atan2(this.m.r.y, this.m.r.x) * 180 / Math.PI;
+};
+
 // The image is any texture class, and frame is optional.
 __MODULE__.Sprite.prototype.setImage = function(image, frame) {
   this.image = image;
@@ -122,16 +127,16 @@ __MODULE__.Sprite.prototype.addCollider = function(filter, oncollision) {
 
 // Called once per frame to update the world space transforms on colliders.
 __MODULE__.Sprite.prototype.updateShapeColliders = function() {
-  this.colliders.forEach((function(collider) {
-    collider.updateShapes(this);
-  }).bind(this.m));
+  for(var i = 0;i < this.colliders.length;i++) {
+    this.colliders[i].updateShapes(this.m);
+  }
 };
 
 // Called once per frame to advance the gameplay simulation.
 __MODULE__.Sprite.prototype.update = function() {
-  this.behaviors.forEach((function(behavior) {
-    behavior.call(this);
-  }).bind(this));
+  for(var i = 0;i < this.behaviors.length;i++) {
+    this.behaviors[i].call(this);
+  }
 
   // Update all the collision shapes.
   this.updateShapeColliders();
@@ -147,6 +152,7 @@ __MODULE__.Sprite.prototype.draw = function() {
   spark.view.save();
   {
     spark.view.globalAlpha = Math.min(1.0, Math.max(this.alpha, 0.0));
+    spark.view.globalCompositeOperation = this.compositeOperation || 'souerce-over';
 
     // Set the transform and render.
     this.applyTransform();

@@ -146,9 +146,10 @@ __MODULE__.playerControls = function() {
     this.thrust.y -= 800.0 * spark.game.step * this.m.r.x;
 
     // Change the sprite image to one that shows the ship thrusting.
-    //this.setImage(spark.game.scene.atlas, 'ship_thrust.png');
-
-    //this.scene.thrust.play();
+    spark.game.project.assets.thrust.emit(
+      this.localToWorld([0, 30]),
+      this.localToWorldAngle(-90.0),
+      1);
   } else {
 
     // Change back to the idle ship.

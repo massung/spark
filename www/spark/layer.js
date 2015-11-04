@@ -4,7 +4,7 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.entity').defines({
+spark.module().requires('spark.particle').defines({
 
   // A layer that has sprites on it.
   SpriteLayer: function() {

@@ -14,8 +14,10 @@
     "player_thrust": { "class": "spark.texture.Image", "source": "thrust.png" },
     "player_laser":  { "class": "spark.texture.Image", "source": "laser.png" },
     "player_shield": { "class": "spark.texture.Image", "source": "shield.png" },
+    "particle":      { "class": "spark.texture.Image", "source": "particle.png" },
     "pickup_sound":  { "class": "spark.audio.Clip", "source": "pickup.ogg" },
     "laser_sound":   { "class": "spark.audio.Clip", "source": "laser.ogg" },
-    "rumble_sound":  { "class": "spark.audio.Clip", "source": "rumble.ogg" }
+    "rumble_sound":  { "class": "spark.audio.Clip", "source": "rumble.ogg" },
+    "thrust":        { "class": "spark.particle.Emitter", "source": "thrust_emitter.json" }
   }
 }
