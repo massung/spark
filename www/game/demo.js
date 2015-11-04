@@ -138,9 +138,7 @@ __MODULE__.playerControls = function() {
 
   // Try and pick asteroids with the mouse.
   if (spark.input.mouseDown()) {
-    this.scene.pick(spark.input.x, spark.input.y, 10).forEach(function(x) {
-      console.log(x);
-    });
+    console.log(this.scene.pick(spark.input.x, spark.input.y, 10));
   }
 
   // Thrusting.
