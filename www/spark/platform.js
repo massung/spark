@@ -8,12 +8,12 @@ spark.module();
 
 // The name of the device running on.
 __MODULE__.__defineGetter__('device', function() {
-  return 'browser';
+  return window['cordova'] ? cordova.platformId : 'browser';
 });
 
 // True if this is a mobile device.
 __MODULE__.__defineGetter__('mobile', function() {
-  return false;
+  return this.device !== 'browser';
 });
 
 // Return the screen width in pixels.

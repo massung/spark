@@ -7,7 +7,11 @@
 spark.module().requires('spark.game');
 
 __MODULE__.init = function () {
-  spark.main('canvas', 640, 480);
+  if (spark.platform.mobile) {
+    spark.main('canvas', spark.platform.width, spark.platform.height);
+  } else {
+    spark.main('canvas', 640, 480);
+  }
 
   // Start the game.
   spark.game.run('game/assets/project.json', function(scene) {

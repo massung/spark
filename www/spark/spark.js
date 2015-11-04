@@ -10,12 +10,22 @@
   // Returns the path to the script file being executed.
   window.__defineGetter__('__PATH__', function() {
     var parser = document.createElement('a');
+    var sliceIndex = 1;
 
     // Set the HREF of the anchor, which will parse it.
     parser.href = document.currentScript.src;
 
+    // Remove the platform base path.
+    if (window['cordova']) {
+      if (cordova.platformId === 'android') {
+        sliceIndex = 3;
+      } else if (cordova.platformId !== 'browser') {
+        throw 'Unsupported platform!';
+      }
+    }
+
     // Return the path.
-    return parser.pathname.split('/').slice(1);
+    return parser.pathname.split('/').slice(sliceIndex);
   });
 
   // The last element in the __PATH__ is the actual filename.
