@@ -125,10 +125,10 @@ __MODULE__.draw = function() {
     // Turn off anti-aliasing of images (better performance?).
     //spark.view.imageSmoothingEnabled = false;
 
-    // Render each layer relative to the camera.
-    this.layers.forEach(function(layer) {
-      layer.draw();
-    });
+    // Render each layer in reverse order (sprites last).
+    for(var i = this.layers.length - 1;i >= 0;i--) {
+      this.layers[i].draw();
+    }
   }).bind(this));
 
   // Debugging of spacial hash and scene box.

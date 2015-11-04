@@ -49,20 +49,22 @@ __MODULE__.SpriteLayer.prototype.update = function() {
 
 // Add sprites to the collision spacial hash.
 __MODULE__.SpriteLayer.prototype.updateCollisions = function(space) {
-  this.forEach(function(sprite) {
+  for(var i = 0;i < this.length;i++) {
+    var sprite = this[i];
+
     if (sprite.visible === true && sprite.colliders.length > 0) {
       sprite.colliders.forEach(function(collider) {
         collider.addToQuadtree(space);
       });
     }
-  });
+  }
 };
 
 // Render all the sprites onto the view.
 __MODULE__.SpriteLayer.prototype.draw = function() {
-  this.forEach(function(sprite) {
-    sprite.draw();
-  });
+  for(var i = 0;i < this.length;i++) {
+    this[i].draw();
+  }
 };
 
 __MODULE__.TilemapLayer.prototype.update = function() {

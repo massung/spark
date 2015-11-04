@@ -7,7 +7,7 @@
 spark.module().defines({
   keys: [],
   buttons: [],
-  touch: false,
+  touches: [],
   x: 0,
   y: 0,
   relativeX: 0,
@@ -124,6 +124,21 @@ __MODULE__.init = function() {
   for(var i = 0;i < 16;i++) {
     this.buttons[i] = { down: false, hits: 0 };
   }
+
+  // Initialize the array of touches.
+  for(var i = 0;i < 10;i++) {
+    this.touches[i] = { /* TODO */ };
+  }
+};
+
+// Hide the cursor.
+__MODULE__.hideCursor = function() {
+  spark.view.canvas.style.cursor = 'none';
+};
+
+// Show the cursor with an optional sprite image.
+__MODULE__.showCursor = function(image) {
+  spark.view.canvas.style.cursor = image || 'pointer';
 };
 
 // Add mouse support.
@@ -215,7 +230,7 @@ __MODULE__.onMouseMove = function(event) {
 
 // Handle touch down.
 __MODULE__.onTouchStart = function(event) {
-  if (event.targetTouches.length == 1) {
+  if (event.targetTouches.length === 1) {
     this.touch = true;
 
     this.x = event.targetTouches[0].pageX - spark.view.canvas.offsetLeft;
@@ -232,7 +247,9 @@ __MODULE__.onTouchStart = function(event) {
 
 // Handle touch up.
 __MODULE__.onTouchEnd = function(event) {
-  this.touches[i].down = false;
+  if (event.targetTouches.length === 1) {
+    this.touches[0].down = false;
+  }
 
   // Don't send mouse events.
   event.preventDefault();
@@ -240,15 +257,15 @@ __MODULE__.onTouchEnd = function(event) {
 
 // Handle touch motion.
 __MODULE__.onTouchMove = function(event) {
-  if (event.targetTouches.length == 1) {
+  if (event.targetTouches.length === 1) {
     var x = event.targetTouches[0].pageX - spark.view.canvas.offsetLeft;
     var y = event.targetTouches[0].pageY - spark.view.canvas.offsetTop;
 
     // Update the touch data.
-    this.touches[i].relativeX += x - this.touches[i].x;
-    this.touches[i].relativeY += x - this.touches[i].y;
-    this.touches[i].x = x;
-    this.touches[i].y = y;
+    this.touches[0].relativeX += x - this.touches[0].x;
+    this.touches[0].relativeY += x - this.touches[0].y;
+    this.touches[0].x = x;
+    this.touches[0].y = y;
   }
 
   // Don't send mouse events.

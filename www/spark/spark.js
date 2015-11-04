@@ -198,7 +198,7 @@
 
         // JSON errors can be difficult to differentiate.
         catch(e) {
-          throw 'Syntax error parsing JSON (' + src + '): "' + e+ '"';
+          throw 'Syntax error parsing JSON (' + src + '): "' + e + '"';
         }
 
         // Callback with parsed JSON object.
@@ -225,7 +225,7 @@
         this.canvas.width = width || spark.platform.width || this.canvas.width;
         this.canvas.height = height || spark.platform.height || this.canvas.height;
 
-        // Hide the mouse over the canvas.
+        // Hide the mouse over the canvas by default.
         this.canvas.style.cursor = 'none';
 
         // Disable the context menu.
