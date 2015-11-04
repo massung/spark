@@ -179,8 +179,8 @@ __MODULE__.pick = function(x, y, radius) {
 
   // Get the world-space point from screen-space.
   var c = this.camera.m.vtransform([
-    (x + this.projection.p.x) * this.projection.s.x,
-    (y + this.projection.p.y) * this.projection.s.y,
+    ((x || spark.input.x) + this.projection.p.x) * this.projection.s.x,
+    ((y || spark.input.y) + this.projection.p.y) * this.projection.s.y,
   ]);
 
   // Fail to pick anything when offscreen.
@@ -189,7 +189,7 @@ __MODULE__.pick = function(x, y, radius) {
   }
 
   // Create a circle shape to collide against.
-  var shape = new spark.collision.Circle(null, c, radius);
+  var shape = new spark.collision.Circle(null, c, radius || 5.0);
 
   // Update the shape cache for querying.
   shape.updateShapeCache(spark.vec.IDENTITY);
