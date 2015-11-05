@@ -147,7 +147,7 @@ __MODULE__.playerControls = function() {
 
     // Change the sprite image to one that shows the ship thrusting.
     spark.game.project.assets.thrust.emit(
-      this.localToWorld([0, 30]),
+      this.localToWorld([0, 40]),
       this.localToWorldAngle(-90.0),
       1);
   } else {

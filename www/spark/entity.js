@@ -96,7 +96,7 @@ __MODULE__.Pivot.prototype.worldToLocal = function(p) {
 
 // Convert a local-space angle (in degrees) to a world-space angle.
 __MODULE__.Pivot.prototype.localToWorldAngle = function(angle) {
-  return angle + Math.atan2(this.m.r.y, this.m.r.x) * 180 / Math.PI;
+  return angle + (Math.atan2(this.m.r.y, this.m.r.x) * 180 / Math.PI);
 };
 
 // The image is any texture class, and frame is optional.

@@ -91,12 +91,6 @@ __MODULE__.Emitter.prototype.emit = function(pos, rot, n) {
     var angle = spark.util.rand(-this.spread, this.spread) + rot;
     var speed = spark.util.rand(this.minSpeed, this.maxSpeed);
 
-    // Calculate the velocity vector.
-    var v = [
-      speed * Math.cos(angle * Math.PI / 180.0),
-      speed * Math.sin(angle * Math.PI / 180.0),
-    ];
-
     // Create all the particle settings.
     p.particle = {
       emitter: this,
@@ -110,8 +104,11 @@ __MODULE__.Emitter.prototype.emit = function(pos, rot, n) {
       // Random rotation speed.
       angularVelocity: spark.util.rand(this.minAngularVelocity, this.maxAngularVelocity),
 
-      // Direction of travel in local space.
-      velocity: spark.vec.vrotate(v, rot),
+      // Direction of travel in world space.
+      velocity: [
+        speed * Math.cos(angle * Math.PI / 180.0),
+        speed * Math.sin(angle * Math.PI / 180.0),
+      ],
     };
 
     // Add the particle behavior for this sprite.

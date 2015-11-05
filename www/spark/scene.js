@@ -152,6 +152,17 @@ __MODULE__.gui = function() {
   spark.view.font = 'bold 10px "Courier New", sans-serif';
   spark.view.fillStyle = '#fff';
   spark.view.fillText('FPS: ' + spark.game.fps().toFixed(1), 10, 14);
+
+  // Debugging in screen space.
+  if (spark.DEBUG) {
+    spark.view.shadowOffsetX = 0;
+    spark.view.shadowOffsetY = 1;
+    spark.view.shadowBlur = 3;
+    spark.view.shadowColor = '#000';
+    spark.view.font = 'bold 10px "Courier New", sans-serif';
+    spark.view.fillStyle = '#f80';
+    spark.view.fillText('Sprites: ' + this.layers[0].length, 10, 50);
+  }
 };
 
 // Spawn a new game sprite into the scene.
