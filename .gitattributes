@@ -1,1 +1,14 @@
 * text eol=lf
+
+# Text files
+*.html text
+*.js text
+*.json text
+*.md text
+*.xml text
+
+# Binary files
+*.ogg binary
+*.png binary
+*.wav binary
+*.xcf binary
