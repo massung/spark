@@ -54,22 +54,7 @@ spark.module().requires('spark.entity', 'spark.util').defines({
       };
     }).bind(this));
   },
-
-  /*
-  // A particle is a type of sprite.
-  Particle: function() {
-
-    // Call sprite constructor.
-    spark.entity.Sprite.call(this);
-  },
-  */
 });
-
-// Particle extend sprite.
-//__MODULE__.Particle.prototype = Object.create(spark.entity.Sprite.prototype);
-
-// Set constructors.
-//__MODULE__.Particle.prototype.constructor = __MODULE__.Particle;
 
 // Emit particles into the scene.
 __MODULE__.Emitter.prototype.emit = function(pos, rot, n) {
