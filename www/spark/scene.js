@@ -40,9 +40,11 @@ __MODULE__.__defineGetter__('height', function() {
 
 // Initialize a new scene.
 __MODULE__.init = function() {
+  this.particles = new spark.layer.SpriteLayer(500);
+  this.sprites = new spark.layer.SpriteLayer(100);
 
-  // The sprite layer is omni-present.
-  this.layers.push(new spark.layer.SpriteLayer());
+  // The particle and sprite layers are omni-presents.
+  this.layers.push(this.particles, this.sprites);
 
   // Create an entity to use as the camera.
   this.camera = new spark.entity.Pivot();
@@ -164,38 +166,27 @@ __MODULE__.gui = function() {
     spark.view.shadowColor = '#000';
     spark.view.font = 'bold 10px "Courier New", sans-serif';
     spark.view.fillStyle = '#f80';
-    spark.view.fillText('Sprites: ' + this.layers[0].length, 10, 50);
+    spark.view.fillText('Sprites   : ' + this.sprites.length, 10, 50);
+    spark.view.fillText('Particles : ' + this.particles.length, 10, 62);
   }
 };
 
-// Spawn a new game sprite into the scene.
-__MODULE__.spawn = function(sprite) {
-  sprite.layer = this.layers[0];
-  sprite.scene = this;
-
-  // Add it to the scene.
-  this.layers[0].push(sprite);
-
-  // Update the shapes of the sprite.
-  sprite.updateShapeColliders();
-
-  // Initialize the sprite now that it's in the scene.
-  if (sprite.init !== undefined) {
-    sprite.init();
-  }
+// Transform a point from screen space to world space.
+__MODULE__.screenToWorld = function(p) {
+  return this.camera.m.vtransform([
+    ((p ? p.x : spark.input.x) + this.projection.p.x) * this.projection.s.x,
+    ((p ? p.y : spark.input.y) + this.projection.p.y) * this.projection.s.y,
+  ]);
 };
 
 // Perform a pick at a given point, find all sprites at that point.
-__MODULE__.pick = function(x, y, radius) {
+__MODULE__.pick = function(p, radius) {
   if (this.space === undefined) {
     return [];
   }
 
   // Get the world-space point from screen-space.
-  var c = this.camera.m.vtransform([
-    ((x || spark.input.x) + this.projection.p.x) * this.projection.s.x,
-    ((y || spark.input.y) + this.projection.p.y) * this.projection.s.y,
-  ]);
+  var c = this.screenToWorld(p || [spark.input.x, spark.input.y]);
 
   // Fail to pick anything when offscreen.
   if (c.x < this.left || c.x > this.right || c.y < this.top || c.y > this.bottom) {

@@ -16,6 +16,7 @@ spark.module().requires('spark.collision').defines({
     this.dead = false;
     this.visible = true;
     this.alpha = 1.0;
+    this.compositeOperation = 'source-over';
     this.pivot = [0.5, 0.5];
 
     // Update behaviors and shape colliders.
@@ -41,7 +42,8 @@ __MODULE__.Pivot.prototype.setPosition = function(x, y) {
 
 // Set the absolute rotation of a sprite.
 __MODULE__.Pivot.prototype.setRotation = function(angle) {
-  this.m.r = [Math.cos(angle * Math.PI / 180.0), Math.sin(angle * Math.PI / 180.0)];
+  var rads = spark.util.degToRad(angle);
+  this.m.r = [Math.cos(rads), Math.sin(rads)];
 };
 
 // Set the absolute scale of a sprite.
@@ -62,9 +64,7 @@ __MODULE__.Pivot.prototype.translate = function(v, local) {
 
 // Turn a pivot entity. Positive angle = clockwise.
 __MODULE__.Pivot.prototype.rotate = function(angle) {
-  var r = angle * Math.PI / 180.0;
-
-  // Rotate the vector.
+  var r = spark.util.degToRad(angle);
   this.m.r = spark.vec.vrotate(this.m.r, [Math.cos(r), Math.sin(r)]);
 };
 
@@ -72,6 +72,11 @@ __MODULE__.Pivot.prototype.rotate = function(angle) {
 __MODULE__.Pivot.prototype.scale = function(x, y) {
   this.m.s.x += x || 1.0;
   this.m.s.y += y || x || 1.0;
+};
+
+// Return the angle of rotation (in degrees). This is slow!
+__MODULE__.Pivot.prototype.angle = function() {
+  return spark.util.radToDeg(Math.atan2(this.m.r.y, this.m.r.x));
 };
 
 // Multiply the canvas view transform.
@@ -96,7 +101,7 @@ __MODULE__.Pivot.prototype.worldToLocal = function(p) {
 
 // Convert a local-space angle (in degrees) to a world-space angle.
 __MODULE__.Pivot.prototype.localToWorldAngle = function(angle) {
-  return angle + (Math.atan2(this.m.r.y, this.m.r.x) * 180 / Math.PI);
+  return angle + this.angle();
 };
 
 // The image is any texture class, and frame is optional.
@@ -152,7 +157,7 @@ __MODULE__.Sprite.prototype.draw = function() {
   spark.view.save();
   {
     spark.view.globalAlpha = Math.min(1.0, Math.max(this.alpha, 0.0));
-    spark.view.globalCompositeOperation = this.compositeOperation || 'souerce-over';
+    spark.view.globalCompositeOperation = this.compositeOperation || 'source-over';
 
     // Set the transform and render.
     this.applyTransform();

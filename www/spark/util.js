@@ -22,6 +22,25 @@ __MODULE__.merge = function(a, b) {
   }
 };
 
+// Remove all the properties from an object.
+__MODULE__.wipe = function(obj) {
+  for(var k in obj) {
+    if (obj.hasOwnProperty(k)) {
+      delete obj[k];
+    }
+  }
+};
+
+// Convert from degrees to radians.
+__MODULE__.degToRad = function(angle) {
+  return angle * Math.PI / 180.0;
+};
+
+// Convert from radians to degrees.
+__MODULE__.radToDeg = function(rads) {
+  return rads * 180.0 / Math.PI;
+};
+
 // Returns a random number in the range of [min,max].
 __MODULE__.rand = function(min, max) {
   return Math.random() * (max - min) + min;

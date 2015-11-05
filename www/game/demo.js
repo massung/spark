@@ -30,7 +30,7 @@ __MODULE__.init = function () {
 };
 
 __MODULE__.createPlayer = function() {
-  var sprite = new spark.entity.Sprite();
+  var sprite = spark.game.scene.sprites.spawn();
 
   // Initial properties.
   sprite.thrust = spark.vec.ZERO;
@@ -50,13 +50,10 @@ __MODULE__.createPlayer = function() {
 
   // Add a simple collider shape.
   collider.addCircleShape([0, 0], 30);
-
-  // Add it to the scene.
-  spark.game.scene.spawn(sprite);
 };
 
 __MODULE__.createAsteroid = function(x, y, scale) {
-  var sprite = new spark.entity.Sprite();
+  var sprite = spark.game.scene.sprites.spawn();
 
   // Initial properties.
   sprite.direction = [spark.util.rand(-100, 100), spark.util.rand(-100, 100)];
@@ -99,29 +96,26 @@ __MODULE__.createAsteroid = function(x, y, scale) {
 
   // Add a simple collider shape.
   collider.addBoxShape(-30, -30, 60, 60);
-
-  // Add it to the scene.
-  spark.game.scene.spawn(sprite);
 };
 
 // All space objects wrap around the viewport.
 __MODULE__.spaceObject = function() {
 
   // Wrap right to left.
-  if (this.m.p.x - this.width / 2 > this.scene.right)
-    this.m.p.x -= this.scene.width + this.width;
+  if (this.m.p.x - this.width / 2 > spark.game.scene.right)
+    this.m.p.x -= spark.game.scene.width + this.width;
 
   // Wrap left to right.
-  if (this.m.p.x + this.width / 2 < this.scene.left)
-    this.m.p.x += this.scene.width + this.width;
+  if (this.m.p.x + this.width / 2 < spark.game.scene.left)
+    this.m.p.x += spark.game.scene.width + this.width;
 
   // Wrap bottom to top.
-  if (this.m.p.y - this.height / 2 > this.scene.bottom)
-    this.m.p.y -= this.scene.height + this.height;
+  if (this.m.p.y - this.height / 2 > spark.game.scene.bottom)
+    this.m.p.y -= spark.game.scene.height + this.height;
 
   // Wrap top to bottom.
-  if (this.m.p.y + this.height / 2 < this.scene.top)
-    this.m.p.y += this.scene.height + this.height;
+  if (this.m.p.y + this.height / 2 < spark.game.scene.top)
+    this.m.p.y += spark.game.scene.height + this.height;
 };
 
 // Asteroids consistently move and spin.
@@ -146,18 +140,16 @@ __MODULE__.playerControls = function() {
     this.thrust.x += 800.0 * spark.game.step * -this.m.r.y;
     this.thrust.y -= 800.0 * spark.game.step * this.m.r.x;
 
-    // Change the sprite image to one that shows the ship thrusting.
+    // Emit some thrust particles.
     spark.game.project.assets.thrust.emit(
       this.localToWorld([0, 55]),
       this.localToWorldAngle(-90.0),
       3);
-  } else {
-    //this.scene.thrust.pause();
   }
 
   // Shooting.
   if (spark.input.keyHit(spark.input.KEY.SPACE)) {
-    var bullet = new spark.entity.Sprite();
+    var bullet = spark.game.scene.sprites.spawn();
 
     // Sprite rendering.
     bullet.setImage(spark.game.project.assets.player_laser);
@@ -179,8 +171,7 @@ __MODULE__.playerControls = function() {
     // Add a simple collider shape.
     collider.addSegmentShape([0, -10], [0, 10]);
 
-    // Add the bullet to the scene and play a sound.
-    this.scene.spawn(bullet);
+    // Play a sound.
     spark.game.project.assets.laser_sound.woof();
   }
 

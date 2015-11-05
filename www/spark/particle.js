@@ -33,9 +33,7 @@ spark.module().requires('spark.entity', 'spark.util').defines({
           this.dead = true;
         }
 
-        // TODO: Everything below this should be done with a tween!
-
-        // Translate, rotate, and scale.
+        // Translate and rotate.
         this.rotate(this.particle.angularVelocity * spark.game.step);
         this.translate(spark.vec.vscale(this.particle.velocity, spark.game.step));
 
@@ -58,9 +56,9 @@ spark.module().requires('spark.entity', 'spark.util').defines({
 });
 
 // Emit particles into the scene.
-__MODULE__.Emitter.prototype.emit = function(pos, rot, n) {
+__MODULE__.Emitter.prototype.emit = function(pos, angle, n) {
   for(var i = 0;i < n;i++) {
-    var p = new spark.entity.Sprite();
+    var p = spark.game.scene.particles.spawn();
 
     // Set the texture image to use.
     p.setImage(spark.game.project.assets[this.texture]);
@@ -69,14 +67,16 @@ __MODULE__.Emitter.prototype.emit = function(pos, rot, n) {
     p.alpha = this.startAlpha;
     p.compositeOperation = this.compositeOperation;
 
-    // Pick an angle of direction and speed.
-    var angle = spark.util.rand(-this.spread, this.spread) + rot;
-    var speed = spark.util.rand(this.minSpeed, this.maxSpeed);
+    // Randomize the angle.
+    angle += spark.util.rand(-this.spread, this.spread);
 
     // Random size and position.
     p.setPosition(pos.x, pos.y);
     p.setScale(spark.util.rand(this.minScale, this.maxScale));
     p.setRotation(angle + this.forwardAngle);
+
+    // Pick a random speed.
+    var speed = spark.util.rand(this.minSpeed, this.maxSpeed);
 
     // Create all the particle settings.
     p.particle = {
@@ -93,15 +93,12 @@ __MODULE__.Emitter.prototype.emit = function(pos, rot, n) {
 
       // Direction of travel in world space.
       velocity: [
-        speed * Math.cos(angle * Math.PI / 180.0),
-        speed * Math.sin(angle * Math.PI / 180.0),
+        speed * Math.cos(spark.util.degToRad(angle)),
+        speed * Math.sin(spark.util.degToRad(angle)),
       ],
     };
 
     // Add the particle behavior for this sprite.
     p.addBehavior(this.particleBehavior);
-
-    // Add the sprite to the game world.
-    spark.game.scene.spawn(p);
   }
 };

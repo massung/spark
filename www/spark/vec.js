@@ -10,10 +10,8 @@ spark.module().defines({
 
     // Set the rotation vector.
     if (angle !== undefined) {
-      this.r = [
-        Math.cos(angle * Math.PI / 180.0),
-        Math.sin(angle * Math.PI / 180.0)
-      ];
+      var rads = spark.util.degToRad(angle);
+      this.r = [Math.cos(rads), Math.sin(rads)];
     } else {
       this.r = spark.vec.RIGHT;
     }
