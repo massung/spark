@@ -42,9 +42,9 @@ __MODULE__.SpriteLayer.prototype.update = function() {
   }
 
   // Process the remaining sprites.
-  this.forEach(function(sprite) {
-    sprite.update();
-  });
+  for(i = 0;i < this.length;i++) {
+    this[i].update();
+  }
 };
 
 // Add sprites to the collision spacial hash.
@@ -52,10 +52,10 @@ __MODULE__.SpriteLayer.prototype.updateCollisions = function(space) {
   for(var i = 0;i < this.length;i++) {
     var sprite = this[i];
 
-    if (sprite.visible === true && sprite.colliders.length > 0) {
-      sprite.colliders.forEach(function(collider) {
-        collider.addToQuadtree(space);
-      });
+    if (sprite.visible === true) {
+      for(var k = 0;k < sprite.colliders.length;k++) {
+        sprite.colliders[k].addToQuadtree(space);
+      }
     }
   }
 };

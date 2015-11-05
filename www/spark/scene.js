@@ -97,12 +97,15 @@ __MODULE__.update = function() {
   var space = new spark.collision.Quadtree(x1, y1, x2 - x1, y2 - y1, 0);
 
   // Update all the layers and allow each layer to push onto the spacial hash.
-  this.layers.forEach((function(layer) {
+  for(var i = 0;i < this.layers.length;i++) {
+    var layer = this.layers[i];
+
+    // First update the layer, then update the collision space.
     spark.perf.updateTime += spark.perf.sample(layer.update.bind(layer));
     spark.perf.collisionTime += spark.perf.sample(function() {
       layer.updateCollisions(space);
     });
-  }).bind(this));
+  }
 
   // Process collisions between layers.
   spark.perf.collisionTime += spark.perf.sample(space.processCollisions.bind(space));

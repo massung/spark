@@ -138,16 +138,18 @@ __MODULE__.Quadtree.prototype.collect = function(shape) {
   var m = [];
 
   // Run over all the shapes in this tree and find overlaps.
-  this.shapes.forEach(function(s) {
+  for(var i = 0;i < this.shapes.length;i++) {
+    var s = this.shapes[i];
+
     if (m.indexOf(s.collider) < 0 && s.shapeQuery(shape)) {
       m.push(s.collider);
     }
-  });
+  }
 
   // Run over all the sub-trees and recurse.
-  this.nodes.forEach(function(n) {
-    m.concat(n.collect(shape));
-  });
+  for(var i = 0;i < this.nodes.length;i++) {
+    m.concat(this.nodes[i].collect(shape));
+  }
 
   return m;
 };
@@ -205,15 +207,15 @@ __MODULE__.Quadtree.prototype.processCollisions = function() {
   }
 
   // Loop over all the contact manifolds and call callbacks.
-  contacts.forEach(function(c) {
-    var a = c[0];
-    var m = c[1];
+  for(var i = 0;i < contacts.length;i++) {
+    var a = contacts[i][0];
+    var m = contacts[i][1];
 
-    m.forEach(function(b) {
-      a.collide(b);
-      b.collide(a);
-    });
-  });
+    for(var j = 0;j < m.length;j++) {
+      a.collide(m[j]);
+      m[j].collide(a);
+    }
+  }
 };
 
 // Debug render the quadtree.
@@ -240,9 +242,9 @@ __MODULE__.Quadtree.prototype.draw = function(color) {
 
 // Add all the shapes of a collider to a spacial hash.
 __MODULE__.Collider.prototype.addToQuadtree = function(space) {
-  this.shapes.forEach(function(shape) {
-    space.push(shape);
-  });
+  for(var i = 0;i < this.shapes.length;i++) {
+    space.push(this.shapes[i]);
+  }
 };
 
 // Add a segment collision shape to the entity.
@@ -262,9 +264,9 @@ __MODULE__.Collider.prototype.addBoxShape = function(x, y, w, h) {
 
 // Called once per frame to transform shapes from local to world space.
 __MODULE__.Collider.prototype.updateShapes = function(m) {
-  this.shapes.forEach(function(shape) {
-    shape.updateShapeCache(m);
-  });
+  for(var i = 0;i < this.shapes.length;i++) {
+    this.shapes[i].updateShapeCache(m);
+  }
 };
 
 // Call the collision callback of the shape body if there is one.
