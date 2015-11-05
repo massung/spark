@@ -21,6 +21,7 @@ spark.module().requires('spark.entity', 'spark.util').defines({
     this.maxSpeed = 100.0;
     this.minAngularVelocity = -180.0;
     this.maxAngularVelocity = 180.0;
+    this.forwardAngle = 0.0;
 
     // Load the emitter as a JSON file of emission and particle properties.
     spark.loadJSON(src, (function(json) {
@@ -64,10 +65,6 @@ __MODULE__.Emitter.prototype.emit = function(pos, rot, n) {
     // Set the texture image to use.
     p.setImage(spark.game.project.assets[this.texture]);
 
-    // Random size and position.
-    p.setScale(spark.util.rand(this.minScale, this.maxScale));
-    p.setPosition(pos.x, pos.y);
-
     // Set the alpha and composite operation for the sprite.
     p.alpha = this.startAlpha;
     p.compositeOperation = this.compositeOperation;
@@ -75,6 +72,11 @@ __MODULE__.Emitter.prototype.emit = function(pos, rot, n) {
     // Pick an angle of direction and speed.
     var angle = spark.util.rand(-this.spread, this.spread) + rot;
     var speed = spark.util.rand(this.minSpeed, this.maxSpeed);
+
+    // Random size and position.
+    p.setPosition(pos.x, pos.y);
+    p.setScale(spark.util.rand(this.minScale, this.maxScale));
+    p.setRotation(angle + this.forwardAngle);
 
     // Create all the particle settings.
     p.particle = {

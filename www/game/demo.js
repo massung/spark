@@ -89,7 +89,8 @@ __MODULE__.createAsteroid = function(x, y, scale) {
         }
       }
 
-      // TODO: Spawn some particles.
+      // Spawn some asteroid particles.
+      spark.game.project.assets.explode.emit(this.m.p, 0, 50);
 
       // Play the explosion sound.
       spark.game.project.assets.rumble_sound.woof();

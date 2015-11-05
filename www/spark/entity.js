@@ -41,7 +41,7 @@ __MODULE__.Pivot.prototype.setPosition = function(x, y) {
 
 // Set the absolute rotation of a sprite.
 __MODULE__.Pivot.prototype.setRotation = function(angle) {
-  this.m.r = [Math.cos(angle * Math.PI / 180.0), Math.cos(angle * Math.PI / 180.0)];
+  this.m.r = [Math.cos(angle * Math.PI / 180.0), Math.sin(angle * Math.PI / 180.0)];
 };
 
 // Set the absolute scale of a sprite.

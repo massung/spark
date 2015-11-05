@@ -1,3 +1,7 @@
 {
-  "texture": "particle"
+  "texture": "player_thrust",
+  "spread": 5.0,
+  "minAngularVelocity": 0,
+  "maxAngularVelocity": 0,
+  "forwardAngle": 90.0
 }
