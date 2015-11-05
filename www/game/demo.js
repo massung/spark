@@ -59,14 +59,14 @@ __MODULE__.createAsteroid = function(x, y, scale) {
   var sprite = new spark.entity.Sprite();
 
   // Initial properties.
-  sprite.direction = [Math.random() * 200 - 100, Math.random() * 200 - 100];
-  sprite.rot = Math.random() * 360 - 180;
+  sprite.direction = [spark.util.rand(-100, 100), spark.util.rand(-100, 100)];
+  sprite.rot = spark.util.rand(-180, 180);
 
   // Sprite initialization.
   sprite.setImage(spark.game.project.assets.asteroid_1);
   sprite.setPosition(
-    x || Math.random() * spark.game.scene.width + spark.game.scene.left,
-    y || Math.random() * spark.game.scene.height + spark.game.scene.top);
+    x || spark.util.rand(spark.game.scene.left, spark.game.scene.right),
+    y || spark.util.rand(spark.game.scene.top, spark.game.scene.bottom));
 
   // Set the scale
   sprite.setScale(scale || 1.0);
@@ -82,7 +82,7 @@ __MODULE__.createAsteroid = function(x, y, scale) {
 
       // Spawn 2-4 smaller asteroids.
       if (this.m.s.x > 0.6) {
-        var n = 2 + Math.round(Math.random() * 2);
+        var n = spark.util.irand(2, 4);
 
         for(var i = 0;i < n;i++) {
           game.demo.createAsteroid(this.m.p.x, this.m.p.y, this.m.s.x * 0.75);
@@ -148,13 +148,10 @@ __MODULE__.playerControls = function() {
 
     // Change the sprite image to one that shows the ship thrusting.
     spark.game.project.assets.thrust.emit(
-      this.localToWorld([0, 40]),
+      this.localToWorld([0, 55]),
       this.localToWorldAngle(-90.0),
-      1);
+      3);
   } else {
-
-    // Change back to the idle ship.
-    //this.setImage(spark.game.scene.atlas, 'ship.png');
     //this.scene.thrust.pause();
   }
 

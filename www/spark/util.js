@@ -27,6 +27,16 @@ __MODULE__.rand = function(min, max) {
   return Math.random() * (max - min) + min;
 };
 
+// Returns a random integer in the range of [min,max).
+__MODULE__.irand = function(min, max) {
+  return Math.floor(spark.util.rand(min, max));
+};
+
+// Returns a random element from an array.
+__MODULE__.arand = function(array) {
+  return array[Math.floor(Math.rand() * array.length)];
+};
+
 // Linearly interpolate across values.
 __MODULE__.lerp = function(start, end, k, max) {
   if (max !== undefined) {

@@ -3,5 +3,9 @@
   "spread": 5.0,
   "minAngularVelocity": 0,
   "maxAngularVelocity": 0,
-  "forwardAngle": 90.0
+  "forwardAngle": 90.0,
+  "startScale": 2.0,
+  "endScale": 1.5,
+  "minLife": 0.2,
+  "maxLife": 0.3
 }
