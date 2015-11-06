@@ -86,7 +86,7 @@ __MODULE__.SpriteLayer.prototype.update = function() {
   }
 
   // Add all the pending sprites from the previous frame.
-  for(i = 0;i < this.pending.length;i++) {
+  while(this.pending.length > 0) {
     this.push(this.pending.pop());
   }
 
