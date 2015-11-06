@@ -16,6 +16,9 @@ __MODULE__.init = function () {
   // Start the game.
   spark.game.run('game/project.json', function(scene) {
 
+    // Setup global data to the scene.
+    scene.score = 0;
+
     // Change the projection so the origin is in the middle.
     scene.setProjection('middle', 0.5);
 
@@ -26,6 +29,14 @@ __MODULE__.init = function () {
     for(var i = 0;i < 3;i++) {
       game.demo.createAsteroid();
     }
+
+    // Add a UI function.
+    scene.gui = function() {
+      spark.view.font = '20px "BulletproofBB"';
+      spark.view.fillStyle = '#fff';
+      spark.view.fillText('FPS: ' + spark.game.fps().toFixed(1), 10, 24);
+      spark.view.fillText('Score: ' + scene.score, 10, 48);
+    };
   });
 };
 
@@ -86,6 +97,9 @@ __MODULE__.createAsteroid = function(x, y, scale) {
         }
       }
 
+      // Add to the score.
+      spark.game.scene.score += 50;
+
       // Spawn some asteroid particles.
       spark.game.project.assets.explode.emit(this.m.p, 0, 50);
 
@@ -130,10 +144,14 @@ __MODULE__.playerControls = function() {
   if (spark.input.keyDown(spark.input.KEY.RIGHT)) this.rotate(180 * spark.game.step);
 
   // Rotate/zoom the camera for fun.
-  if (spark.input.keyDown(spark.input.KEY.A)) this.scene.camera.rotate(-180 * spark.game.step);
-  if (spark.input.keyDown(spark.input.KEY.D)) this.scene.camera.rotate(180 * spark.game.step);
-  if (spark.input.keyDown(spark.input.KEY.W)) this.scene.camera.scale(2.0 * spark.game.step);
-  if (spark.input.keyDown(spark.input.KEY.S)) this.scene.camera.scale(-2.0 * spark.game.step);
+  if (spark.input.keyDown(spark.input.KEY.A))
+    spark.game.scene.camera.rotate(-180 * spark.game.step);
+  if (spark.input.keyDown(spark.input.KEY.D))
+    spark.game.scene.camera.rotate(180 * spark.game.step);
+  if (spark.input.keyDown(spark.input.KEY.W))
+    spark.game.scene.camera.scale(2.0 * spark.game.step);
+  if (spark.input.keyDown(spark.input.KEY.S))
+    spark.game.scene.camera.scale(-2.0 * spark.game.step);
 
   // Thrusting.
   if (spark.input.keyDown(spark.input.KEY.UP)) {
@@ -144,7 +162,7 @@ __MODULE__.playerControls = function() {
     spark.game.project.assets.thrust.emit(
       this.localToWorld([0, 55]),
       this.localToWorldAngle(-90.0),
-      3);
+      2);
   }
 
   // Shooting.

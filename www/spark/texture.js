@@ -20,14 +20,29 @@ spark.module().defines({
   },
 
   // A sprite atlas.
-  Atlas: function(image, src) {
-    this.image = image;
+  Atlas: function(src) {
+    this.images = [];
     this.frames = {};
 
     // Load the JSON source of frames.
     spark.loadJSON(src, (function(json) {
       this.frames = json.frames;
     }).bind(this));
+  },
+
+  // A CSS font.
+  Font: function(src) {
+    var family = src.split('/').slice(-1)[0].split('.')[0];
+    var face = `@font-face{
+      font-family: "` + family + `"; src: url("` + src + `");
+    }`;
+
+    // Create the <style> node.
+    this.style = document.createElement('style');
+    this.style.appendChild(document.createTextNode(face));
+
+    // Add it to the document. This won't load, but will be good enough.
+    document.head.appendChild(this.style);
   },
 });
 
