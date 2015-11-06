@@ -120,6 +120,13 @@ __MODULE__.trace = function(frame) {
   spark.view.shadowBlur = 3;
   spark.view.shadowColor = '#000';
   spark.view.font = 'bold 10px "Courier New", sans-serif';
+
+  // Show sprite and particle counts.
+  spark.view.fillStyle = '#ff8000';
+  spark.view.fillText('Sprites   : ' + spark.game.scene.sprites.count, 10, spark.view.canvas.height - y - 84);
+  spark.view.fillText('Particles : ' + spark.game.scene.particles.count, 10, spark.view.canvas.height - y - 72);
+
+  // Show timings in milliseconds for draw, update, and collision.
   spark.view.fillStyle = '#66b2ff';
   spark.view.fillText('Update    : ' + this.updateTime.toFixed(2) + 'ms', 10, spark.view.canvas.height - y - 24);
   spark.view.fillStyle = '#c354ff';
@@ -127,5 +134,5 @@ __MODULE__.trace = function(frame) {
   spark.view.fillStyle = '#2dffb2';
   spark.view.fillText('Draw      : ' + this.drawTime.toFixed(2) + 'ms', 10, spark.view.canvas.height - y - 48);
   spark.view.fillStyle = '#ccc';
-  spark.view.fillText('60 FPS', 10, spark.view.canvas.height - y - 2);
+  spark.view.fillText('FPS       : ' + spark.game.fps().toFixed(1), 10, spark.view.canvas.height - y - 2);
 };

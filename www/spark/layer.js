@@ -8,25 +8,25 @@ spark.module().requires('spark.particle').defines({
 
   // A layer that has sprites on it.
   SpriteLayer: function(n) {
-    Array.call(this);
-
-    // Sprites waiting to be added and free sprites to draw from.
-    this.pending = [];
+    this.sprites = [];
     this.pool = [];
 
     // Initialize the pool with a bunch of sprites.
     for(var i = 0;i < (n || 100);i++) {
       this.pool.push(new spark.entity.Sprite());
     }
+
+    // Track the free list with a stack pointer and in-use with a count.
+    this.sp = this.pool.length;
+    this.count = 0;
+    this.pending = 0;
   },
 
   // A tilemap layer for a map.
   TilemapLayer: function() {
+    // TODO:
   },
 });
-
-// SpriteLayers are a subclass of Array.
-__MODULE__.SpriteLayer.prototype = Object.create(Array.prototype);
 
 // Set constructors.
 __MODULE__.SpriteLayer.prototype.constructor = __MODULE__.SpriteLayer;
@@ -36,10 +36,10 @@ __MODULE__.TilemapLayer.prototype.constructor = __MODULE__.TilemapLayer;
 __MODULE__.SpriteLayer.prototype.spawn = function(init) {
   var sprite;
 
-  if (this.pool.length === 0) {
+  if (this.sp === 0) {
     sprite = new spark.entity.Sprite();
   } else {
-    sprite = this.pool.pop();
+    sprite = this.pool[--this.sp];
 
     // Initialize the sprite from the pool.
     spark.entity.Sprite.call(sprite);
@@ -53,8 +53,14 @@ __MODULE__.SpriteLayer.prototype.spawn = function(init) {
     init(sprite);
   }
 
-  // Add the sprite to the pending list to be added later.
-  this.pending.push(sprite);
+  // Append the sprite, but it will be on the pending side of the count.
+  if (this.count + this.pending < this.sprites.length) {
+    this.sprites[this.count + this.pending] = sprite;
+  } else {
+    this.sprites.push(sprite);
+  }
+
+  this.pending++;
 
   return sprite;
 };
@@ -63,43 +69,44 @@ __MODULE__.SpriteLayer.prototype.spawn = function(init) {
 __MODULE__.SpriteLayer.prototype.update = function() {
   var i;
 
+  // Add all the pending sprites to the scene.
+  this.count += this.pending;
+  this.pending = 0;
+
   // Delete all the dead sprites.
-  for(i = 0;i < this.length;) {
-    var sprite = this[i];
+  for(i = 0;i < this.count;) {
+    var sprite = this.sprites[i];
 
     if (sprite.dead) {
-      var x = this.pop();
+      this.sprites[i] = this.sprites[--this.count];
 
       // Remove all the custom properties from this sprite.
       spark.util.wipe(sprite);
 
-      // Release the dead sprite back to the pool.
-      this.pool.push(sprite);
-
-      // Swap this sprite with the last one.
-      if (i < this.length) {
-        this[i] = x;
+      // Add this sprite back to the pool.
+      if (this.sp < this.pool.length) {
+        this.pool[this.sp] = sprite;
+      } else {
+        this.pool.push(sprite);
       }
+
+      // Tally free list.
+      this.sp++;
     } else {
       i++;
     }
   }
 
-  // Add all the pending sprites from the previous frame.
-  while(this.pending.length > 0) {
-    this.push(this.pending.pop());
-  }
-
   // Process the remaining sprites.
-  for(i = 0;i < this.length;i++) {
-    this[i].update();
+  for(i = 0;i < this.count;i++) {
+    this.sprites[i].update();
   }
 };
 
 // Add sprites to the collision spacial hash.
 __MODULE__.SpriteLayer.prototype.updateCollisions = function(space) {
-  for(var i = 0;i < this.length;i++) {
-    var sprite = this[i];
+  for(var i = 0;i < this.count;i++) {
+    var sprite = this.sprites[i];
 
     if (sprite.visible === true) {
       for(var k = 0;k < sprite.colliders.length;k++) {
@@ -111,8 +118,17 @@ __MODULE__.SpriteLayer.prototype.updateCollisions = function(space) {
 
 // Render all the sprites onto the view.
 __MODULE__.SpriteLayer.prototype.draw = function() {
-  for(var i = 0;i < this.length;i++) {
-    this[i].draw();
+  for(var i = 0;i < this.count;i++) {
+    this.sprites[i].draw();
+  }
+};
+
+// Render the optional GUI for each sprite.
+__MODULE__.SpriteLayer.prototype.gui = function() {
+  for(var i = 0;i < this.count;i++) {
+    if (this.sprites[i].gui !== undefined) {
+      this.sprites[i].gui();
+    }
   }
 };
 
@@ -123,3 +139,7 @@ __MODULE__.TilemapLayer.prototype.update = function() {
 __MODULE__.TilemapLayer.prototype.draw = function() {
   // TODO:
 };
+
+__MODULE__.TilemapLayer.prototype.gui = function() {
+  // TODO:
+}

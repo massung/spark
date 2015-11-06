@@ -4,9 +4,7 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.layer', 'spark.perf', 'spark.project').defines({
-  layers: [],
-});
+spark.module().requires('spark.layer', 'spark.perf', 'spark.project');
 
 // Read-only top pixel coordinate in projection space.
 __MODULE__.__defineGetter__('top', function() {
@@ -43,8 +41,11 @@ __MODULE__.init = function() {
   this.particles = new spark.layer.SpriteLayer(500);
   this.sprites = new spark.layer.SpriteLayer(100);
 
-  // The particle and sprite layers are omni-presents.
-  this.layers.push(this.particles, this.sprites);
+  // The particle and sprite layers are omni-present and on top!
+  this.layers = [
+    this.particles,
+    this.sprites,
+  ];
 
   // Create an entity to use as the camera.
   this.camera = new spark.entity.Pivot();
@@ -118,6 +119,9 @@ __MODULE__.update = function() {
 
 // Called once per frame to draw each layer.
 __MODULE__.draw = function() {
+  var i;
+
+  // Retain transforms, etc.
   spark.view.save();
 
   // Setup the projection matrix.
@@ -131,7 +135,7 @@ __MODULE__.draw = function() {
     //spark.view.imageSmoothingEnabled = false;
 
     // Render each layer in reverse order (sprites last).
-    for(var i = this.layers.length - 1;i >= 0;i--) {
+    for(i = this.layers.length - 1;i >= 0;i--) {
       this.layers[i].draw();
     }
   }).bind(this));
@@ -148,24 +152,29 @@ __MODULE__.draw = function() {
   // Put everything back.
   spark.view.restore();
 
-  // Render the GUI for the scene.
-  this.gui();
+  // Render the optional scene GUI for the scene.
+  if (this.gui !== undefined) {
+    this.gui();
+  }
+
+  // Render the layer GUIs.
+  for(i = this.layers.length - 1;i >= 0;i--) {
+    this.layers[i].gui();
+  }
 };
 
 // Render the GUI for the scene. Default just renders framerate.
 __MODULE__.gui = function() {
-  spark.view.font = 'bold 10px "Courier New", sans-serif';
-  spark.view.fillStyle = '#fff';
-  spark.view.fillText('FPS: ' + spark.game.fps().toFixed(1), 10, 14);
-
-  // Debugging in screen space.
   if (spark.DEBUG) {
     spark.view.shadowOffsetX = 0;
     spark.view.shadowOffsetY = 1;
     spark.view.shadowBlur = 3;
     spark.view.shadowColor = '#000';
+
+    // Show framerate.
     spark.view.font = 'bold 10px "Courier New", sans-serif';
     spark.view.fillStyle = '#f80';
+    spark.view.fillText('FPS       : ' + spark.game.fps().toFixed(1), 10, 38);
     spark.view.fillText('Sprites   : ' + this.sprites.length, 10, 50);
     spark.view.fillText('Particles : ' + this.particles.length, 10, 62);
   }
