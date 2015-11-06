@@ -4,7 +4,7 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.vec').defines({
+spark.module().requires('spark.sat').defines({
   QUADTREE_DEPTH_LIMIT: 3,
   QUADTREE_SHAPE_LIMIT: 8,
 
