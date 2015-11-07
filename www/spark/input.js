@@ -114,19 +114,20 @@ spark.module().defines({
 
 // Attach this input module to a canvas control.
 __MODULE__.init = function() {
+  var i;
 
   // Initialize the array of keys.
-  for(var i = 0;i < 256;i++) {
+  for(i = 0;i < 256;i++) {
     this.keys[i] = { down: false, hits: 0 };
   }
 
   // Initialize the array of mouse buttons.
-  for(var i = 0;i < 16;i++) {
+  for(i = 0;i < 16;i++) {
     this.buttons[i] = { down: false, hits: 0 };
   }
 
   // Initialize the array of touches.
-  for(var i = 0;i < 10;i++) {
+  for(i = 0;i < 10;i++) {
     this.touches[i] = { /* TODO */ };
   }
 };

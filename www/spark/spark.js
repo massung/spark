@@ -59,18 +59,22 @@
 
   // True when all dependencies for this module have been loaded.
   Module.prototype.import = function() {
-    if (this.loaded !== true && this.dependencies.every(function(m) {
-      return m();
-    })) {
-      if (this.init !== undefined) {
-        this.init();
-      }
-
-      // This module is now loaded.
-      return this.loaded = true;
+    if (this.loaded === true) {
+      return false;
     }
 
-    return false;
+    // Are all the dependencies met?
+    if (this.dependencies.every(function(m) { return m(); }) === false) {
+      return false;
+    }
+
+    // Initialize the module.
+    if (this.init !== undefined ) {
+      this.init();
+    }
+
+    // This module is now loaded.
+    return this.loaded = true;
   };
 
   // List the module dependencies that need to be loaded first.
@@ -101,9 +105,7 @@
       var path = src.split('.').join('/') + '.js';
 
       // Load the dependency script.
-      spark.loadScript(path, (function() {
-        spark.importModules();
-      }).bind(this));
+      spark.loadScript(path, spark.importModules.bind(spark));
     }).bind(this));
 
     return this;

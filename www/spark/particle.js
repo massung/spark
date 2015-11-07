@@ -4,7 +4,7 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.entity', 'spark.util').defines({
+spark.module().requires('spark.entity').defines({
   Emitter: function(src) {
 
     // Set all the default values for an empty emitter.

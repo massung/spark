@@ -41,6 +41,11 @@ __MODULE__.radToDeg = function(rads) {
   return rads * 180.0 / Math.PI;
 };
 
+// Clamp a value to a min and max value.
+__MODULE__.clamp = function(x, min, max) {
+  return Math.max(min, Math.min(x, max));
+};
+
 // Returns a random number in the range of [min,max].
 __MODULE__.rand = function(min, max) {
   return Math.random() * (max - min) + min;

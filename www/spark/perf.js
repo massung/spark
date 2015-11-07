@@ -8,6 +8,7 @@ spark.module().defines({
   updateTime: 0,
   collisionTime: 0,
   drawTime: 0,
+  guiTime: 0,
 });
 
 // Create an offscreen canvas to render performance data to.
@@ -47,6 +48,7 @@ __MODULE__.reset = function() {
   this.updateTime = 0;
   this.collisionTime = 0;
   this.drawTime = 0;
+  this.guiTime = 0;
 };
 
 // Draw a trace on the performance canvas.
@@ -72,6 +74,7 @@ __MODULE__.trace = function(frame) {
   var updateY = Math.round(this.updateTime * 60 * y / 1000);
   var collisionY = Math.round(this.collisionTime * 60 * y / 1000);
   var drawY = Math.round(this.drawTime * 60 * y / 1000);
+  var guiY = Math.round(this.guiTime * 60 * y / 1000);
 
   // Clear an around around the draw section.
   this.view.clearRect(x, 0, 10, h);
@@ -99,6 +102,13 @@ __MODULE__.trace = function(frame) {
   this.view.lineTo(x, h - updateY - collisionY - drawY);
   this.view.stroke();
 
+  // Pink for gui time.
+  this.view.strokeStyle = '#fa5882';
+  this.view.beginPath();
+  this.view.moveTo(x, h - updateY - collisionY - drawY);
+  this.view.lineTo(x, h - updateY - collisionY - drawY - guiY);
+  this.view.stroke();
+
   // Draw a gray line at the 60 FPS mark.
   this.view.strokeStyle = '#333';
   this.view.beginPath();
@@ -123,8 +133,8 @@ __MODULE__.trace = function(frame) {
 
   // Show sprite and particle counts.
   spark.view.fillStyle = '#ff8000';
-  spark.view.fillText('Sprites   : ' + spark.game.scene.sprites.count, 10, spark.view.canvas.height - y - 84);
-  spark.view.fillText('Particles : ' + spark.game.scene.particles.count, 10, spark.view.canvas.height - y - 72);
+  spark.view.fillText('Sprites   : ' + spark.game.scene.sprites.count, 10, spark.view.canvas.height - y - 96);
+  spark.view.fillText('Particles : ' + spark.game.scene.particles.count, 10, spark.view.canvas.height - y - 84);
 
   // Show timings in milliseconds for draw, update, and collision.
   spark.view.fillStyle = '#66b2ff';
@@ -133,6 +143,8 @@ __MODULE__.trace = function(frame) {
   spark.view.fillText('Collision : ' + this.collisionTime.toFixed(2) + 'ms', 10, spark.view.canvas.height - y - 36);
   spark.view.fillStyle = '#2dffb2';
   spark.view.fillText('Draw      : ' + this.drawTime.toFixed(2) + 'ms', 10, spark.view.canvas.height - y - 48);
+  spark.view.fillStyle = '#fa5882';
+  spark.view.fillText('GUI       : ' + this.guiTime.toFixed(2) + 'ms', 10, spark.view.canvas.height - y - 60);
   spark.view.fillStyle = '#ccc';
   spark.view.fillText('FPS       : ' + spark.game.fps().toFixed(1), 10, spark.view.canvas.height - y - 2);
 };

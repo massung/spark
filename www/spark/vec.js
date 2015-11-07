@@ -4,7 +4,7 @@
  * All rights reserved.
  */
 
-spark.module().defines({
+spark.module().requires('spark.util').defines({
   Mat: function(x, y, angle, sx, sy) {
     this.p = [x || 0.0, y || 0.0];
 

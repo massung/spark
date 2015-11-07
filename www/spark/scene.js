@@ -154,29 +154,14 @@ __MODULE__.draw = function() {
 
   // Render the optional scene GUI for the scene.
   if (this.gui !== undefined) {
-    this.gui();
-  }
-
-  // Render the layer GUIs.
-  for(i = this.layers.length - 1;i >= 0;i--) {
-    this.layers[i].gui();
+    spark.perf.guiTime += spark.perf.sample(this.gui.bind(this));
   }
 };
 
-// Render the GUI for the scene. Default just renders framerate.
+// Render the GUI for the scene.
 __MODULE__.gui = function() {
-  if (spark.DEBUG) {
-    spark.view.shadowOffsetX = 0;
-    spark.view.shadowOffsetY = 1;
-    spark.view.shadowBlur = 3;
-    spark.view.shadowColor = '#000';
-
-    // Show framerate.
-    spark.view.font = 'bold 10px "Courier New", sans-serif';
-    spark.view.fillStyle = '#f80';
-    spark.view.fillText('FPS       : ' + spark.game.fps().toFixed(1), 10, 38);
-    spark.view.fillText('Sprites   : ' + this.sprites.length, 10, 50);
-    spark.view.fillText('Particles : ' + this.particles.length, 10, 62);
+  for(i = this.layers.length - 1;i >= 0;i--) {
+    this.layers[i].gui();
   }
 };
 
