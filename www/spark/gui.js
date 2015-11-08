@@ -69,7 +69,10 @@ __MODULE__.Label.prototype.draw = function(x, y) {
   }).bind(this));
 };
 
-//
+// Modify the value of a meter with a constant value.
+__MODULE__.Meter.prototype.update = function(delta) {
+  this.value = spark.util.clamp(this.value + delta, 0, this.max);
+};
 
 // Render a meter bar.
 __MODULE__.Meter.prototype.draw = function(x, y, w, h) {

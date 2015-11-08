@@ -4,7 +4,7 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.gui', 'spark.scene').defines({
+spark.module().requires('spark.scene').defines({
   framecount: 0,
   frametime: 0.0,
   step: 0.0,

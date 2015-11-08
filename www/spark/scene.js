@@ -4,7 +4,7 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.layer', 'spark.perf', 'spark.project');
+spark.module().requires('spark.gui', 'spark.layer', 'spark.perf', 'spark.project');
 
 // Read-only top pixel coordinate in projection space.
 __MODULE__.__defineGetter__('top', function() {
@@ -155,13 +155,6 @@ __MODULE__.draw = function() {
   // Render the optional scene GUI for the scene.
   if (this.gui !== undefined) {
     spark.perf.guiTime += spark.perf.sample(this.gui.bind(this));
-  }
-};
-
-// Render the GUI for the scene.
-__MODULE__.gui = function() {
-  for(i = this.layers.length - 1;i >= 0;i--) {
-    this.layers[i].gui();
   }
 };
 

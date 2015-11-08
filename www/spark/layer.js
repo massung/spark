@@ -123,15 +123,6 @@ __MODULE__.SpriteLayer.prototype.draw = function() {
   }
 };
 
-// Render the optional GUI for each sprite.
-__MODULE__.SpriteLayer.prototype.gui = function() {
-  for(var i = 0;i < this.count;i++) {
-    if (this.sprites[i].gui !== undefined) {
-      this.sprites[i].gui();
-    }
-  }
-};
-
 __MODULE__.TilemapLayer.prototype.update = function() {
   // TODO:
 };
@@ -139,7 +130,3 @@ __MODULE__.TilemapLayer.prototype.update = function() {
 __MODULE__.TilemapLayer.prototype.draw = function() {
   // TODO:
 };
-
-__MODULE__.TilemapLayer.prototype.gui = function() {
-  // TODO:
-}
