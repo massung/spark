@@ -6,6 +6,14 @@
 
 spark.module().requires('spark.gui', 'spark.layer', 'spark.perf', 'spark.project');
 
+// Read-only origin in clip space.
+__MODULE__.__defineGetter__('origin', function() {
+  return [
+    (this.projection.p.x / gl.canvas.width) - 1.0,
+    (this.projection.p.y / gl.canvas.height) - 1.0
+  ];
+});
+
 // Read-only top pixel coordinate in projection space.
 __MODULE__.__defineGetter__('top', function() {
   return this.projection.p.y * this.projection.s.y;
@@ -18,12 +26,12 @@ __MODULE__.__defineGetter__('left', function() {
 
 // Read-only bottom pixel coordinate in projection space.
 __MODULE__.__defineGetter__('bottom', function() {
-  return -this.projection.p.y * this.projection.s.y;
+  return this.top + this.height;
 });
 
 // Read-only right pixel coordinate in projection space.
 __MODULE__.__defineGetter__('right', function() {
-  return -this.projection.p.x * this.projection.s.x;
+  return this.left + this.width;
 });
 
 // Read-only width of the scene in pixels.
@@ -124,12 +132,16 @@ __MODULE__.draw = function() {
   var r = this.right;
   var b = this.bottom;
 
-  // Define an orthographic projection matrix from the projection.
+  // Origin offset.
+  var x = -(r + l) / (r - l);
+  var y = -(t + b) / (t - b);
+
+  // Define an orthographic projection.
   var ortho = new Float32Array([
-    2.0 / (r - l),           0.0, 0.0, 0.0,
-              0.0, 2.0 / (t - b), 0.0, 0.0,
-              0.0,           0.0, 1.0, 0.0,
-              0.0,           0.0, 0.0, 1.0,
+    2.0 / (r - l),           0.0,    0.0, 0.0,
+              0.0, 2.0 / (t - b),    0.0, 0.0,
+              0.0,           0.0, -0.002, 0.0,
+                x,             y,   -1.0, 1.0,
   ]);
 
   // Use the same camera transform for every layer.
@@ -155,15 +167,6 @@ __MODULE__.draw = function() {
       layer.draw();
     }
   }).bind(this));
-
-  // Debugging of spacial hash and scene box.
-  if (spark.DEBUG) {
-    //this.space.draw();
-
-    // Draw the scene box.
-    //spark.view.stokeStyle = '#fff';
-    //spark.view.strokeRect(this.left, this.top, this.width, this.height);
-  }
 
   // Render the optional scene GUI for the scene.
   //if (this.gui !== undefined) {
