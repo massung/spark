@@ -247,7 +247,8 @@
 
         // Create a simple shader for all to use.
         if (spark.shader !== undefined) {
-          window.gl.simpleShader = new spark.shader.Program();
+          gl.simpleShader = new spark.shader.Program(spark.shader.simpleVertexShader, spark.shader.simpleFragmentShader);
+          gl.spriteShader = new spark.shader.Program(spark.shader.spriteVertexShader, spark.shader.spriteFragmentShader);
         }
       }
     };

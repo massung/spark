@@ -4,7 +4,7 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.collision').defines({
+spark.module().requires('spark.collision', 'spark.shader').defines({
 
   // A pivot object is just a transform.
   Pivot: function() {
@@ -151,17 +151,14 @@ __MODULE__.Sprite.prototype.draw = function() {
     return;
   }
 
-  // Render the sprite.
-  spark.view.save();
-  {
-    spark.view.globalAlpha = Math.min(1.0, Math.max(this.alpha, 0.0));
-    spark.view.globalCompositeOperation = this.compositeOperation || 'source-over';
+  // Set the alpha value for the sprite.
+  gl.uniform1f(spark.shader.current.u_alpha, this.alpha);
 
-    // Set the transform and render.
-    this.applyTransform();
-    this.image.blit(this.frame, this.pivot);
-  }
-  spark.view.restore();
+  // Set the world transform for this sprite.
+  gl.uniformMatrix4fv(spark.shader.current.u_world, false, this.m.transform);
+
+  // Render the sprite.
+  this.image.blit(this.frame);
 };
 
 // Return the width of the sprite.
@@ -170,11 +167,7 @@ __MODULE__.Sprite.prototype.__defineGetter__('width', function() {
     return 0;
   }
 
-  if (this.frame === undefined) {
-    return this.image.source.width;
-  }
-
-  return this.image.frames[this.frame].frame.w;
+  return this.frame ? this.frame.width : this.image.source.width;
 });
 
 // Return the height of the sprite.
@@ -183,9 +176,5 @@ __MODULE__.Sprite.prototype.__defineGetter__('height', function() {
     return 0;
   }
 
-  if (this.frame === undefined) {
-    return this.image.source.height;
-  }
-
-  return this.image.frames[this.frame].frame.h;
+  return this.frame ? this.frame.height : this.image.source.height;
 });

@@ -3,7 +3,6 @@
   "version": 1.0,
   "assetRelativePath": "assets/",
   "assets": {
-    "simple":        { "class": "spark.shader.Program", "source": "simple.shader" },
     "starfield":     { "class": "spark.texture.Image", "source": "background.png" },
     "asteroid_0":    { "class": "spark.texture.Image", "source": "asteroid_big_1.png" },
     "asteroid_1":    { "class": "spark.texture.Image", "source": "asteroid_big_2.png" },

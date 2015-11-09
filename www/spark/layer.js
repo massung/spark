@@ -4,7 +4,12 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.particle').defines({
+spark.module().requires('spark.particle', 'spark.shader').defines({
+
+  // A background layer is a single texture.
+  BackgroundLayer: function() {
+    // TODO:
+  },
 
   // A layer that has sprites on it.
   SpriteLayer: function(n) {
@@ -20,6 +25,9 @@ spark.module().requires('spark.particle').defines({
     this.sp = this.pool.length;
     this.count = 0;
     this.pending = 0;
+
+    // Set the shader for this layer.
+    this.shader = gl.spriteShader;
   },
 
   // A tilemap layer for a map.
@@ -29,8 +37,19 @@ spark.module().requires('spark.particle').defines({
 });
 
 // Set constructors.
+__MODULE__.BackgroundLayer.prototype.constructor = __MODULE__.BackgroundLayer;
 __MODULE__.SpriteLayer.prototype.constructor = __MODULE__.SpriteLayer;
 __MODULE__.TilemapLayer.prototype.constructor = __MODULE__.TilemapLayer;
+
+// Background layers can scroll.
+__MODULE__.BackgroundLayer.prototype.update = function() {
+  // TODO:
+};
+
+// Draw the layer.
+__MODULE__.BackgroundLayer.prototype.draw = function() {
+  // TODO:
+};
 
 // Allocate a new sprite to add to the layer.
 __MODULE__.SpriteLayer.prototype.spawn = function(init) {
@@ -123,10 +142,12 @@ __MODULE__.SpriteLayer.prototype.draw = function() {
   }
 };
 
+// Tilemaps can scroll.
 __MODULE__.TilemapLayer.prototype.update = function() {
   // TODO:
 };
 
+// Draw individual tiles.
 __MODULE__.TilemapLayer.prototype.draw = function() {
   // TODO:
 };

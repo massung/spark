@@ -18,31 +18,31 @@ spark.module().requires('spark.util').defines({
 
     // Set the scale vector.
     this.s = [sx || 1.0, sy || sx || 1.0];
-
-    // Returns a copy of this matrix that is its inverse.
-    Object.defineProperty(this, 'inverse', {
-      get: function() {
-        var m = new spark.vec.Mat(-this.p.x, -this.p.y, undefined, 1 / this.s.x, 1 / this.s.y);
-
-        // Transpose the rotation.
-        m.r.x = this.r.x;
-        m.r.y = -this.r.y;
-
-        return m;
-      }
-    });
-
-    // Returns the transform as a 3x3 matrix for a 2d context.
-    Object.defineProperty(this, 'transform', {
-      get: function() {
-        return [this.r.x * this.s.x, -this.r.y * this.s.y, this.r.y * this.s.x, this.r.x * this.s.y, this.p.x, this.p.y];
-      }
-    });
   },
 });
 
 // Set constructors.
 __MODULE__.Mat.prototype.constructor = __MODULE__.Mat;
+
+// Matrix inverse.
+__MODULE__.Mat.prototype.__defineGetter__('inverse', function() {
+  var m = new spark.vec.Mat(-this.p.x, -this.p.y, undefined, 1 / this.s.x, 1 / this.s.y);
+
+  // Transpose the rotation.
+  m.r.x = this.r.x;
+  m.r.y = -this.r.y;
+
+  return m;
+});
+
+// A 4x4 matrix for use with gl.uniformMatrix4fv().
+__MODULE__.Mat.prototype.__defineGetter__('transform', function() {
+  return new Float32Array([
+    this.r.x * this.s.x, -this.r.y * this.s.y, 0.0, 0.0,
+    this.r.y * this.s.x,  this.r.x * this.s.y, 0.0, 0.0,
+                    0.0,                  0.0, 1.0, 0.0,
+               this.p.x,             this.p.y, 0.0, 1.0]);
+});
 
 // Create accessors for <x,y> of array pairs.
 Array.prototype.__defineGetter__('x', function() {

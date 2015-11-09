@@ -71,24 +71,35 @@ __MODULE__.loadFrame = function() {
   // Vertex buffer for outline and progress bar.
   var box = [-0.5, 0.1, w, 0.1, w, -0.1, -0.5, -0.1];
   var outline = [-0.5, 0.1, 0.5, 0.1, 0.5, -0.1, -0.5, -0.1];
+  var colors = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
   var vbuf = gl.createBuffer();
+  var cbuf = gl.createBuffer();
 
   // Draw the progrss bar.
   gl.bindBuffer(gl.ARRAY_BUFFER, vbuf);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(box), gl.STATIC_DRAW);
   gl.vertexAttribPointer(gl.simpleShader.a_pos, 2, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(0);
+  gl.enableVertexAttribArray(gl.simpleShader.a_pos);
+  gl.bindBuffer(gl.ARRAY_BUFFER, cbuf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+  gl.vertexAttribPointer(gl.simpleShader.a_color, 4, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(gl.simpleShader.a_color);
   gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
 
   // Draw a loading box outline.
   gl.bindBuffer(gl.ARRAY_BUFFER, vbuf);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(outline), gl.STATIC_DRAW);
   gl.vertexAttribPointer(gl.simpleShader.a_pos, 2, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(0);
+  gl.enableVertexAttribArray(gl.simpleShader.a_pos);
+  gl.bindBuffer(gl.ARRAY_BUFFER, cbuf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+  gl.vertexAttribPointer(gl.simpleShader.a_color, 4, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(gl.simpleShader.a_color);
   gl.drawArrays(gl.LINE_LOOP, 0, 4);
 
   // Free buffer.
   gl.deleteBuffer(vbuf);
+  gl.deleteBuffer(cbuf);
 
   // Continue running.
   this.loop();
@@ -111,7 +122,7 @@ __MODULE__.run = function(projectFile, onload) {
   this.scene = Object.create(spark.scene);
 
   // Initialize a new scene.
-  this.scene.init();
+  this.scene.setup();
 
   // Load the project file, and call onload once loaded.
   spark.project.load(projectFile, (function() {

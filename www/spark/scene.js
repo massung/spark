@@ -36,8 +36,8 @@ __MODULE__.__defineGetter__('height', function() {
   return gl.canvas.height * this.projection.s.y;
 });
 
-// Initialize a new scene.
-__MODULE__.init = function() {
+// Called from game.run() when a new scene is created.
+__MODULE__.setup = function() {
   this.particles = new spark.layer.SpriteLayer(500);
   this.sprites = new spark.layer.SpriteLayer(100);
 
@@ -119,57 +119,56 @@ __MODULE__.update = function() {
 
 // Called once per frame to draw each layer.
 __MODULE__.draw = function() {
-  var i;
+  var l = this.left;
+  var t = this.top;
+  var r = this.right;
+  var b = this.bottom;
 
-  // Set the projection matrix.
-  gl.uniformMatrix4fv(spark.shader.current.u_proj, false, new Float32Array([
-    this.projection.s.x,                 0.0, 0.0, this.projection.x,
-                    0.0, this.projection.s.y, 0.0, this.projection.y,
-                    0.0,                 0.0, 1.0,               0.0,
-                    0.0,                 0.0, 0.0,               1.0,
-  ]));
+  // Define an orthographic projection matrix from the projection.
+  var ortho = new Float32Array([
+    2.0 / (r - l),           0.0, 0.0, 0.0,
+              0.0, 2.0 / (t - b), 0.0, 0.0,
+              0.0,           0.0, 1.0, 0.0,
+              0.0,           0.0, 0.0, 1.0,
+  ]);
 
-  // Apply the world transform matrix.
-  gl.uniformMatrix4fv(spark.shader.current.u_world, false, new Float32Array([
-    1.0, 0.0, 0.0, 0.0,
-    0.0, 1.0, 0.0, 0.0,
-    0.0, 0.0, 1.0, 0.0,
-    0.0, 0.0, 0.0, 1.0,
-  ]));
+  // Use the same camera transform for every layer.
+  var camera = this.camera.m.inverse.transform;
 
+  // Enable blending states.
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-  // Setup the projection matrix.
+  // Render all of the layers.
   spark.perf.drawTime += spark.perf.sample((function() {
-    //spark.view.setTransform.apply(spark.view, this.projection.inverse.transform);
+    for(var i = this.layers.length - 1;i >= 0;i--) {
+      var layer = this.layers[i];
 
-    // Transform by the inverse of the camera.
-    this.camera.applyInverseTransform();
+      // Set the shader to use for the layer.
+      layer.shader.use();
 
-    // Turn off anti-aliasing of images (better performance?).
-    //spark.view.imageSmoothingEnabled = false;
+      // Set the transform stack matricies.
+      gl.uniformMatrix4fv(layer.shader.u_proj, false, ortho);
+      gl.uniformMatrix4fv(layer.shader.u_camera, false, camera);
 
-    // Render each layer in reverse order (sprites last).
-    for(i = this.layers.length - 1;i >= 0;i--) {
-      this.layers[i].draw();
+      // Draw each element on the layer.
+      layer.draw();
     }
   }).bind(this));
 
   // Debugging of spacial hash and scene box.
   if (spark.DEBUG) {
-    this.space.draw();
+    //this.space.draw();
 
     // Draw the scene box.
     //spark.view.stokeStyle = '#fff';
     //spark.view.strokeRect(this.left, this.top, this.width, this.height);
   }
 
-  // Put everything back.
-  gl.popMatrix();
-
   // Render the optional scene GUI for the scene.
-  if (this.gui !== undefined) {
-    spark.perf.guiTime += spark.perf.sample(this.gui.bind(this));
-  }
+  //if (this.gui !== undefined) {
+  //  spark.perf.guiTime += spark.perf.sample(this.gui.bind(this));
+  //}
 };
 
 // Transform a point from screen space to world space.

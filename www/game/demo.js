@@ -15,7 +15,7 @@ __MODULE__.init = function () {
 
   // Start the game.
   spark.game.run('game/project.json', function(scene) {
-/*
+
     // Change the projection so the origin is in the middle.
     scene.setProjection('middle', 0.5);
 
@@ -26,31 +26,6 @@ __MODULE__.init = function () {
     for(var i = 0;i < 3;i++) {
       game.demo.createAsteroid();
     }
-
-    // Track how much energy the player has.
-    scene.energy = new spark.gui.Meter(100, 100, {
-      lineWidth: 2,
-      strokeStyle: '#fff',
-      fillStyle: '#08f',
-    });
-
-    // Track the player's score.
-    scene.score = new spark.gui.Label(0, {
-      font: '20px BulletproofBB',
-      shadowBlur: 3,
-      shadowColor: '#000',
-      shadowOffsetX: 0,
-      shadowOffsetY: 2,
-      fillStyle: '#ff0',
-      textBaseline: 'hanging',
-    });
-
-    // Render the GUI.
-    scene.gui = (function() {
-      this.score.draw(10, 10);
-      this.energy.draw(-10, 10, 100, 18);
-    }).bind(scene);
-*/
   });
 };
 
@@ -61,7 +36,7 @@ __MODULE__.createPlayer = function() {
   sprite.thrust = spark.vec.ZERO;
 
   // Sprite rendering.
-  sprite.setImage(spark.game.project.assets.player_ship);
+  sprite.setImage(spark.project.assets.player_ship);
   sprite.setPosition(0, 0);
 
   // Add some callback behaviors.
@@ -88,7 +63,7 @@ __MODULE__.createAsteroid = function(x, y, scale) {
   sprite.rot = spark.util.rand(-180, 180);
 
   // Sprite initialization.
-  sprite.setImage(spark.game.project.assets.asteroid_1);
+  sprite.setImage(spark.project.assets.asteroid_1);
   sprite.setPosition(
     x || spark.util.rand(spark.game.scene.left, spark.game.scene.right),
     y || spark.util.rand(spark.game.scene.top, spark.game.scene.bottom));
@@ -114,14 +89,11 @@ __MODULE__.createAsteroid = function(x, y, scale) {
         }
       }
 
-      // Add to the score.
-      spark.game.scene.score.value += 50;
-
       // Spawn some asteroid particles.
-      spark.game.project.assets.explode.emit(this.m.p, 0, 50);
+      spark.project.assets.explode.emit(this.m.p, 0, 50);
 
       // Play the explosion sound.
-      spark.game.project.assets.rumble_sound.woof();
+      spark.project.assets.rumble_sound.woof();
     }
   });
 
@@ -172,29 +144,22 @@ __MODULE__.playerControls = function() {
 
   // Thrusting.
   if (spark.input.keyDown(spark.input.KEY.UP)) {
-    if (spark.game.scene.energy.value >= spark.game.step * 10) {
-      this.thrust.x += 800.0 * spark.game.step * -this.m.r.y;
-      this.thrust.y -= 800.0 * spark.game.step * this.m.r.x;
+    this.thrust.x += 800.0 * spark.game.step * -this.m.r.y;
+    this.thrust.y -= 800.0 * spark.game.step * this.m.r.x;
 
-      // Emit some thrust particles.
-      spark.game.project.assets.thrust.emit(
-        this.localToWorld([0, 55]),
-        this.localToWorldAngle(-90.0),
-        2);
-    }
-
-    // Expend some energy.
-    spark.game.scene.energy.update(-10 * spark.game.step);
-  } else {
-    spark.game.scene.energy.update(20 * spark.game.step);
+    // Emit some thrust particles.
+    spark.project.assets.thrust.emit(
+      this.localToWorld([0, 55]),
+      this.localToWorldAngle(-90.0),
+      2);
   }
 
   // Shooting.
-  if (spark.input.keyHit(spark.input.KEY.SPACE) && spark.game.scene.energy.value > 10) {
+  if (spark.input.keyHit(spark.input.KEY.SPACE)) {
     var bullet = spark.game.scene.sprites.spawn();
 
     // Sprite rendering.
-    bullet.setImage(spark.game.project.assets.player_laser);
+    bullet.setImage(spark.project.assets.player_laser);
 
     // Spawn in front of the player.
     bullet.m.p = this.localToWorld([0, -30]);
@@ -214,10 +179,7 @@ __MODULE__.playerControls = function() {
     collider.addSegmentShape([0, -10], [0, 10]);
 
     // Play a sound.
-    spark.game.project.assets.laser_sound.woof();
-
-    // Expend some energy.
-    spark.game.scene.energy.update(-10);
+    spark.project.assets.laser_sound.woof();
   }
 
   // Move the player.
