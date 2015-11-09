@@ -68,7 +68,7 @@
       return false;
     }
 
-    // Initialize the module.
+    // Initialize the module. Should only happen once!
     if (this.init !== undefined ) {
       this.init();
     }
@@ -126,8 +126,8 @@
     this.registeredAssets = [];
     this.modules = [];
 
-    // Set the true for visualization, entity selection, etc.
-    this.DEBUG = false;
+    // Track all the scripts so they don't get reloaded.
+    this.scripts = {};
 
     // Loop over all modules and initialize/load those whose dependencies are loaded.
     this.importModules = function() {
@@ -144,6 +144,10 @@
 
     // Request a text file using a <script> tag and then call onload
     this.loadScript = function(src, onload) {
+      if (this.scripts[src] !== undefined) {
+        return;
+      }
+
       var script = document.createElement('script');
 
       script.setAttribute('type', 'application/javascript');
@@ -161,6 +165,9 @@
 
       // Queue this element.
       this.loadQueue.push(script);
+
+      // Add this script to the set of loading/loaded scripts.
+      this.scripts[src] = script;
 
       // Add it to the document so it begins loading.
       document.head.appendChild(script);
@@ -236,7 +243,12 @@
         };
 
         // Get the render context of the canvas.
-        this.view = this.canvas.getContext('2d');
+        window.gl = this.canvas.getContext('webgl');
+
+        // Create a simple shader for all to use.
+        if (spark.shader !== undefined) {
+          window.gl.simpleShader = new spark.shader.Program();
+        }
       }
     };
 

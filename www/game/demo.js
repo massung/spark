@@ -15,7 +15,7 @@ __MODULE__.init = function () {
 
   // Start the game.
   spark.game.run('game/project.json', function(scene) {
-
+/*
     // Change the projection so the origin is in the middle.
     scene.setProjection('middle', 0.5);
 
@@ -50,6 +50,7 @@ __MODULE__.init = function () {
       this.score.draw(10, 10);
       this.energy.draw(-10, 10, 100, 18);
     }).bind(scene);
+*/
   });
 };
 

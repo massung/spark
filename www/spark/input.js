@@ -134,12 +134,12 @@ __MODULE__.init = function() {
 
 // Hide the cursor.
 __MODULE__.hideCursor = function() {
-  spark.view.canvas.style.cursor = 'none';
+  gl.canvas.style.cursor = 'none';
 };
 
 // Show the cursor with an optional sprite image.
 __MODULE__.showCursor = function(image) {
-  spark.view.canvas.style.cursor = image || 'pointer';
+  gl.canvas.style.cursor = image || 'pointer';
 };
 
 // Add mouse support.
@@ -157,9 +157,9 @@ __MODULE__.enableKeyboard = function() {
 
 // Add touch support on a mobile device.
 __MODULE__.enableTouch = function() {
-  spark.view.canvas.addEventListener('touchstart', this.onTouchStart.bind(this), false);
-  spark.view.canvas.addEventListener('touchend', this.onTouchEnd.bind(this), false);
-  spark.view.canvas.addEventListener('touchmove', this.onTouchMove.bind(this), false);
+  gl.canvas.addEventListener('touchstart', this.onTouchStart.bind(this), false);
+  gl.canvas.addEventListener('touchend', this.onTouchEnd.bind(this), false);
+  gl.canvas.addEventListener('touchmove', this.onTouchMove.bind(this), false);
 };
 
 // Flush the key states every frame.
@@ -217,8 +217,8 @@ __MODULE__.onMouseUp = function(event) {
 
 // Handle mouse movement events.
 __MODULE__.onMouseMove = function(event) {
-  var x = event.clientX - spark.view.canvas.offsetLeft;
-  var y = event.clientY - spark.view.canvas.offsetTop;
+  var x = event.clientX - gl.canvas.offsetLeft;
+  var y = event.clientY - gl.canvas.offsetTop;
 
   // Update relative motion.
   this.relativeX += x - this.x;
@@ -234,8 +234,8 @@ __MODULE__.onTouchStart = function(event) {
   if (event.targetTouches.length === 1) {
     this.touch = true;
 
-    this.x = event.targetTouches[0].pageX - spark.view.canvas.offsetLeft;
-    this.y = event.targetTouches[0].pageY - spark.view.canvas.offsetTop;
+    this.x = event.targetTouches[0].pageX - gl.canvas.offsetLeft;
+    this.y = event.targetTouches[0].pageY - gl.canvas.offsetTop;
 
     // Reset relative motion.
     this.relativeX = 0;
@@ -259,8 +259,8 @@ __MODULE__.onTouchEnd = function(event) {
 // Handle touch motion.
 __MODULE__.onTouchMove = function(event) {
   if (event.targetTouches.length === 1) {
-    var x = event.targetTouches[0].pageX - spark.view.canvas.offsetLeft;
-    var y = event.targetTouches[0].pageY - spark.view.canvas.offsetTop;
+    var x = event.targetTouches[0].pageX - gl.canvas.offsetLeft;
+    var y = event.targetTouches[0].pageY - gl.canvas.offsetTop;
 
     // Update the touch data.
     this.touches[0].relativeX += x - this.touches[0].x;

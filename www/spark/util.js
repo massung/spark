@@ -31,6 +31,11 @@ __MODULE__.wipe = function(obj) {
   }
 };
 
+// Get the next power of 2 from a number.
+__MODULE__.nextPow2 = function(n) {
+  return Math.pow(2, Math.ceil(Math.log(n) / Math.log(2)));
+};
+
 // Convert from degrees to radians.
 __MODULE__.degToRad = function(angle) {
   return angle * Math.PI / 180.0;

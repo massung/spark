@@ -28,12 +28,12 @@ __MODULE__.__defineGetter__('right', function() {
 
 // Read-only width of the scene in pixels.
 __MODULE__.__defineGetter__('width', function() {
-  return spark.view.canvas.width * this.projection.s.x;
+  return gl.canvas.width * this.projection.s.x;
 });
 
 // Read-only height of the scene in pixels.
 __MODULE__.__defineGetter__('height', function() {
-  return spark.view.canvas.height * this.projection.s.y;
+  return gl.canvas.height * this.projection.s.y;
 });
 
 // Initialize a new scene.
@@ -68,13 +68,13 @@ __MODULE__.setProjection = function(origin, sx, sy) {
   if (origin === 'topleft' || origin === 'top-left') {
     m.p = [0, 0];
   } else if (origin === 'topright' || origin === 'top-right') {
-    m.p = [spark.view.canvas.width, 0];
+    m.p = [gl.canvas.width, 0];
   } else if (origin === 'bottomleft' || origin === 'bottom-left') {
-    m.p = [0, spark.view.canvas.height];
+    m.p = [0, gl.canvas.height];
   } else if (origin === 'bottomright' || origin === 'bottom-right') {
-    m.p = [spark.view.canvas.width, spark.view.canvas.height];
+    m.p = [gl.canvas.width, gl.canvas.height];
   } else if (origin === 'middle' || origin === 'center') {
-    m.p = [spark.view.canvas.width / 2, spark.view.canvas.height / 2];
+    m.p = [gl.canvas.width / 2, gl.canvas.height / 2];
   } else {
     throw 'Invalid origin for projection. Use "topLeft", "middle", "bottomRight", etc.';
   }
@@ -121,12 +121,26 @@ __MODULE__.update = function() {
 __MODULE__.draw = function() {
   var i;
 
-  // Retain transforms, etc.
-  spark.view.save();
+  // Set the projection matrix.
+  gl.uniformMatrix4fv(spark.shader.current.u_proj, false, new Float32Array([
+    this.projection.s.x,                 0.0, 0.0, this.projection.x,
+                    0.0, this.projection.s.y, 0.0, this.projection.y,
+                    0.0,                 0.0, 1.0,               0.0,
+                    0.0,                 0.0, 0.0,               1.0,
+  ]));
+
+  // Apply the world transform matrix.
+  gl.uniformMatrix4fv(spark.shader.current.u_world, false, new Float32Array([
+    1.0, 0.0, 0.0, 0.0,
+    0.0, 1.0, 0.0, 0.0,
+    0.0, 0.0, 1.0, 0.0,
+    0.0, 0.0, 0.0, 1.0,
+  ]));
+
 
   // Setup the projection matrix.
   spark.perf.drawTime += spark.perf.sample((function() {
-    spark.view.setTransform.apply(spark.view, this.projection.inverse.transform);
+    //spark.view.setTransform.apply(spark.view, this.projection.inverse.transform);
 
     // Transform by the inverse of the camera.
     this.camera.applyInverseTransform();
@@ -145,12 +159,12 @@ __MODULE__.draw = function() {
     this.space.draw();
 
     // Draw the scene box.
-    spark.view.stokeStyle = '#fff';
-    spark.view.strokeRect(this.left, this.top, this.width, this.height);
+    //spark.view.stokeStyle = '#fff';
+    //spark.view.strokeRect(this.left, this.top, this.width, this.height);
   }
 
   // Put everything back.
-  spark.view.restore();
+  gl.popMatrix();
 
   // Render the optional scene GUI for the scene.
   if (this.gui !== undefined) {

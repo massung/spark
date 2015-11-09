@@ -4,51 +4,50 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.platform', 'spark.texture', 'spark.audio');
+spark.module().requires('spark.platform', 'spark.util').defines({
+  title: 'Untitled',
+  version: 1.0,
+  path: '/',
+  assetRelativePath: '',
+  assets: {},
+});
 
 // Load a manifest XML file into an object.
 __MODULE__.load = function(src, onload) {
-  var project = {
-    title: 'Untitled',
-    version: 1.0,
-    assetRelativePath: '',
-    assets: {},
-  };
-
-  // Set the asset path to the same path as the project file.
-  project.assetPath = src.split('/').slice(0, -1).join('/') + '/';
+  spark.project.path = src.split('/').slice(0, -1).join('/') + '/';
 
   // Load the manifest and then issue requests for all the assets inside.
   spark.loadJSON(src, function(json) {
 
     // Merge the properties into the project. This will override defaults.
-    for(var prop in json) {
-      project[prop] = json[prop];
-    }
+    spark.util.merge(spark.project, json);
 
     // Issue a load request for each asset.
-    for(var id in project.assets) {
-      var cls = project.assets[id].class;
-      var src = project.assets[id].source;
+    for(var id in spark.project.assets) {
+      var cls = spark.project.assets[id].class;
+      var src = spark.project.assets[id].source;
 
       if (cls === undefined || src === undefined) {
         console.log('Invalid asset "' + id + '"; skipping...');
       } else {
         var ctor = spark.project.assetConstructor(cls);
+        var path = spark.project.assetPath(src);
 
         // Create the asset, which will issue the load request.
-        project.assets[id] = new ctor(project.assetPath + project.assetRelativePath + src);
+        spark.project.assets[id] = new ctor(path);
       }
     };
 
     // Call the onload callback now.
     if (onload !== undefined) {
-      onload(project);
+      onload();
     }
   });
+};
 
-  // Return the object that will hold all the assets in it.
-  return project;
+// Return the full path to an asset.
+__MODULE__.assetPath = function(src) {
+  return spark.project.path + spark.project.assetRelativePath + src;
 };
 
 // Find the class for a given asset type.

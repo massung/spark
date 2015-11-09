@@ -16,8 +16,6 @@ spark.module().requires('spark.collision').defines({
     this.dead = false;
     this.visible = true;
     this.alpha = 1.0;
-    this.compositeOperation = 'source-over';
-    this.pivot = [0.5, 0.5];
 
     // Update behaviors and shape colliders.
     this.behaviors = [];
@@ -96,7 +94,7 @@ __MODULE__.Pivot.prototype.localToWorld = function(p) {
 
 // Convery a world <x,y> pair into local space.
 __MODULE__.Pivot.prototype.worldToLocal = function(p) {
-  return this.m.invserse.vtransform(p);
+  return this.m.inverse.vtransform(p);
 };
 
 // Convert a local-space angle (in degrees) to a world-space angle.

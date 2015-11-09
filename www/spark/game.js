@@ -4,7 +4,7 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.scene').defines({
+spark.module().requires('spark.scene', 'spark.texture', 'spark.shader', 'spark.audio').defines({
   framecount: 0,
   frametime: 0.0,
   step: 0.0,
@@ -23,18 +23,11 @@ __MODULE__.update = function() {
 
 // Called once per frame after update.
 __MODULE__.draw = function() {
-  spark.view.setTransform(1, 0, 0, 1, 0, 0);
+  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-  // Erase the display.
-  spark.view.clearRect(0, 0, spark.view.canvas.width, spark.view.canvas.height);
-
-  // Reset everything that can cause FPS issues.
-  spark.view.globalAlpha = 1;
-  spark.view.globalCompositeOperation = 'source-over';
-  spark.view.shadowBlur = 0;
-  spark.view.lineWidth = 1;
-  spark.view.fillStyle = '#000';
-  spark.view.strokeStyle = '#fff';
+  // Clear the canvas.
+  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   // Draw all the layers.
   this.scene.draw();
@@ -63,21 +56,39 @@ __MODULE__.stepFrame = function(now) {
 
 // Called while the framework is loading assets to show progress.
 __MODULE__.loadFrame = function() {
-  var w = 200 * spark.loadProgress();
+  var w = -0.5 + spark.loadProgress();
 
-  // Erase the display.
-  spark.view.setTransform(1, 0, 0, 1, 0, 0);
-  spark.view.clearRect(0, 0, spark.view.canvas.width, spark.view.canvas.height);
+  // Setup the viewport.
+  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-  // Display some loading text in the bottom left.
-  spark.view.strokeStyle = '#fff';
-  spark.view.fillStyle = '#fff';
-  spark.view.font = 'bold 10px "Courier", sans-serif';
-  spark.view.fillText('Loading...', 10, spark.view.canvas.height - 20);
+  // Clear the canvas.
+  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  // Render the progress as a simple load bar.
-  spark.view.strokeRect(10, spark.view.canvas.height - 16, 200, 6);
-  spark.view.fillRect(10, spark.view.canvas.height - 16, w, 6);
+  // Use the default shader.
+  gl.simpleShader.use();
+
+  // Vertex buffer for outline and progress bar.
+  var box = [-0.5, 0.1, w, 0.1, w, -0.1, -0.5, -0.1];
+  var outline = [-0.5, 0.1, 0.5, 0.1, 0.5, -0.1, -0.5, -0.1];
+  var vbuf = gl.createBuffer();
+
+  // Draw the progrss bar.
+  gl.bindBuffer(gl.ARRAY_BUFFER, vbuf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(box), gl.STATIC_DRAW);
+  gl.vertexAttribPointer(gl.simpleShader.a_pos, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(0);
+  gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+
+  // Draw a loading box outline.
+  gl.bindBuffer(gl.ARRAY_BUFFER, vbuf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(outline), gl.STATIC_DRAW);
+  gl.vertexAttribPointer(gl.simpleShader.a_pos, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(0);
+  gl.drawArrays(gl.LINE_LOOP, 0, 4);
+
+  // Free buffer.
+  gl.deleteBuffer(vbuf);
 
   // Continue running.
   this.loop();
@@ -103,7 +114,7 @@ __MODULE__.run = function(projectFile, onload) {
   this.scene.init();
 
   // Load the project file, and call onload once loaded.
-  this.project = spark.project.load(projectFile, (function() {
+  spark.project.load(projectFile, (function() {
 
     // Initialize all input devices.
     spark.input.enableMouse();
