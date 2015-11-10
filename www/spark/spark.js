@@ -245,11 +245,8 @@
         // Get the render context of the canvas.
         window.gl = this.canvas.getContext('webgl');
 
-        // Create a simple shader for all to use.
-        if (spark.shader !== undefined) {
-          gl.simpleShader = new spark.shader.Program(spark.shader.simpleVertexShader, spark.shader.simpleFragmentShader);
-          gl.spriteShader = new spark.shader.Program(spark.shader.spriteVertexShader, spark.shader.spriteFragmentShader);
-        }
+        // Create the basic shader that's the default for load screens, etc.
+        gl.basicShader = new spark.shader.Basic();
       }
     };
 

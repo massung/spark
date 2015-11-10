@@ -157,6 +157,8 @@ __MODULE__.Sprite.prototype.draw = function() {
   // Set the world transform for this sprite.
   gl.uniformMatrix4fv(spark.shader.current.u_world, false, this.m.transform);
 
+  // TODO: Set custom attributes and uniforms on the shader.
+
   // Render the sprite.
   this.image.blit(this.frame);
 };

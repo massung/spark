@@ -6,13 +6,23 @@
 
 spark.module().requires('spark.particle', 'spark.shader').defines({
 
+  // The base layer object.
+  Basic: function() {
+    this.shader = null;
+  },
+
   // A background layer is a single texture.
   BackgroundLayer: function() {
+    spark.layer.Basic.call(this);
+
     // TODO:
   },
 
   // A layer that has sprites on it.
   SpriteLayer: function(n) {
+    spark.layer.Basic.call(this);
+
+    // Lists of active and free sprites.
     this.sprites = [];
     this.pool = [];
 
@@ -27,29 +37,32 @@ spark.module().requires('spark.particle', 'spark.shader').defines({
     this.pending = 0;
 
     // Set the shader for this layer.
-    this.shader = gl.spriteShader;
+    this.shader = null; // spark.project.assets.spriteShader;
   },
 
   // A tilemap layer for a map.
   TilemapLayer: function() {
+    spark.layer.Basic.call(this);
+
     // TODO:
   },
 });
 
+// All layers derive from a base layer.
+__MODULE__.BackgroundLayer.prototype = Object.create(__MODULE__.Basic);
+__MODULE__.SpriteLayer.prototype = Object.create(__MODULE__.Basic);
+__MODULE__.TilemapLayer.prototype = Object.create(__MODULE__.Basic);
+
 // Set constructors.
+__MODULE__.Basic.prototype.constructor = __MODULE__.Basic;
 __MODULE__.BackgroundLayer.prototype.constructor = __MODULE__.BackgroundLayer;
 __MODULE__.SpriteLayer.prototype.constructor = __MODULE__.SpriteLayer;
 __MODULE__.TilemapLayer.prototype.constructor = __MODULE__.TilemapLayer;
 
-// Background layers can scroll.
-__MODULE__.BackgroundLayer.prototype.update = function() {
-  // TODO:
-};
-
-// Draw the layer.
-__MODULE__.BackgroundLayer.prototype.draw = function() {
-  // TODO:
-};
+// The basic layer does nothing.
+__MODULE__.Basic.prototype.update = function() { };
+__MODULE__.Basic.prototype.updateCollisions = function() { };
+__MODULE__.Basic.prototype.draw = function() { };
 
 // Allocate a new sprite to add to the layer.
 __MODULE__.SpriteLayer.prototype.spawn = function(init) {
@@ -140,14 +153,4 @@ __MODULE__.SpriteLayer.prototype.draw = function() {
   for(var i = 0;i < this.count;i++) {
     this.sprites[i].draw();
   }
-};
-
-// Tilemaps can scroll.
-__MODULE__.TilemapLayer.prototype.update = function() {
-  // TODO:
-};
-
-// Draw individual tiles.
-__MODULE__.TilemapLayer.prototype.draw = function() {
-  // TODO:
 };

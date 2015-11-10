@@ -1,0 +1,14 @@
+{
+  "vertex": "sprite_vs.glsl",
+  "fragment": "sprite_fs.glsl",
+  "attribute": {
+    "position": "a_pos",
+    "uv": "a_uv"
+  },
+  "uniform": {
+    "alpha": "u_alpha",
+    "projection": "u_proj",
+    "camera": "u_camera",
+    "world": "u_world"
+  }
+}

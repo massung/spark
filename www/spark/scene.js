@@ -157,14 +157,16 @@ __MODULE__.draw = function() {
       var layer = this.layers[i];
 
       // Set the shader to use for the layer.
-      layer.shader.use();
+      if (layer.shader) {
+        layer.shader.use();
 
-      // Set the transform stack matricies.
-      gl.uniformMatrix4fv(layer.shader.u_proj, false, ortho);
-      gl.uniformMatrix4fv(layer.shader.u_camera, false, camera);
+        // Set the transform stack matricies.
+        gl.uniformMatrix4fv(layer.shader.u_proj, false, ortho);
+        gl.uniformMatrix4fv(layer.shader.u_camera, false, camera);
 
-      // Draw each element on the layer.
-      layer.draw();
+        // Draw each element on the layer.
+        layer.draw();
+      }
     }
   }).bind(this));
 

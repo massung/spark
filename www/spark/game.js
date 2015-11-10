@@ -66,40 +66,20 @@ __MODULE__.loadFrame = function() {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   // Use the default shader.
-  gl.simpleShader.use();
+  gl.basicShader.use();
 
-  // Vertex buffer for outline and progress bar.
-  var box = [-0.5, 0.1, w, 0.1, w, -0.1, -0.5, -0.1];
-  var outline = [-0.5, 0.1, 0.5, 0.1, 0.5, -0.1, -0.5, -0.1];
-  var colors = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+  // Vertex buffer for a line progress bar.
   var vbuf = gl.createBuffer();
-  var cbuf = gl.createBuffer();
 
   // Draw the progrss bar.
   gl.bindBuffer(gl.ARRAY_BUFFER, vbuf);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(box), gl.STATIC_DRAW);
-  gl.vertexAttribPointer(gl.simpleShader.a_pos, 2, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(gl.simpleShader.a_pos);
-  gl.bindBuffer(gl.ARRAY_BUFFER, cbuf);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-  gl.vertexAttribPointer(gl.simpleShader.a_color, 4, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(gl.simpleShader.a_color);
-  gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
-
-  // Draw a loading box outline.
-  gl.bindBuffer(gl.ARRAY_BUFFER, vbuf);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(outline), gl.STATIC_DRAW);
-  gl.vertexAttribPointer(gl.simpleShader.a_pos, 2, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(gl.simpleShader.a_pos);
-  gl.bindBuffer(gl.ARRAY_BUFFER, cbuf);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-  gl.vertexAttribPointer(gl.simpleShader.a_color, 4, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(gl.simpleShader.a_color);
-  gl.drawArrays(gl.LINE_LOOP, 0, 4);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-0.5, 0.0, w, 0.0]), gl.STATIC_DRAW);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(0);
+  gl.drawArrays(gl.LINES, 0, 2);
 
   // Free buffer.
   gl.deleteBuffer(vbuf);
-  gl.deleteBuffer(cbuf);
 
   // Continue running.
   this.loop();
