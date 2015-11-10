@@ -1,14 +1,16 @@
 {
   "vertex": "sprite_vs.glsl",
   "fragment": "sprite_fs.glsl",
-  "attribute": {
+  "attributes": {
     "position": "a_pos",
     "uv": "a_uv"
   },
-  "uniform": {
+  "uniforms": {
+    "z": "u_z",
     "alpha": "u_alpha",
     "projection": "u_proj",
     "camera": "u_camera",
-    "world": "u_world"
+    "world": "u_world",
+    "sampler": "u_sampler"
   }
 }

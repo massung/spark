@@ -8,7 +8,9 @@ spark.module().requires('spark.particle', 'spark.shader').defines({
 
   // The base layer object.
   Basic: function() {
+    this.visible = true;
     this.shader = null;
+    this.z = 0.0;
   },
 
   // A background layer is a single texture.
@@ -63,6 +65,11 @@ __MODULE__.TilemapLayer.prototype.constructor = __MODULE__.TilemapLayer;
 __MODULE__.Basic.prototype.update = function() { };
 __MODULE__.Basic.prototype.updateCollisions = function() { };
 __MODULE__.Basic.prototype.draw = function() { };
+
+// Z-order comparing for layer sorting.
+__MODULE__.zCompare = function(a, b) {
+  return a.z > b.z;
+};
 
 // Allocate a new sprite to add to the layer.
 __MODULE__.SpriteLayer.prototype.spawn = function(init) {
@@ -150,7 +157,9 @@ __MODULE__.SpriteLayer.prototype.updateCollisions = function(space) {
 
 // Render all the sprites onto the view.
 __MODULE__.SpriteLayer.prototype.draw = function() {
-  for(var i = 0;i < this.count;i++) {
-    this.sprites[i].draw();
+  if (this.visible) {
+    for(var i = 0;i < this.count;i++) {
+      this.sprites[i].draw();
+    }
   }
 };

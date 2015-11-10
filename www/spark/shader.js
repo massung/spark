@@ -19,8 +19,8 @@ spark.module().requires('spark.vec').defines({
       var fss = spark.project.assetPath(json.fragment);
 
       // Save the bindings for use later.
-      this.a = json.attribte || {};
-      this.u = json.uniform || {};
+      this.a = json.attributes || {};
+      this.u = json.uniforms || {};
 
       // Issue a request for the vertex shader.
       spark.loadText(vss, (function(source) {

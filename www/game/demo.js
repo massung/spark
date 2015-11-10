@@ -19,18 +19,30 @@ __MODULE__.init = function () {
     // Change the projection so the origin is in the middle.
     scene.setProjection('middle', 0.5);
 
+    // Create layers for the asteroids, player, and particles.
+    var asteroidsLayer = scene.addLayer(new spark.layer.SpriteLayer(100));
+    var playerLayer = scene.addLayer(new spark.layer.SpriteLayer(50));
+
+    // Set the Z values of each. Player layer on top.
+    asteroidsLayer.z = 1;
+    playerLayer.z = 2;
+
+    // Set the shader to use for each layer.
+    asteroidsLayer.shader = spark.project.assets.sprite_shader;
+    playerLayer.shader = spark.project.assets.sprite_shader;
+
     // Create the player.
-    game.demo.createPlayer();
+    game.demo.createPlayer(playerLayer);
 
     // Spawn 3 large asteroids.
     for(var i = 0;i < 3;i++) {
-      game.demo.createAsteroid();
+      game.demo.createAsteroid(asteroidsLayer);
     }
   });
 };
 
-__MODULE__.createPlayer = function() {
-  var sprite = spark.game.scene.sprites.spawn();
+__MODULE__.createPlayer = function(layer) {
+  var sprite = layer.spawn();
 
   // Initial properties.
   sprite.thrust = spark.vec.ZERO;
@@ -54,8 +66,8 @@ __MODULE__.createPlayer = function() {
   return sprite;
 };
 
-__MODULE__.createAsteroid = function(x, y, scale) {
-  var sprite = spark.game.scene.sprites.spawn();
+__MODULE__.createAsteroid = function(layer, x, y, scale) {
+  var sprite = layer.spawn();
   var s = 150;
 
   // Initial properties.
@@ -85,12 +97,12 @@ __MODULE__.createAsteroid = function(x, y, scale) {
         var n = spark.util.irand(2, 4);
 
         for(var i = 0;i < n;i++) {
-          game.demo.createAsteroid(this.m.p.x, this.m.p.y, this.m.s.x * 0.75);
+          game.demo.createAsteroid(this.layer, this.m.p.x, this.m.p.y, this.m.s.x * 0.75);
         }
       }
 
       // Spawn some asteroid particles.
-      spark.project.assets.explode.emit(this.m.p, 0, 50);
+      spark.project.assets.explode.emit(this.layer, this.m.p, 0, 50);
 
       // Play the explosion sound.
       spark.project.assets.rumble_sound.woof();
@@ -149,6 +161,7 @@ __MODULE__.playerControls = function() {
 
     // Emit some thrust particles.
     spark.project.assets.thrust.emit(
+      this.layer,
       this.localToWorld([0, 55]),
       this.localToWorldAngle(-90.0),
       2);
@@ -156,7 +169,7 @@ __MODULE__.playerControls = function() {
 
   // Shooting.
   if (spark.input.keyHit(spark.input.KEY.SPACE)) {
-    var bullet = spark.game.scene.sprites.spawn();
+    var bullet = this.layer.spawn();
 
     // Sprite rendering.
     bullet.setImage(spark.project.assets.player_laser);

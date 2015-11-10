@@ -46,20 +46,30 @@ __MODULE__.__defineGetter__('height', function() {
 
 // Called from game.run() when a new scene is created.
 __MODULE__.setup = function() {
-  this.particles = new spark.layer.SpriteLayer(500);
-  this.sprites = new spark.layer.SpriteLayer(100);
 
-  // The particle and sprite layers are omni-present and on top!
-  this.layers = [
-    this.particles,
-    this.sprites,
-  ];
+  // No layers by default.
+  this.layers = [];
 
   // Create an entity to use as the camera.
   this.camera = new spark.entity.Pivot();
 
   // Setup the default projection.
   this.setProjection();
+};
+
+// Add a new layer to the scene.
+__MODULE__.addLayer = function(layer, init) {
+
+  // Optionally initialize before adding to the layers.
+  if (init !== undefined) {
+    init(layer);
+  }
+
+  // Resort the layers based on z-ordering.
+  this.layers.push(layer);
+  this.layers.sort(spark.layer.zCompare);
+
+  return layer;
 };
 
 // Define the projection matrix.
@@ -132,37 +142,60 @@ __MODULE__.draw = function() {
   var r = this.right;
   var b = this.bottom;
 
+  // Default far/near.
+  var f = -1000.0;
+  var n = +1000.0;
+
   // Origin offset.
   var x = -(r + l) / (r - l);
   var y = -(t + b) / (t - b);
+  var z = -(f + n) / (f - n);
 
   // Define an orthographic projection.
   var ortho = new Float32Array([
-    2.0 / (r - l),           0.0,    0.0, 0.0,
-              0.0, 2.0 / (t - b),    0.0, 0.0,
-              0.0,           0.0, -0.002, 0.0,
-                x,             y,   -1.0, 1.0,
+    2.0 / (r - l),           0.0,          0.0, 0.0,
+              0.0, 2.0 / (t - b),          0.0, 0.0,
+              0.0,           0.0, -2 / (f - n), 0.0,
+                x,             y,            z, 1.0,
   ]);
 
   // Use the same camera transform for every layer.
   var camera = this.camera.m.inverse.transform;
 
+  // Enable depth testing.
+  //gl.enable(gl.DEPTH_TEST);
+  //gl.depthFunc(gl.LESS);
+
   // Enable blending states.
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
+  // Sort the layers (in-place) by z-ordering.
+  this.layers.sort(spark.layer.zCompare);
+
   // Render all of the layers.
   spark.perf.drawTime += spark.perf.sample((function() {
-    for(var i = this.layers.length - 1;i >= 0;i--) {
+    for(var i = 0;i < this.layers.length;i++) {
       var layer = this.layers[i];
 
       // Set the shader to use for the layer.
       if (layer.shader) {
         layer.shader.use();
 
-        // Set the transform stack matricies.
-        gl.uniformMatrix4fv(layer.shader.u_proj, false, ortho);
-        gl.uniformMatrix4fv(layer.shader.u_camera, false, camera);
+        // Set the projection matrix if it exists in the shader.
+        if (layer.shader.u.projection) {
+          gl.uniformMatrix4fv(layer.shader.u.projection, false, ortho);
+        }
+
+        // Set the camera matrix if it exists.
+        if (layer.shader.u.camera) {
+          gl.uniformMatrix4fv(layer.shader.u.camera, false, camera);
+        }
+
+        // Set the z-value for the layer if it exists.
+        if (layer.shader.u.z) {
+          gl.uniform1f(layer.shader.u.z, layer.z);
+        }
 
         // Draw each element on the layer.
         layer.draw();

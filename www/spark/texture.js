@@ -129,14 +129,14 @@ __MODULE__.Frame.prototype.bind = function() {
   // Bind the vertices.
   gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, this.quad, gl.STATIC_DRAW);
-  gl.vertexAttribPointer(spark.shader.current.a_pos, 2, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(spark.shader.current.a_pos);
+  gl.vertexAttribPointer(spark.shader.current.a.position, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(spark.shader.current.a.position);
 
   // Bind the texture coordinates.
   gl.bindBuffer(gl.ARRAY_BUFFER, this.uvBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, this.uvs, gl.STATIC_DRAW);
-  gl.vertexAttribPointer(spark.shader.current.a_uv, 2, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(spark.shader.current.a_uv);
+  gl.vertexAttribPointer(spark.shader.current.a.uv, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(spark.shader.current.a.uv);
 };
 
 // Set the pivot of an image. This alters the quad.
@@ -159,7 +159,7 @@ __MODULE__.Image.prototype.setPivot = function(x, y) {
 __MODULE__.Image.prototype.blit = function(frame) {
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, this.texture);
-  gl.uniform1i(spark.shader.current.u_sampler, 0);
+  gl.uniform1i(spark.shader.current.u.sampler, 0);
 
   // If a frame is passed in, use the vertices and UVs from it.
   (frame || this.frame).bind();

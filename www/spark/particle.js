@@ -56,9 +56,9 @@ spark.module().requires('spark.entity').defines({
 });
 
 // Emit particles into the scene.
-__MODULE__.Emitter.prototype.emit = function(pos, angle, n) {
+__MODULE__.Emitter.prototype.emit = function(layer, pos, angle, n) {
   for(var i = 0;i < n;i++) {
-    var p = spark.game.scene.particles.spawn();
+    var p = layer.spawn();
 
     // Set the texture image to use.
     p.setImage(spark.project.assets[this.texture]);

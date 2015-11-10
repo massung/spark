@@ -2,11 +2,8 @@
   "title": "Spark Demo",
   "version": 1.0,
   "assetRelativePath": "assets/",
-  "shader": {
-    "basic": "basic_shader.json",
-    "sprite": "sprite_shader.json"
-  },
   "assets": {
+    "sprite_shader": { "class": "spark.shader.Program", "source": "sprite_shader.json" },
     "starfield":     { "class": "spark.texture.Image", "source": "background.png" },
     "asteroid_0":    { "class": "spark.texture.Image", "source": "asteroid_big_1.png" },
     "asteroid_1":    { "class": "spark.texture.Image", "source": "asteroid_big_2.png" },

@@ -152,10 +152,10 @@ __MODULE__.Sprite.prototype.draw = function() {
   }
 
   // Set the alpha value for the sprite.
-  gl.uniform1f(spark.shader.current.u_alpha, this.alpha);
+  gl.uniform1f(spark.shader.current.u.alpha, this.alpha);
 
   // Set the world transform for this sprite.
-  gl.uniformMatrix4fv(spark.shader.current.u_world, false, this.m.transform);
+  gl.uniformMatrix4fv(spark.shader.current.u.world, false, this.m.transform);
 
   // TODO: Set custom attributes and uniforms on the shader.
 
