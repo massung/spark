@@ -104,17 +104,57 @@ spark.module().defines({
 
   // A CSS font.
   Font: function(src) {
-    var family = src.split('/').slice(-1)[0].split('.')[0];
-    var face = `@font-face{
-      font-family: "` + family + `"; src: url("` + src + `");
-    }`;
+    this.pages = [];
+    this.glyphs = [];
 
-    // Create the <style> node.
-    this.style = document.createElement('style');
-    this.style.appendChild(document.createTextNode(face));
+    // Load the font description as an XML file.
+    spark.loadXML(src, (function(font) {
+      var common = font.getElementsByTagName('common')[0];
+      var pages = font.getElementsByTagName('page');
+      var chars = font.getElementsByTagName('char');
 
-    // Add it to the document. This won't load, but will be good enough.
-    document.head.appendChild(this.style);
+      // Find all the common settings.
+      this.lineHeight = parseFloat(common.attributes.lineHeight.value);
+      this.pageWidth = parseFloat(common.attributes.scaleW.value);
+      this.pageHeight = parseFloat(common.attributes.scaleH.value);
+
+      // Issue texture requests for all the pages.
+      for(var i = 0;i < pages.length;i++) {
+        var id = parseInt(pages[i].attributes.id.value);
+        var src = spark.project.assetPath(pages[i].attributes.file.value);
+
+        // Assign the page to the font.
+        this.pages[id] = new spark.texture.Image(src);
+      }
+
+      // Create frames for all the glyphs.
+      for(var i = 0;i < chars.length;i++) {
+        var id = parseInt(chars[i].attributes.id.value);
+
+        // Get the bounds of the glyph.
+        var x = parseFloat(chars[i].attributes.x.value);
+        var y = parseFloat(chars[i].attributes.y.value);
+        var w = parseFloat(chars[i].attributes.width.value);
+        var h = parseFloat(chars[i].attributes.height.value);
+
+        // Get the uv texture coordinates.
+        var u1 = x / this.pageWidth;
+        var v1 = y / this.pageHeight;
+        var u2 = (x + w) / this.pageWidth;
+        var v2 = (y + h) / this.pageHeight;
+
+        // Setup the glyph object.
+        this.glyphs[id] = {
+          xoffset: parseFloat(chars[i].attributes.xoffset.value),
+          yoffset: parseFloat(chars[i].attributes.yoffset.value),
+          xadvance: parseFloat(chars[i].attributes.xadvance.value),
+          page: parseInt(chars[i].attributes.page.value),
+
+          // Create the frame for this glyph.
+          frame: new spark.texture.Frame(0, h, w, 0, u1, v2, u2, v1),
+        };
+      }
+    }).bind(this));
   },
 });
 
@@ -171,4 +211,27 @@ __MODULE__.Image.prototype.blit = function(frame) {
 // Blit a sprite from an atlas to the canvas.
 __MODULE__.Atlas.prototype.blit = function(frame) {
   this.image.blit(this.frames[frame]);
+};
+
+// Render a font string.
+__MODULE__.Font.prototype.drawText = function(string, x, y) {
+
+  // TODO: What shader to use?
+
+  for(var i = 0;i < string.length;i++) {
+    var glyph = this.glyphs[string.charCodeAt(0)];
+
+    // Skip if we don't have that character in the font.
+    if (glyph === undefined || this.pages[glyph.page] === undefined) {
+      continue;
+    }
+
+    // TODO: Set the transform to use.
+
+    // Blit the glyph.
+    this.pages[glyph.page].blit(glyph.frame);
+
+    // Update the transform position.
+    x += glyph.xadvance;
+  }
 };

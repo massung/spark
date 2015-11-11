@@ -178,12 +178,8 @@
       var req = new XMLHttpRequest();
 
       req.onreadystatechange = (function() {
-        if (req.readyState === 4) {
-          if (req.status === 200) {
-            onload(req.responseText);
-          }
-
-          // The source is loaded.
+        if (req.readyState === 4 && req.status === 200) {
+          onload(req.responseText);
           this.register(req);
         }
       }).bind(this);
@@ -192,6 +188,29 @@
       this.loadQueue.push(req);
 
       // Perform the request.
+      req.open('GET', src, true);
+      req.send();
+    };
+
+    // Load a file as an XML document.
+    this.loadXML = function(src, onload) {
+      var req = new XMLHttpRequest();
+
+      req.onreadystatechange = (function() {
+        if (req.readyState === 4 && req.status === 200) {
+          onload(req.response.documentElement);
+          this.register(req);
+        }
+      }).bind(this);
+
+      // Add this source to the load queue.
+      this.loadQueue.push(req);
+
+      // Set the response type to be an XML document.
+      req.responseType = 'document';
+
+      // Perform the request.
+      req.overrideMimeType('application/xml');
       req.open('GET', src, true);
       req.send();
     };
