@@ -4,7 +4,7 @@
  * All rights reserved.
  */
 
-spark.module().defines({
+spark.module().requires('spark.render').defines({
   updateTime: 0,
   collisionTime: 0,
   drawTime: 0,
@@ -13,16 +13,9 @@ spark.module().defines({
 
 // Create an offscreen canvas to render performance data to.
 __MODULE__.start = function() {
-  if (this.canvas === undefined) {
-    this.canvas = document.createElement('canvas');
-
-    // Set the dimensions of the canvas.
-    this.canvas.width = 0;
-    this.canvas.height= 200;
+  if (this.target === undefined) {
+    this.target = new spark.render.Target(gl.canvas.width, gl.canvas.height);
   }
-
-  // Get the context to render with.
-  this.view = this.canvas.getContext('2d');
 };
 
 // Stop profiling.
@@ -37,10 +30,14 @@ __MODULE__.sample = function(f) {
   var t0 = window.performance.now();
 
   // Execute.
-  f();
+  try {
+    f();
+  }
 
   // Tally how much time it took to call the function
-  return window.performance.now() - t0;
+  finally {
+    return window.performance.now() - t0;
+  }
 };
 
 // Reset timings for a new frame.

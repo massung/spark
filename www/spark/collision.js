@@ -4,7 +4,10 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.sat').defines({
+spark.module().requires('spark.render', 'spark.sat').defines({
+  DEBUG: false,
+
+  // Maximum spacial depth and shapes per node before subdividing.
   QUADTREE_DEPTH_LIMIT: 3,
   QUADTREE_SHAPE_LIMIT: 8,
 
@@ -220,11 +223,10 @@ __MODULE__.Quadtree.prototype.processCollisions = function() {
 
 // Debug render the quadtree.
 __MODULE__.Quadtree.prototype.draw = function(color) {
-  spark.view.save();
 
   // Render the bounding area of this quadtree node.
-  spark.view.strokeStyle = color || '#f00';
-  spark.view.strokeRect(this.x1, this.y1, this.x2 - this.x1, this.y2 - this.y1);
+  spark.render.drawColor(1, 0, 0);
+  spark.render.drawRect(this.x1, this.y1, this.x2 - this.x1, this.y2 - this.y1);
 
   // Render all the child nodes.
   this.nodes.forEach(function(node) {
@@ -235,9 +237,6 @@ __MODULE__.Quadtree.prototype.draw = function(color) {
   this.shapes.forEach(function(shape) {
     shape.draw();
   });
-
-  // Done.
-  spark.view.restore();
 };
 
 // Add all the shapes of a collider to a spacial hash.
@@ -295,11 +294,8 @@ __MODULE__.Shape.prototype.boxQuery = function(s) { return false; };
 
 // Render the segment shape.
 __MODULE__.Segment.prototype.draw = function() {
-  spark.view.strokeStyle = '#ff0';
-  spark.view.beginPath();
-  spark.view.moveTo(this.tp1.x, this.tp1.y);
-  spark.view.lineTo(this.tp2.x, this.tp2.y);
-  spark.view.stroke();
+  spark.render.drawColor(1, 1, 0);
+  spark.render.drawLine(this.tp1.x, this.tp1.y, this.tp2.x, this.tp2.y);
 };
 
 // Update the world coordinates of the segment shape.
@@ -362,10 +358,8 @@ __MODULE__.Segment.prototype.boxQuery = function(s) {
 
 // Render the circle shape.
 __MODULE__.Circle.prototype.draw = function() {
-  spark.view.strokeStyle = '#ff0';
-  spark.view.beginPath();
-  spark.view.arc(this.tc.x, this.tc.y, this.r, 0, 360);
-  spark.view.stroke();
+  spark.render.drawColor(1, 1, 0);
+  spark.render.drawCircle(this.tc.x, this.tc.y, this.r);
 };
 
 // Update the world coordinates of the circle shape.
@@ -427,14 +421,8 @@ __MODULE__.Circle.prototype.boxQuery = function(s) {
 
 // Render the box shape.
 __MODULE__.Box.prototype.draw = function() {
-  spark.view.strokeStyle = '#ff0';
-  spark.view.beginPath();
-  spark.view.moveTo(this.tp1.x, this.tp1.y);
-  spark.view.lineTo(this.tp2.x, this.tp1.y);
-  spark.view.lineTo(this.tp2.x, this.tp2.y);
-  spark.view.lineTo(this.tp1.x, this.tp2.y);
-  spark.view.closePath();
-  spark.view.stroke();
+  spark.render.drawColor(1, 1, 0);
+  spark.render.drawRect(this.tp1.x, this.tp1.y, this.tp2.x - this.tp1.x, this.tp2.y - this.tp1.y);
 };
 
 // Update the world coordinates of the circle shape.

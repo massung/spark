@@ -68,6 +68,10 @@ __MODULE__.loadFrame = function() {
   // Use the default shader.
   gl.basicShader.use();
 
+  // Set the identity projection matrix and white color.
+  gl.uniformMatrix4fv(gl.basicShader.u.projection, false, spark.vec.IDENTITY.transform);
+  gl.uniform4f(gl.basicShader.u.color, 1, 1, 1, 1);
+
   // Vertex buffer for a line progress bar.
   var vbuf = gl.createBuffer();
 

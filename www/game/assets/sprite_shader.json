@@ -7,7 +7,7 @@
   },
   "uniforms": {
     "z": "u_z",
-    "alpha": "u_alpha",
+    "color": "u_color",
     "projection": "u_proj",
     "camera": "u_camera",
     "world": "u_world",

@@ -162,10 +162,6 @@ __MODULE__.draw = function() {
   // Use the same camera transform for every layer.
   var camera = this.camera.m.inverse.transform;
 
-  // Enable depth testing.
-  //gl.enable(gl.DEPTH_TEST);
-  //gl.depthFunc(gl.LESS);
-
   // Enable blending states.
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -202,6 +198,18 @@ __MODULE__.draw = function() {
       }
     }
   }).bind(this));
+
+  // Render the spacial hash for debugging.
+  if (spark.collision.DEBUG === true) {
+    gl.basicShader.use();
+
+    // TODO: multiply ortho by camera.
+
+    gl.uniformMatrix4fv(gl.basicShader.u.projection, false, ortho);
+
+    // Render the spacial hash.
+    this.space.draw();
+  }
 
   // Render the optional scene GUI for the scene.
   //if (this.gui !== undefined) {

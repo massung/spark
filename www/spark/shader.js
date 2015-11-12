@@ -44,10 +44,10 @@ spark.module().requires('spark.vec').defines({
     }).bind(this));
   },
 
-  // The basic shader is a clip-space, white-only, shader.
+  // The basic shader is a simple projection + color shader.
   Basic: function() {
-    var vss = `attribute vec2 a_pos; void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }`;
-    var fss = `void main() { gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0); }`;
+    var vss = `uniform mat4 u_proj; attribute vec2 a_pos; void main() { gl_Position = u_proj * vec4(a_pos, 0.0, 1.0); }`;
+    var fss = `uniform highp vec4 u_color; void main() { gl_FragColor = u_color; }`;
 
     // Create the program.
     this.program = gl.createProgram();
@@ -57,8 +57,8 @@ spark.module().requires('spark.vec').defines({
     this.fs = this.compileShader(gl.FRAGMENT_SHADER, fss);
 
     // Set default attribute and uniform bindings.
+    this.u = { projection: 'u_proj', color: 'u_color' };
     this.a = { position: 'a_pos' };
-    this.u = { };
 
     // Link the program.
     this.link();

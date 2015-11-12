@@ -6,10 +6,10 @@
 
 spark.module().requires('spark.particle', 'spark.shader').defines({
 
-  // The base layer object.
+  // A basic, immediate-rendering layer.
   Basic: function() {
     this.visible = true;
-    this.shader = null;
+    this.shader = gl.basicShader;
     this.z = 0.0;
   },
 

@@ -15,6 +15,11 @@ spark.module().requires('spark.collision', 'spark.shader').defines({
   Sprite: function() {
     this.dead = false;
     this.visible = true;
+
+    // Color tint and alpha.
+    this.red = 1.0;
+    this.green = 1.0;
+    this.blue = 1.0;
     this.alpha = 1.0;
 
     // Update behaviors and shape colliders.
@@ -151,8 +156,8 @@ __MODULE__.Sprite.prototype.draw = function() {
     return;
   }
 
-  // Set the alpha value for the sprite.
-  gl.uniform1f(spark.shader.current.u.alpha, this.alpha);
+  // Set the color tint and alpha value for the sprite.
+  gl.uniform4f(spark.shader.current.u.color, this.red, this.green, this.blue, this.alpha);
 
   // Set the world transform for this sprite.
   gl.uniformMatrix4fv(spark.shader.current.u.world, false, this.m.transform);
