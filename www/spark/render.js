@@ -24,9 +24,10 @@ spark.module().requires('spark.shader').defines({
 
     // Setup the texture.
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-    gl.generateMipmap(gl.TEXTURE_2D);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, rttFramebuffer.width, rttFramebuffer.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
 
     // Setup the render target.
     gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, w, h);
@@ -36,6 +37,14 @@ spark.module().requires('spark.shader').defines({
     // Cleanup.
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindTexture(gl.TEXTURE_2D, null);
+
+    // Allocate arrays for the quad and texture coordinates.
+    this.quad = new Float32Array([0.0, 0.0, 0.0, 1, 1, 0.0, 1, 1]);
+    this.uvs = new Float32Array([0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]);
+
+    // Create a simple UV buffer and quad buffer for the texture.
+    this.quadBuffer = gl.createBuffer();
+    this.uvBuffer = gl.createBuffer();
   },
 });
 
@@ -55,6 +64,28 @@ __MODULE__.Target.prototype.withFramebuffer = function(f) {
   finally {
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   }
+};
+
+// Render a target to the viewport.
+__MODULE__.Target.prototype.blit = function() {
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, this.texture);
+  gl.uniform1i(spark.shader.current.u.sampler, 0);
+
+  // Bind the vertices.
+  gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, this.quad, gl.STATIC_DRAW);
+  gl.vertexAttribPointer(spark.shader.current.a.position, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(spark.shader.current.a.position);
+
+  // Bind the texture coordinates.
+  gl.bindBuffer(gl.ARRAY_BUFFER, this.uvBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, this.uvs, gl.STATIC_DRAW);
+  gl.vertexAttribPointer(spark.shader.current.a.uv, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(spark.shader.current.a.uv);
+
+  // Render the quad.
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 };
 
 // Use the basic shader and screen-space projection matrix.
@@ -155,6 +186,31 @@ __MODULE__.drawCircle = function(x, y, r, slices) {
   gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(0);
   gl.drawArrays(gl.LINE_LOOP, 0, slices);
+
+  // Free buffer.
+  gl.deleteBuffer(vbuf);
+};
+
+// Draw a solid rectangle from <x,y> - <x+w,y+h>.
+__MODULE__.fillRect = function(x, y, w, h) {
+  var vbuf = gl.createBuffer();
+
+  // Set the vertices.
+  spark.render.vertices[0] = x;
+  spark.render.vertices[1] = y;
+  spark.render.vertices[2] = x + w;
+  spark.render.vertices[3] = y;
+  spark.render.vertices[4] = x + w;
+  spark.render.vertices[5] = y + h;
+  spark.render.vertices[6] = x;
+  spark.render.vertices[7] = y + h;
+
+  // Fill out the vertex buffer.
+  gl.bindBuffer(gl.ARRAY_BUFFER, vbuf);
+  gl.bufferData(gl.ARRAY_BUFFER, spark.render.vertices, gl.STATIC_DRAW);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(0);
+  gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
 
   // Free buffer.
   gl.deleteBuffer(vbuf);
