@@ -4,55 +4,53 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.shader').defines({
-  vertices: new Float32Array(100),
+spark.module().requires('spark.shader');
 
-  // A framebuffer and render-to-texture target.
-  Target: function(w, h) {
-    this.framebuffer = gl.createFramebuffer();
-    this.renderbuffer = gl.createRenderbuffer();
-    this.texture = gl.createTexture();
+// A framebuffer and render-to-texture target.
+spark.RenderTarget = function(w, h) {
+  this.framebuffer = gl.createFramebuffer();
+  this.renderbuffer = gl.createRenderbuffer();
+  this.texture = gl.createTexture();
 
-    // Set the size of the framebuffer.
-    this.framebuffer.width = w;
-    this.framebuffer.height = h;
+  // Set the size of the framebuffer.
+  this.framebuffer.width = w;
+  this.framebuffer.height = h;
 
-    // Bind all state variables.
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
-    gl.bindTexture(gl.TEXTURE_2D, this.texture);
-    gl.bindRenderbuffer(gl.RENDERBUFFER, this.renderbuffer);
+  // Bind all state variables.
+  gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
+  gl.bindTexture(gl.TEXTURE_2D, this.texture);
+  gl.bindRenderbuffer(gl.RENDERBUFFER, this.renderbuffer);
 
-    // Setup the texture.
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  // Setup the texture.
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
 
-    // Setup the render target.
-    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, w, h);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texture, 0);
-    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, this.renderbuffer);
+  // Setup the render target.
+  gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, w, h);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texture, 0);
+  gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, this.renderbuffer);
 
-    // Cleanup.
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.bindTexture(gl.TEXTURE_2D, null);
+  // Cleanup.
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.bindTexture(gl.TEXTURE_2D, null);
 
-    // Allocate arrays for the quad and texture coordinates.
-    this.quad = new Float32Array([0.0, 0.0, 0.0, 1, 1, 0.0, 1, 1]);
-    this.uvs = new Float32Array([0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]);
+  // Allocate arrays for the quad and texture coordinates.
+  this.quad = new Float32Array([0.0, 0.0, 0.0, 1, 1, 0.0, 1, 1]);
+  this.uvs = new Float32Array([0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]);
 
-    // Create a simple UV buffer and quad buffer for the texture.
-    this.quadBuffer = gl.createBuffer();
-    this.uvBuffer = gl.createBuffer();
-  },
-});
+  // Create a simple UV buffer and quad buffer for the texture.
+  this.quadBuffer = gl.createBuffer();
+  this.uvBuffer = gl.createBuffer();
+};
 
 // Set constructors.
-__MODULE__.Target.prototype.constructor = __MODULE__.Target;
+spark.RenderTarget.prototype.constructor = spark.RenderTarget;
 
 // Render to a target.
-__MODULE__.Target.prototype.withFramebuffer = function(f) {
+spark.RenderTarget.prototype.withFramebuffer = function(f) {
   gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
 
   // Render.
@@ -67,7 +65,7 @@ __MODULE__.Target.prototype.withFramebuffer = function(f) {
 };
 
 // Render a target to the viewport.
-__MODULE__.Target.prototype.blit = function() {
+spark.RenderTarget.prototype.blit = function() {
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, this.texture);
   gl.uniform1i(spark.shader.current.u.sampler, 0);
@@ -89,12 +87,12 @@ __MODULE__.Target.prototype.blit = function() {
 };
 
 // Use the basic shader and screen-space projection matrix.
-__MODULE__.drawColor = function(r, g, b, a) {
+spark.drawColor = function(r, g, b, a) {
   gl.uniform4f(spark.shader.current.u.color, r, g, b, a || 1.0);
 };
 
 // Draw a line from <x1,y1> - <x2,y2>.
-__MODULE__.drawLine = function(x1, y1, x2, y2) {
+spark.drawLine = function(x1, y1, x2, y2) {
   var vbuf = gl.createBuffer();
 
   // Set the vertices.
@@ -115,7 +113,7 @@ __MODULE__.drawLine = function(x1, y1, x2, y2) {
 };
 
 // Draw a rectangle from <x,y> - <x+w, y+h>.
-__MODULE__.drawRect = function(x, y, w, h) {
+spark.drawRect = function(x, y, w, h) {
   var vbuf = gl.createBuffer();
 
   // Set the vertices.
@@ -140,7 +138,7 @@ __MODULE__.drawRect = function(x, y, w, h) {
 };
 
 // Draw an arc at <x,y> with a radius from angle t - u.
-__MODULE__.drawArc = function(x, y, r, t, u, slices) {
+spark.drawArc = function(x, y, r, t, u, slices) {
   var vbuf = gl.createBuffer();
 
   // Default number of slices.
@@ -168,7 +166,7 @@ __MODULE__.drawArc = function(x, y, r, t, u, slices) {
 };
 
 // Draw a circle at <x,y> with a given radius.
-__MODULE__.drawCircle = function(x, y, r, slices) {
+spark.drawCircle = function(x, y, r, slices) {
   var vbuf = gl.createBuffer();
 
   // Default number of slices.
@@ -192,7 +190,7 @@ __MODULE__.drawCircle = function(x, y, r, slices) {
 };
 
 // Draw a solid rectangle from <x,y> - <x+w,y+h>.
-__MODULE__.fillRect = function(x, y, w, h) {
+spark.fillRect = function(x, y, w, h) {
   var vbuf = gl.createBuffer();
 
   // Set the vertices.

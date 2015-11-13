@@ -7,7 +7,7 @@
 spark.module().requires('spark.vec');
 
 // Project a list of points onto an axis, find the min and max.
-__MODULE__.project = function(as, bs, axis) {
+spark.SATproject = function(as, bs, axis) {
   var i, n, amin, amax, bmin, bmax;
 
   // Project the first point.
@@ -41,19 +41,19 @@ __MODULE__.project = function(as, bs, axis) {
 };
 
 // Perform SAT on two convex shapes (points and normals).
-__MODULE__.query = function(aPs, aNs, bPs, aNs) {
+spark.SATquery = function(aPs, aNs, bPs, aNs) {
   var i, pa, pb;
 
   // Project all the points onto the normals of shape A.
   for(i = 0;i < aNs.length;i++) {
-    if (spark.sat.project(aPs, bPs, aNs[i]) === false) {
+    if (spark.SATproject(aPs, bPs, aNs[i]) === false) {
       return false;
     }
   }
 
   // Project all the points onto the normals of shape B.
   for(i = 0;i < bNs.length;i++) {
-    if (spark.sat.project(aPs, bPs, bNs[i]) === false) {
+    if (spark.SATproject(aPs, bPs, bNs[i]) === false) {
       return false;
     }
   }

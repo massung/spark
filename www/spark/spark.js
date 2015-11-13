@@ -7,52 +7,9 @@
 // Initialize the Spark framework.
 (function(window) {
 
-  // Returns the path to the script file being executed.
-  window.__defineGetter__('__PATH__', function() {
-    var parser = document.createElement('a');
-    var sliceIndex = 1;
-
-    // Set the HREF of the anchor, which will parse it.
-    parser.href = document.currentScript.src;
-
-    // Remove the platform base path.
-    if (window['cordova']) {
-      if (cordova.platformId === 'android') {
-        sliceIndex = 3;
-      } else if (cordova.platformId !== 'browser') {
-        throw 'Unsupported platform!';
-      }
-    }
-
-    // Return the path.
-    return parser.pathname.split('/').slice(sliceIndex);
-  });
-
-  // The last element in the __PATH__ is the actual filename.
-  window.__defineGetter__('__FILE__', function() {
-    return __PATH__.pop();
-  });
-
-  // Returns the module for the current module.
-  window.__defineGetter__('__MODULE__', function() {
-    var path = __PATH__;
-
-    // Strip the file and extension off the path to this script.
-    var name = path.pop().split('.')[0];
-    var root = window;
-
-    // Create all the namespaces leading up to the module.
-    path.forEach(function(s) {
-      root = root[s] = (root[s] || new Module());
-    });
-
-    // If the module doesn't exist, create it.
-    return root[name] || (root[name] = new Module());
-  });
-
   // Define a new module.
   function Module() {
-    this.path = __FILE__;
+    this.src = document.currentScript.src;
     this.loaded = false;
     this.dependencies = [];
   }
@@ -64,67 +21,48 @@
     }
 
     // Are all the dependencies met?
-    if (this.dependencies.every(function(m) { return m(); }) === false) {
-      return false;
+    if (this.loaded = this.dependencies.every(spark.moduleLoaded.bind(spark))) {
+      if (this.init !== undefined) {
+        this.init();
+      }
     }
 
-    // Initialize the module. Should only happen once!
-    if (this.init !== undefined ) {
-      this.init();
-    }
-
-    // This module is now loaded.
-    return this.loaded = true;
+    return this.loaded;
   };
 
-  // List the module dependencies that need to be loaded first.
+  // List of module dependencies that need to be imported.
   Module.prototype.requires = function() {
     var sources = Array.prototype.slice.call(arguments);
 
     // Each dependency is a function that finds the module in question.
     this.dependencies = sources.map(function(src) {
-      var path = src.split('.');
+      var link = document.createElement('a');
 
-      return function() {
-        var m = window;
+      // Create a link that will expand to the full HREF location.
+      link.href = src.split('.').join('/') + '.js';
 
-        for(var i = 0;i < path.length;i++) {
-          m = m[path[i]];
-
-          if (m === undefined) {
-            return false;
-          }
-        }
-
-        return m.loaded;
-      };
+      // Return the parsed (and expanded) href.
+      return link.href;
     });
 
     // For each source load the script.
-    sources.forEach((function(src) {
-      var path = src.split('.').join('/') + '.js';
-
-      // Load the dependency script.
-      spark.loadScript(path, spark.importModules.bind(spark));
+    this.dependencies.forEach((function(href) {
+      spark.loadScript(href, spark.importModules.bind(spark));
     }).bind(this));
 
     return this;
   };
 
-  // Setup the module with properties that are globally accessible.
-  Module.prototype.defines = function(props) {
-    for(var prop in props) {
-      this[prop] = props[prop];
-    }
-
-    return this;
-  }
+  // Returns 'this' module.
+  window.__defineGetter__('__MODULE__', function() {
+    return spark.modules[document.currentScript.src];
+  });
 
   // Primary interface to framework.
   window.spark = new (function() {
     this.loadQueue = [];
     this.registeredAssets = [];
-    this.modules = [];
+    this.modules = {};
 
     // Track all the scripts so they don't get reloaded.
     this.scripts = {};
@@ -134,9 +72,10 @@
       do {
         var moduleImported = false;
 
-        this.modules.forEach(function(module) {
-          moduleImported |= module.import();
-        });
+        // Try and import each module.
+        for(var mod in this.modules) {
+          moduleImported |= this.modules[mod].import();
+        }
 
         // As long as one module imported, try and import more.
       } while(moduleImported);
@@ -236,12 +175,17 @@
 
     // Define a new module.
     this.module = function() {
-      var module = __MODULE__;
+      return this.modules[document.currentScript.src] = new Module();
+    };
 
-      // Track the module so it can be imported when dependencies are met.
-      this.modules.push(module);
+    // True once a module has been loaded.
+    this.moduleLoaded = function(m) {
+      return this.modules[m] !== undefined && this.modules[m].loaded;
+    };
 
-      return module;
+    // Define the main game module. This loads the rest of spark.
+    this.game = function() {
+      return this.module().requires('spark.game');
     };
 
     // Called once to initialize.
@@ -250,8 +194,8 @@
 
       // Resize the canvas.
       if (this.canvas !== undefined) {
-        this.canvas.width = width || spark.platform.width || this.canvas.width;
-        this.canvas.height = height || spark.platform.height || this.canvas.height;
+        this.canvas.width = width || (spark.mobile ? spark.screenWidth : this.canvas.width);
+        this.canvas.height = height || (spark.mobile ? spark.screenHeight : this.canvas.height);
 
         // Hide the mouse over the canvas by default.
         this.canvas.style.cursor = 'none';
@@ -265,7 +209,8 @@
         window.gl = this.canvas.getContext('webgl');
 
         // Create the basic shader that's the default for load screens, etc.
-        gl.basicShader = new spark.shader.Basic();
+        gl.basicShader = new spark.BasicShader();
+        gl.spriteShader = new spark.SpriteShader();
       }
     };
 

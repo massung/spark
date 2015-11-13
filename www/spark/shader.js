@@ -4,81 +4,99 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.vec').defines({
+spark.module().requires('spark.matrix');
 
-  // This is the currently active shader.
-  current: null,
+// A shader program.
+spark.Shader = function(src) {
+  this.program = gl.createProgram();
 
-  // A linked vertex and fragment shader.
-  Program: function(src) {
-    this.program = gl.createProgram();
+  // Load a JSON file describing the shader.
+  spark.loadJSON(src, (function(json) {
+    var vss = spark.project.assetPath(json.vertex);
+    var fss = spark.project.assetPath(json.fragment);
 
-    // Load a JSON file describing the shader.
-    spark.loadJSON(src, (function(json) {
-      var vss = spark.project.assetPath(json.vertex);
-      var fss = spark.project.assetPath(json.fragment);
+    // Save the bindings for use later.
+    this.a = json.attributes || {};
+    this.u = json.uniforms || {};
 
-      // Save the bindings for use later.
-      this.a = json.attributes || {};
-      this.u = json.uniforms || {};
+    // Issue a request for the vertex shader.
+    spark.loadText(vss, (function(source) {
+      this.vs = this.compileShader(gl.VERTEX_SHADER, source);
 
-      // Issue a request for the vertex shader.
-      spark.loadText(vss, (function(source) {
-        this.vs = this.compileShader(gl.VERTEX_SHADER, source);
-
-        // When both the vertex and fragment shaders are loaded, link.
-        if (this.vs !== undefined && this.fs !== undefined) {
-          this.link();
-        }
-      }).bind(this));
-
-      // Issue a request for the fragment shader.
-      spark.loadText(fss, (function(source) {
-        this.fs = this.compileShader(gl.FRAGMENT_SHADER, source);
-
-        // When both the vertex and fragment shaders are loaded, link.
-        if (this.vs !== undefined && this.fs !== undefined) {
-          this.link();
-        }
-      }).bind(this));
+      // When both the vertex and fragment shaders are loaded, link.
+      if (this.vs !== undefined && this.fs !== undefined) {
+        this.link();
+      }
     }).bind(this));
-  },
 
-  // The basic shader is a simple projection + color shader.
-  Basic: function() {
-    var vss = `uniform mat4 u_proj; attribute vec2 a_pos; void main() { gl_Position = u_proj * vec4(a_pos, 0.0, 1.0); }`;
-    var fss = `uniform highp vec4 u_color; void main() { gl_FragColor = u_color; }`;
+    // Issue a request for the fragment shader.
+    spark.loadText(fss, (function(source) {
+      this.fs = this.compileShader(gl.FRAGMENT_SHADER, source);
 
-    // Create the program.
-    this.program = gl.createProgram();
+      // When both the vertex and fragment shaders are loaded, link.
+      if (this.vs !== undefined && this.fs !== undefined) {
+        this.link();
+      }
+    }).bind(this));
+  }).bind(this));
+};
 
-    // Compile the vertex and fragment shaders.
-    this.vs = this.compileShader(gl.VERTEX_SHADER, vss);
-    this.fs = this.compileShader(gl.FRAGMENT_SHADER, fss);
+// Define the basic shader.
+spark.BasicShader = function() {
+  var vss = `uniform mat4 u_proj; attribute vec2 a_pos; void main() { gl_Position = u_proj * vec4(a_pos, 0.0, 1.0); }`;
+  var fss = `uniform highp vec4 u_color; void main() { gl_FragColor = u_color; }`;
 
-    // Set default attribute and uniform bindings.
-    this.u = { projection: 'u_proj', color: 'u_color' };
-    this.a = { position: 'a_pos' };
+  // Create the program.
+  this.program = gl.createProgram();
 
-    // Link the program.
-    this.link();
-  },
-});
+  // Compile the vertex and fragment shaders.
+  this.vs = this.compileShader(gl.VERTEX_SHADER, vss);
+  this.fs = this.compileShader(gl.FRAGMENT_SHADER, fss);
+
+  // Set default attribute and uniform bindings.
+  this.u = { projection: 'u_proj', color: 'u_color' };
+  this.a = { position: 'a_pos' };
+
+  // Link the program.
+  this.link();
+};
+
+// The common sprite shader.
+spark.SpriteShader = function() {
+  var vss = `attribute vec2 a_pos, a_uv; uniform mat4 u_proj, u_camera, u_world; uniform lowp float u_z; varying lowp vec2 v_uv; void main() { v_uv = a_uv; gl_Position = u_proj * u_camera * u_world * vec4(a_pos, u_z, 1.0); }`;
+  var fss = `precision highp float; varying vec2 v_uv; uniform vec4 u_color; uniform sampler2D u_sampler; void main() { gl_FragColor = vec4(texture2D(u_sampler, vec2(v_uv.s, v_uv.t)) * u_color); }`;
+
+  // Create the program.
+  this.program = gl.createProgram();
+
+  // Compile the vertex and fragment shaders.
+  this.vs = this.compileShader(gl.VERTEX_SHADER, vss);
+  this.fs = this.compileShader(gl.FRAGMENT_SHADER, fss);
+
+  // Set default attribute and uniform bindings.
+  this.u = { projection: 'u_proj', camera: 'u_camera', world: 'u_world', color: 'u_color', alpha: 'u_alpha', z: 'u_z', sampler: 'u_sampler' };
+  this.a = { position: 'a_pos', uv: 'a_uv' };
+
+  // Link the program.
+  this.link();
+};
 
 // A basic shader is a shader program.
-__MODULE__.Basic.prototype = Object.create(__MODULE__.Program.prototype);
+spark.BasicShader.prototype = Object.create(spark.Shader.prototype);
+spark.SpriteShader.prototype = Object.create(spark.Shader.prototype);
 
 // Set constructors.
-__MODULE__.Program.prototype.constructor = __MODULE__.Program;
-__MODULE__.Basic.prototype.constructor = __MODULE__.Basic;
+spark.Shader.prototype.constructor = spark.Shader;
+spark.BasicShader.prototype.constructor = spark.BasicShader;
+spark.SpriteShader.prototype.constructor = spark.SpriteShader;
 
 // Make this shader current.
-__MODULE__.Program.prototype.use = function() {
-  gl.useProgram((spark.shader.current = this).program);
+spark.Shader.prototype.use = function() {
+  gl.useProgram((spark.currentShader = this).program);
 };
 
 // Callback when the vertex shader source is done loading.
-__MODULE__.Program.prototype.compileShader = function(type, source) {
+spark.Shader.prototype.compileShader = function(type, source) {
   var shader = gl.createShader(type);
 
   // Bind and compile.
@@ -97,7 +115,7 @@ __MODULE__.Program.prototype.compileShader = function(type, source) {
 };
 
 // Link the vertex and fragment shaders together, bind variables.
-__MODULE__.Program.prototype.link = function() {
+spark.Shader.prototype.link = function() {
   if (this.a.position === undefined) {
     throw 'No position attribute in shader!';
   }

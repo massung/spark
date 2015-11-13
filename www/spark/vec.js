@@ -4,45 +4,7 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.util').defines({
-  Mat: function(x, y, angle, sx, sy) {
-    this.p = [x || 0.0, y || 0.0];
-
-    // Set the rotation vector.
-    if (angle !== undefined) {
-      var rads = spark.util.degToRad(angle);
-      this.r = [Math.cos(rads), Math.sin(rads)];
-    } else {
-      this.r = spark.vec.RIGHT;
-    }
-
-    // Set the scale vector.
-    this.s = [sx || 1.0, sy || sx || 1.0];
-  },
-});
-
-// Set constructors.
-__MODULE__.Mat.prototype.constructor = __MODULE__.Mat;
-
-// Matrix inverse.
-__MODULE__.Mat.prototype.__defineGetter__('inverse', function() {
-  var m = new spark.vec.Mat(-this.p.x, -this.p.y, undefined, 1 / this.s.x, 1 / this.s.y);
-
-  // Transpose the rotation.
-  m.r.x = this.r.x;
-  m.r.y = -this.r.y;
-
-  return m;
-});
-
-// A 4x4 matrix for use with gl.uniformMatrix4fv().
-__MODULE__.Mat.prototype.__defineGetter__('transform', function() {
-  return new Float32Array([
-    this.r.x * this.s.x, -this.r.y * this.s.y, 0.0, 0.0,
-    this.r.y * this.s.x,  this.r.x * this.s.y, 0.0, 0.0,
-                    0.0,                  0.0, 1.0, 0.0,
-               this.p.x,             this.p.y, 0.0, 1.0]);
-});
+spark.vec = spark.module().requires('spark.util');
 
 // Create accessors for <x,y> of array pairs.
 Array.prototype.__defineGetter__('x', function() {
@@ -62,106 +24,101 @@ Array.prototype.__defineSetter__('y', function(y) {
 });
 
 // <0,0> zero vector.
-__MODULE__.__defineGetter__('ZERO', function() {
+spark.vec.__defineGetter__('ZERO', function() {
   return new Array(0.0, 0.0);
 });
 
 // <1,1> uniform vector.
-__MODULE__.__defineGetter__('ONE', function() {
+spark.vec.__defineGetter__('ONE', function() {
   return new Array(1.0, 1.0);
 });
 
 // <1,0> right vector.
-__MODULE__.__defineGetter__('RIGHT', function() {
+spark.vec.__defineGetter__('RIGHT', function() {
   return new Array(1.0, 0.0);
 });
 
 // <0,1> up vector.
-__MODULE__.__defineGetter__('UP', function() {
+spark.vec.__defineGetter__('UP', function() {
   return new Array(0.0, 1.0);
 });
 
-// <1,0,0,1,0,0> identity matrix.
-__MODULE__.__defineGetter__('IDENTITY', function() {
-  return new spark.vec.Mat();
-});
-
 // Add two vectors.
-__MODULE__.vadd = function(a, b) {
+spark.vadd = function(a, b) {
   return [a.x + b.x, a.y + b.y];
 };
 
 // Subtract two vectors.
-__MODULE__.vsub = function(a, b) {
+spark.vsub = function(a, b) {
   return [a.x - b.x, a.y - b.y];
 };
 
 // Negate a vector.
-__MODULE__.vneg = function(v) {
+spark.vneg = function(v) {
   return [-v.x, -v.y];
 };
 
 // Invert a vector.
-__MODULE__.vinv = function(v) {
+spark.vinv = function(v) {
   return [1 / v.x, 1 / v.y];
 };
 
 // Dot product of two vectors.
-__MODULE__.vdot = function(a, b) {
+spark.vdot = function(a, b) {
   return (a.x * b.x) + (a.y * b.y);
 };
 
 // Cross product of two vectors.
-__MODULE__.vcross = function(a, b) {
+spark.vcross = function(a, b) {
   return (a.x * b.y) - (a.y * b.x);
 };
 
 // Magnitude of a vector squared.
-__MODULE__.vmagsq = function(v) {
+spark.vmagsq = function(v) {
   return (v.x * v.x) + (v.y * v.y);
 };
 
 // Magnitude of a vector.
-__MODULE__.vmag = function(v) {
+spark.vmag = function(v) {
   return Math.sqrt((v.x * v.x) + (v.y * v.y));
 };
 
 // Distance squared between two vectors.
-__MODULE__.vdistsq = function(a, b) {
-  return spark.vec.vmagsq(spark.vec.vsub(a, b));
+spark.vdistsq = function(a, b) {
+  return spark.vmagsq(spark.vsub(a, b));
 };
 
 // Distance between two vectors.
-__MODULE__.vdist = function(a, b) {
-  return spark.vec.vmag(spark.vec.vsub(a, b));
+spark.vdist = function(a, b) {
+  return spark.vmag(spark.vsub(a, b));
 };
 
 // Multiple a vector by a scalar.
-__MODULE__.vscale = function(v, s) {
+spark.vscale = function(v, s) {
   return [v.x * s, v.y * s];
 };
 
 // Multiply two vectors.
-__MODULE__.vmult = function(a, b) {
+spark.vmult = function(a, b) {
   return [a.x * b.x, a.y * b.y];
 };
 
 // Divide two vectors.
-__MODULE__.vimult = function(a, b) {
+spark.vimult = function(a, b) {
   return [a.x / b.x, a.y / b.y];
 };
 
 // Normalize a vector.
-__MODULE__.vnorm = function(v) {
-  return spark.vec.vscale(spark.vec.vmag(v));
+spark.vnorm = function(v) {
+  return spark.vscale(spark.vmag(v));
 };
 
 // Project vector p0->p1 (a) onto p0->p2 (b).
-__MODULE__.vproj = function(p0, p1, p2) {
-  var a = spark.vec.vsub(p1, p0);
-  var b = spark.vec.vsub(p2, p0);
-  var p = spark.vec.vdot(a, b);
-  var d = spark.vec.vmagsq(b);
+spark.vproj = function(p0, p1, p2) {
+  var a = spark.vsub(p1, p0);
+  var b = spark.vsub(p2, p0);
+  var p = spark.vdot(a, b);
+  var d = spark.vmagsq(b);
 
   if (d < 0.0001) {
     return b;
@@ -178,31 +135,26 @@ __MODULE__.vproj = function(p0, p1, p2) {
 };
 
 // Return the left-handed normal of a vector.
-__MODULE__.vperp = function(v) {
+spark.vperp = function(v) {
   return [v.y, -v.x];
 };
 
 // Return the right-handed normal of a vector.
-__MODULE__.vrperp = function(v) {
+spark.vrperp = function(v) {
   return [-v.y, v.x];
 };
 
 // Rotate a vector.
-__MODULE__.vrotate = function(v, r) {
+spark.vrotate = function(v, r) {
   return [(v.x * r.x) + (v.y * r.y), (v.y * r.x) - (v.x * r.y)];
 };
 
 // Unrotate a vector.
-__MODULE__.vunrotate = function(v, r) {
+spark.vunrotate = function(v, r) {
   return [(v.x * r.x) - (v.y * r.y), (v.y * r.x) + (v.x * r.y)];
 };
 
 // Linearly interpolate along p->q by k [0,1].
-__MODULE__.vlerp = function(p, q, k) {
-  return spark.vec.vadd(spark.vec.vscale(p, k - 1.0), spark.vec.vscale(q, k));
-};
-
-// Transform a vector by this.
-__MODULE__.Mat.prototype.vtransform = function(v) {
-  return spark.vec.vadd(spark.vec.vrotate(spark.vec.vmult(v, this.s), this.r), this.p);
+spark.vlerp = function(p, q, k) {
+  return spark.vadd(spark.vscale(p, k - 1.0), spark.vscale(q, k));
 };

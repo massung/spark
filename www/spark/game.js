@@ -4,25 +4,41 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.scene', 'spark.texture', 'spark.shader', 'spark.audio').defines({
-  framecount: 0,
-  frametime: 0.0,
-  step: 0.0,
-  paused: false,
-});
+spark.module().requires('spark.scene', 'spark.texture', 'spark.shader', 'spark.audio');
 
-// Called once when the module is done loading.
-__MODULE__.init = function() {
-  this.frametime = performance.now();
+// Loop controller.
+spark.Game = function(projectFile, onload) {
+  this.framecount = 0;
+  this.frametime = 0.0;
+  this.step = 0.0;
+  this.paused = false;
+
+  // Create a new project and scene.
+  this.project = new spark.Project();
+  this.scene = new spark.Scene();
+
+  // Load the project file, and call onload once fully loaded.
+  this.project.load(projectFile, (function() {
+
+    // Initialize all input devices.
+    spark.enableMouse();
+    spark.enableKeyboard();
+    spark.enableTouch();
+
+    // TODO: Additional setup from project file?
+
+    // Allow the game to setup the scene.
+    onload.call(this, this.scene);
+  }).bind(this));
 };
 
 // Called once per frame.
-__MODULE__.update = function() {
+spark.Game.prototype.update = function() {
   this.scene.update();
 };
 
 // Called once per frame after update.
-__MODULE__.draw = function() {
+spark.Game.prototype.draw = function() {
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
   // Clear the canvas.
@@ -34,7 +50,7 @@ __MODULE__.draw = function() {
 };
 
 // Called periodically to update and render.
-__MODULE__.stepFrame = function(now) {
+spark.Game.prototype.stepFrame = function(now) {
   this.step = this.paused ? 0.0 : (now - this.frametime) / 1000.0;
   this.frametime = now;
   this.framecount++;
@@ -44,18 +60,18 @@ __MODULE__.stepFrame = function(now) {
   this.draw();
 
   // Show performance graph.
-  spark.perf.trace(this.framecount);
-  spark.perf.reset();
+  //spark.perf.trace(this.framecount);
+  //spark.perf.reset();
 
   // Clear hit counts.
-  spark.input.flush();
+  spark.flushInput();
 
   // Continue running.
-  this.loop();
+  this.run();
 };
 
 // Called while the framework is loading assets to show progress.
-__MODULE__.loadFrame = function() {
+spark.Game.prototype.loadFrame = function() {
   var w = -0.5 + spark.loadProgress();
 
   // Setup the viewport.
@@ -69,7 +85,7 @@ __MODULE__.loadFrame = function() {
   gl.basicShader.use();
 
   // Set the identity projection matrix and white color.
-  gl.uniformMatrix4fv(gl.basicShader.u.projection, false, spark.vec.IDENTITY.transform);
+  gl.uniformMatrix4fv(gl.basicShader.u.projection, false, spark.Mat.IDENTITY.transform);
   gl.uniform4f(gl.basicShader.u.color, 1, 1, 1, 1);
 
   // Vertex buffer for a line progress bar.
@@ -86,11 +102,11 @@ __MODULE__.loadFrame = function() {
   gl.deleteBuffer(vbuf);
 
   // Continue running.
-  this.loop();
+  this.run();
 };
 
 // The main game loop.
-__MODULE__.loop = function() {
+spark.Game.prototype.run = function() {
   if (spark.loadProgress() === true) {
     this.runloop = window.requestAnimationFrame(this.stepFrame.bind(this));
   } else {
@@ -98,42 +114,14 @@ __MODULE__.loop = function() {
   }
 };
 
-// Start the main game loop.
-__MODULE__.run = function(projectFile, onload) {
-  this.quit();
-
-  // Create a new scene.
-  this.scene = Object.create(spark.scene);
-
-  // Initialize a new scene.
-  this.scene.setup();
-
-  // Load the project file, and call onload once loaded.
-  spark.project.load(projectFile, (function() {
-
-    // Initialize all input devices.
-    spark.input.enableMouse();
-    spark.input.enableKeyboard();
-    spark.input.enableTouch();
-
-    // TODO: Additional setup from project file?
-
-    // Allow the game to setup the scene.
-    onload(this.scene);
-  }).bind(this));
-
-  // Run the main game loop.
-  this.loop();
-};
-
 // Stop the main game loop.
-__MODULE__.quit = function() {
+spark.Game.prototype.quit = function() {
   if (this.runloop !== undefined) {
     window.cancelAnimationFrame(this.runloop);
   }
 };
 
 // Return the current FPS.
-__MODULE__.fps = function() {
+spark.Game.prototype.fps = function() {
   return 1.0 / this.step;
 };

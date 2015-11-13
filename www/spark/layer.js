@@ -4,84 +4,60 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.particle', 'spark.shader').defines({
+spark.module().requires('spark.particle', 'spark.shader');
 
-  // A basic, immediate-rendering layer.
-  Basic: function() {
-    this.visible = true;
-    this.shader = gl.basicShader;
-    this.z = 0.0;
-  },
-
-  // A background layer is a single texture.
-  BackgroundLayer: function() {
-    spark.layer.Basic.call(this);
-
-    // TODO:
-  },
-
-  // A layer that has sprites on it.
-  SpriteLayer: function(n) {
-    spark.layer.Basic.call(this);
-
-    // Lists of active and free sprites.
-    this.sprites = [];
-    this.pool = [];
-
-    // Initialize the pool with a bunch of sprites.
-    for(var i = 0;i < (n || 100);i++) {
-      this.pool.push(new spark.entity.Sprite());
-    }
-
-    // Track the free list with a stack pointer and in-use with a count.
-    this.sp = this.pool.length;
-    this.count = 0;
-    this.pending = 0;
-
-    // Set the shader for this layer.
-    this.shader = null; // spark.project.assets.spriteShader;
-  },
-
-  // A tilemap layer for a map.
-  TilemapLayer: function() {
-    spark.layer.Basic.call(this);
-
-    // TODO:
-  },
-});
-
-// All layers derive from a base layer.
-__MODULE__.BackgroundLayer.prototype = Object.create(__MODULE__.Basic);
-__MODULE__.SpriteLayer.prototype = Object.create(__MODULE__.Basic);
-__MODULE__.TilemapLayer.prototype = Object.create(__MODULE__.Basic);
-
-// Set constructors.
-__MODULE__.Basic.prototype.constructor = __MODULE__.Basic;
-__MODULE__.BackgroundLayer.prototype.constructor = __MODULE__.BackgroundLayer;
-__MODULE__.SpriteLayer.prototype.constructor = __MODULE__.SpriteLayer;
-__MODULE__.TilemapLayer.prototype.constructor = __MODULE__.TilemapLayer;
-
-// The basic layer does nothing.
-__MODULE__.Basic.prototype.update = function() { };
-__MODULE__.Basic.prototype.updateCollisions = function() { };
-__MODULE__.Basic.prototype.draw = function() { };
-
-// Z-order comparing for layer sorting.
-__MODULE__.zCompare = function(a, b) {
-  return a.z > b.z;
+// A layer is a grouping of similarly drawn things.
+spark.Layer = function() {
+  this.shader = null;
+  this.visible = true;
+  this.z = 0.0;
 };
 
+// A layer for rendering.
+spark.SpriteLayer = function(n) {
+  spark.Layer.call(this);
+
+  // Lists of active and free sprites.
+  this.sprites = [];
+  this.pool = [];
+
+  // Initialize the pool with a bunch of sprites.
+  for(var i = 0;i < (n || 100);i++) {
+    this.pool.push(new spark.Sprite());
+  }
+
+  // Track the free list with a stack pointer and in-use with a count.
+  this.sp = this.pool.length;
+  this.count = 0;
+  this.pending = 0;
+
+  // Set the shader for this layer.
+  this.shader = new spark.SpriteShader();
+};
+
+// All layers derive from a base layer.
+spark.SpriteLayer.prototype = Object.create(spark.Layer);
+
+// Set constructors.
+spark.Layer.prototype.constructor = spark.Layer;
+spark.SpriteLayer.prototype.constructor = spark.SpriteLayer;
+
+// The basic layer does nothing.
+spark.Layer.prototype.update = function() { };
+spark.Layer.prototype.updateCollisions = function() { };
+spark.Layer.prototype.draw = function() { };
+
 // Allocate a new sprite to add to the layer.
-__MODULE__.SpriteLayer.prototype.spawn = function(init) {
+spark.SpriteLayer.prototype.spawn = function(init) {
   var sprite;
 
   if (this.sp === 0) {
-    sprite = new spark.entity.Sprite();
+    sprite = new spark.Sprite();
   } else {
     sprite = this.pool[--this.sp];
 
     // Initialize the sprite from the pool.
-    spark.entity.Sprite.call(sprite);
+    spark.Sprite.call(sprite);
   }
 
   // Set the layer this sprite is on.
@@ -99,13 +75,14 @@ __MODULE__.SpriteLayer.prototype.spawn = function(init) {
     this.sprites.push(sprite);
   }
 
+  // Tally the number of pending sprites.
   this.pending++;
 
   return sprite;
 };
 
 // Process gameplay and collisions.
-__MODULE__.SpriteLayer.prototype.update = function() {
+spark.SpriteLayer.prototype.update = function() {
   var i;
 
   // Add all the pending sprites to the scene.
@@ -120,7 +97,7 @@ __MODULE__.SpriteLayer.prototype.update = function() {
       this.sprites[i] = this.sprites[--this.count];
 
       // Remove all the custom properties from this sprite.
-      spark.util.wipe(sprite);
+      spark.wipe(sprite);
 
       // Add this sprite back to the pool.
       if (this.sp < this.pool.length) {
@@ -143,7 +120,7 @@ __MODULE__.SpriteLayer.prototype.update = function() {
 };
 
 // Add sprites to the collision spacial hash.
-__MODULE__.SpriteLayer.prototype.updateCollisions = function(space) {
+spark.SpriteLayer.prototype.updateCollisions = function(space) {
   for(var i = 0;i < this.count;i++) {
     var sprite = this.sprites[i];
 
@@ -156,7 +133,7 @@ __MODULE__.SpriteLayer.prototype.updateCollisions = function(space) {
 };
 
 // Render all the sprites onto the view.
-__MODULE__.SpriteLayer.prototype.draw = function() {
+spark.SpriteLayer.prototype.draw = function() {
   if (this.visible) {
     for(var i = 0;i < this.count;i++) {
       this.sprites[i].draw();

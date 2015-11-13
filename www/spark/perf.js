@@ -4,26 +4,16 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.render').defines({
-  updateTime: 0,
-  collisionTime: 0,
-  drawTime: 0,
-  guiTime: 0,
-});
+spark.module().requires('spark.render');
 
-// Create an offscreen canvas to render performance data to.
-__MODULE__.start = function() {
-  if (this.target === undefined) {
-    this.target = new spark.render.Target(300, 200);
-  }
-};
-
-// Stop profiling.
-__MODULE__.stop = function() {
-};
+// Performance timestamps.
+spark.updateTime = 0;
+spark.collisionTime =0;
+spark.drawTime = 0;
+spark.guiTime = 0;
 
 // Track some time.
-__MODULE__.sample = function(f) {
+spark.sample = function(f) {
   var t0 = window.performance.now();
 
   // Execute.
@@ -37,8 +27,12 @@ __MODULE__.sample = function(f) {
   }
 };
 
+// Create an offscreen canvas to render performance data to.
+spark.startPerf = function() {
+};
+
 // Reset timings for a new frame.
-__MODULE__.reset = function() {
+spark.resetPerf = function() {
   this.updateTime = 0;
   this.collisionTime = 0;
   this.drawTime = 0;
@@ -46,7 +40,7 @@ __MODULE__.reset = function() {
 };
 
 // Draw a trace on the performance canvas.
-__MODULE__.trace = function(frame) {
+spark.tracePerf = function(frame) {
   if (this.target === undefined) {
     return;
   }
