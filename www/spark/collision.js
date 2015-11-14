@@ -4,76 +4,69 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.sat').defines({
-  QUADTREE_DEPTH_LIMIT: 3,
-  QUADTREE_SHAPE_LIMIT: 8,
+spark.module().requires('spark.vec');
 
-  // Every collision object and shape has a unique ID.
-  NEXT_COLLIDER_ID: 1,
+// Collision spacial hash.
+__MODULE__.Quadtree = function(x, y, w, h, depth) {
+  this.x1 = x;
+  this.y1 = y;
+  this.x2 = x + w;
+  this.y2 = y + h;
 
-  // Collision spacial hash.
-  Quadtree: function(x, y, w, h, depth) {
-    this.x1 = x;
-    this.y1 = y;
-    this.x2 = x + w;
-    this.y2 = y + h;
+  // Once the depth === QUADTREE_DEPTH_LIMIT, this tree cannot be subdivided.
+  this.depth = depth || 0;
 
-    // Once the depth === QUADTREE_DEPTH_LIMIT, this tree cannot be subdivided.
-    this.depth = depth || 0;
+  // All the shapes and child tree nodes.
+  this.shapes = [];
+  this.nodes = [];
+};
 
-    // All the shapes and child tree nodes.
-    this.shapes = [];
-    this.nodes = [];
-  },
+// A collider can have many shapes.
+__MODULE__.Collider = function(owner, filter, oncollision) {
+  this.owner = owner;
+  this.filter = filter;
+  this.oncollision = oncollision;
+  this.shapes = [];
+};
 
-  // A collider can have many shapes.
-  Collider: function(owner, filter, oncollision) {
-    this.id = spark.collision.NEXT_COLLIDER_ID++;
-    this.owner = owner;
-    this.filter = filter;
-    this.oncollision = oncollision;
-    this.shapes = [];
-  },
+// Root shape class.
+__MODULE__.Shape = function(collider) {
+  this.collider = collider;
+};
 
-  // A shape is a simple, axis-aligned bounding box.
-  Shape: function(collider) {
-    this.collider = collider;
-  },
+// A line segment shape.
+__MODULE__.Segment = function(collider, p1, p2) {
+  spark.collision.Shape.call(this, collider);
 
-  // A line segment shape.
-  Segment: function(collider, p1, p2) {
-    this.p1 = p1;
-    this.p2 = p2;
+  // Set the end-points.
+  this.p1 = p1;
+  this.p2 = p2;
+};
 
-    // Shape constructor.
-    spark.collision.Shape.call(this, collider);
-  },
+// A circle shape.
+__MODULE__.Circle = function(collider, c, r) {
+  spark.collision.Shape.call(this, collider);
 
-  // A circle shape.
-  Circle: function(collider, c, r) {
-    this.c = c;
-    this.r = r;
+  // Set origin and radius.
+  this.c = c;
+  this.r = r;
+};
 
-    // Shape constructor.
-    spark.collision.Shape.call(this, collider);
-  },
+// An axis-aligned, box shape.
+__MODULE__.Box = function(collider, x, y, w, h) {
+  spark.collision.Shape.call(this, collider);
 
-  // An axis-aligned, box shape.
-  Box: function(collider, x, y, w, h) {
-    this.x = x;
-    this.y = y;
-    this.w = w;
-    this.h = h;
-
-    // Shape constructor.
-    spark.collision.Shape.call(this, collider);
-  },
-});
+  // Set bounds.
+  this.x = x;
+  this.y = y;
+  this.w = w;
+  this.h = h;
+};
 
 // Extend shapes.
-__MODULE__.Segment.prototype = Object.create(spark.collision.Shape.prototype);
-__MODULE__.Circle.prototype = Object.create(spark.collision.Shape.prototype);
-__MODULE__.Box.prototype = Object.create(spark.collision.Shape.prototype);
+__MODULE__.Segment.prototype = Object.create(__MODULE__.Shape.prototype);
+__MODULE__.Circle.prototype = Object.create(__MODULE__.Shape.prototype);
+__MODULE__.Box.prototype = Object.create(__MODULE__.Shape.prototype);
 
 // Set constructors.
 __MODULE__.Quadtree.prototype.constructor = __MODULE__.Quadtree;
@@ -82,6 +75,10 @@ __MODULE__.Shape.prototype.constructor = __MODULE__.Shape;
 __MODULE__.Segment.prototype.constructor = __MODULE__.Segment;
 __MODULE__.Circle.prototype.constructor = __MODULE__.Circle;
 __MODULE__.Box.prototype.constructor = __MODULE__.Box;
+
+// Maximum depth and split limits.
+__MODULE__.Quadtree.prototype.DEPTH_LIMIT = 3;
+__MODULE__.Quadtree.prototype.SHAPE_LIMIT = 8;
 
 // Add a shape to the quadtree.
 __MODULE__.Quadtree.prototype.push = function(shape) {
@@ -100,7 +97,7 @@ __MODULE__.Quadtree.prototype.push = function(shape) {
   this.shapes.push(shape);
 
   // Are there too many shapes in this tree node?
-  if (this.depth < spark.collision.QUADTREE_DEPTH_LIMIT && this.shapes.length > spark.collision.QUADTREE_SHAPE_LIMIT && this.nodes.length === 0) {
+  if (this.depth < spark.collision.Quadtree.prototype.DEPTH_LIMIT && this.shapes.length > spark.collision.Quadtree.prototype.SHAPE_LIMIT && this.nodes.length === 0) {
     var w = (this.x2 - this.x1) / 2;
     var h = (this.y2 - this.y1) / 2;
 
@@ -248,17 +245,17 @@ __MODULE__.Collider.prototype.addToQuadtree = function(space) {
 };
 
 // Add a segment collision shape to the entity.
-__MODULE__.Collider.prototype.addSegmentShape = function(p1, p2) {
+__MODULE__.Collider.prototype.addSegment = function(p1, p2) {
   this.shapes.push(new spark.collision.Segment(this, p1, p2));
 };
 
 // Add a circle collision shape to the entity.
-__MODULE__.Collider.prototype.addCircleShape = function(c, r) {
+__MODULE__.Collider.prototype.addCircle = function(c, r) {
   this.shapes.push(new spark.collision.Circle(this, c, r));
 };
 
 // Add an axis-aligned, bounding box collision shape to the entity.
-__MODULE__.Collider.prototype.addBoxShape = function(x, y, w, h) {
+__MODULE__.Collider.prototype.addBox = function(x, y, w, h) {
   this.shapes.push(new spark.collision.Box(this, x, y, w, h));
 };
 

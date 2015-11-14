@@ -4,45 +4,38 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.particle').defines({
+spark.module().requires('spark.particle');
 
-  // A layer that has sprites on it.
-  SpriteLayer: function(n) {
-    this.sprites = [];
-    this.pool = [];
+// A layer for rendering.
+__MODULE__.SpriteLayer = function(n) {
+  this.sprites = [];
+  this.pool = [];
 
-    // Initialize the pool with a bunch of sprites.
-    for(var i = 0;i < (n || 100);i++) {
-      this.pool.push(new spark.entity.Sprite());
-    }
+  // Initialize the pool with a bunch of sprites.
+  for(var i = 0;i < (n || 100);i++) {
+    this.pool.push(new spark.sprite.Sprite());
+  }
 
-    // Track the free list with a stack pointer and in-use with a count.
-    this.sp = this.pool.length;
-    this.count = 0;
-    this.pending = 0;
-  },
-
-  // A tilemap layer for a map.
-  TilemapLayer: function() {
-    // TODO:
-  },
-});
+  // Track the free list with a stack pointer and in-use with a count.
+  this.sp = this.pool.length;
+  this.count = 0;
+  this.pending = 0;
+};
 
 // Set constructors.
 __MODULE__.SpriteLayer.prototype.constructor = __MODULE__.SpriteLayer;
-__MODULE__.TilemapLayer.prototype.constructor = __MODULE__.TilemapLayer;
 
 // Allocate a new sprite to add to the layer.
 __MODULE__.SpriteLayer.prototype.spawn = function(init) {
   var sprite;
 
   if (this.sp === 0) {
-    sprite = new spark.entity.Sprite();
+    sprite = new spark.sprite.Sprite();
   } else {
     sprite = this.pool[--this.sp];
 
     // Initialize the sprite from the pool.
-    spark.entity.Sprite.call(sprite);
+    spark.sprite.Sprite.call(sprite);
   }
 
   // Set the layer this sprite is on.
@@ -60,6 +53,7 @@ __MODULE__.SpriteLayer.prototype.spawn = function(init) {
     this.sprites.push(sprite);
   }
 
+  // Tally the number of pending sprites.
   this.pending++;
 
   return sprite;
@@ -121,12 +115,4 @@ __MODULE__.SpriteLayer.prototype.draw = function() {
   for(var i = 0;i < this.count;i++) {
     this.sprites[i].draw();
   }
-};
-
-__MODULE__.TilemapLayer.prototype.update = function() {
-  // TODO:
-};
-
-__MODULE__.TilemapLayer.prototype.draw = function() {
-  // TODO:
 };

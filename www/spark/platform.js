@@ -6,22 +6,22 @@
 
 spark.module();
 
-// The name of the device running on.
+// Return the name of the device.
 __MODULE__.__defineGetter__('device', function() {
   return window['cordova'] ? cordova.platformId : 'browser';
 });
 
-// True if this is a mobile device.
+// True if the device platform is mobile.
 __MODULE__.__defineGetter__('mobile', function() {
-  return this.device !== 'browser';
-});
+  return spark.platform.device !== 'browser';
+})
 
-// Return the screen width in pixels.
+// Return the width of the window or device display.
 __MODULE__.__defineGetter__('width', function() {
-  return this.mobile ? screen.width : window.innerWidth;
+  return spark.platform.mobile ? screen.width : window.innerWidth;
 });
 
-// Return the screen height in pixels.
-__MODULE__.__defineGetter__('height', function() {
-  return this.mobile ? screen.height : window.innerHeight;
+// Return the height of the window or device display.
+__MODULE__.__defineGetter__('width', function() {
+  return spark.platform.mobile ? screen.height : window.innerHeight;
 });

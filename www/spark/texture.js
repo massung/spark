@@ -4,50 +4,48 @@
  * All rights reserved.
  */
 
-spark.module().defines({
+spark.module();
 
-  // A single image.
-  Image: function(src) {
-    this.source = new Image();
+// A single image.
+__MODULE__.Image = function(src) {
+  this.source = new Image();
 
-    // Handle registeration when done loading.
-    this.source.onload = (function() {
-      spark.register(this.source);
-    }).bind(this);
+  // Handle registeration when done loading.
+  this.source.onload = (function() {
+    spark.resolve(this.source);
+  }).bind(this);
 
-    // Tell spark to load this element.
-    spark.request(this.source, src);
-  },
+  // Tell spark to load this element.
+  spark.request(this.source, src);
+};
 
-  // A sprite atlas.
-  Atlas: function(src) {
-    this.images = [];
-    this.frames = {};
+// A CSS font.
+__MODULE__.Font = function(src) {
+  var family = src.split('/').slice(-1)[0].split('.')[0];
+  var face = `@font-face{ font-family: "` + family + `"; src: url("` + src + `"); }`;
 
-    // Load the JSON source of frames.
-    spark.loadJSON(src, (function(json) {
-      this.frames = json.frames;
-    }).bind(this));
-  },
+  // Create the <style> node.
+  this.style = document.createElement('style');
+  this.style.appendChild(document.createTextNode(face));
 
-  // A CSS font.
-  Font: function(src) {
-    var family = src.split('/').slice(-1)[0].split('.')[0];
-    var face = `@font-face{
-      font-family: "` + family + `"; src: url("` + src + `");
-    }`;
+  // Add it to the document. This won't load, but will be good enough.
+  document.head.appendChild(this.style);
+};
 
-    // Create the <style> node.
-    this.style = document.createElement('style');
-    this.style.appendChild(document.createTextNode(face));
+// A texture atlas.
+__MODULE__.Atlas = function(src) {
+  this.images = [];
+  this.frames = {};
 
-    // Add it to the document. This won't load, but will be good enough.
-    document.head.appendChild(this.style);
-  },
-});
+  // Load the JSON source of frames.
+  spark.loadJSON(src, (function(json) {
+    this.frames = json.frames;
+  }).bind(this));
+},
 
 // Set constructors.
 __MODULE__.Image.prototype.constructor = __MODULE__.Image;
+__MODULE__.Font.prototype.constructor = __MODULE__.Font;
 __MODULE__.Atlas.prototype.constructor = __MODULE__.Atlas;
 
 // Render the entire texture image to the canvas.

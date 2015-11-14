@@ -4,20 +4,21 @@
  * All rights reserved.
  */
 
-spark.module().defines({
-  updateTime: 0,
-  collisionTime: 0,
-  drawTime: 0,
-  guiTime: 0,
-});
+spark.module();
+
+// Private module data.
+__MODULE__.updateTime = 0;
+__MODULE__.collisionTime = 0;
+__MODULE__.drawTime = 0;
+__MODULE__.guiTime = 0;
+
+// Local cavas to render performance to.
+__MODULE__.canvas = document.createElement('canvas');
 
 // Create an offscreen canvas to render performance data to.
 __MODULE__.start = function() {
   if (this.canvas === undefined) {
-    this.canvas = document.createElement('canvas');
-
-    // Set the dimensions of the canvas.
-    this.canvas.width = 0;
+    this.canvas.width = spark.view.canvas.width;
     this.canvas.height= 200;
   }
 
@@ -76,6 +77,16 @@ __MODULE__.trace = function(frame) {
   var drawY = Math.round(this.drawTime * 60 * y / 1000);
   var guiY = Math.round(this.guiTime * 60 * y / 1000);
 
+  // Count all the sprites and layers.
+  var layers = 0;
+  var sprites = 0;
+
+  // Count all the sprites.
+  spark.game.scene.layers.forEach(function(layer) {
+    layers += 1;
+    sprites += layer.count;
+  });
+
   // Clear an around around the draw section.
   this.view.clearRect(x, 0, 10, h);
 
@@ -125,16 +136,16 @@ __MODULE__.trace = function(frame) {
 
   // Show the legend.
   spark.view.lineWidth = 1;
-  spark.view.shadowOffsetX = 0;
-  spark.view.shadowOffsetY = 1;
-  spark.view.shadowBlur = 3;
-  spark.view.shadowColor = '#000';
+  //spark.view.shadowOffsetX = 0;
+  //spark.view.shadowOffsetY = 1;
+  //spark.view.shadowBlur = 3;
+  //spark.view.shadowColor = '#000';
   spark.view.font = 'bold 10px "Courier New", sans-serif';
 
   // Show sprite and particle counts.
   spark.view.fillStyle = '#ff8000';
-  spark.view.fillText('Sprites   : ' + spark.game.scene.sprites.count, 10, spark.view.canvas.height - y - 96);
-  spark.view.fillText('Particles : ' + spark.game.scene.particles.count, 10, spark.view.canvas.height - y - 84);
+  spark.view.fillText('Layers    : ' + layers, 10, spark.view.canvas.height - y - 96);
+  spark.view.fillText('Sprites   : ' + sprites, 10, spark.view.canvas.height - y - 84);
 
   // Show timings in milliseconds for draw, update, and collision.
   spark.view.fillStyle = '#66b2ff';

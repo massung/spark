@@ -4,45 +4,7 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.util').defines({
-  Mat: function(x, y, angle, sx, sy) {
-    this.p = [x || 0.0, y || 0.0];
-
-    // Set the rotation vector.
-    if (angle !== undefined) {
-      var rads = spark.util.degToRad(angle);
-      this.r = [Math.cos(rads), Math.sin(rads)];
-    } else {
-      this.r = spark.vec.RIGHT;
-    }
-
-    // Set the scale vector.
-    this.s = [sx || 1.0, sy || sx || 1.0];
-
-    // Returns a copy of this matrix that is its inverse.
-    Object.defineProperty(this, 'inverse', {
-      get: function() {
-        var m = new spark.vec.Mat(-this.p.x, -this.p.y, undefined, 1 / this.s.x, 1 / this.s.y);
-
-        // Transpose the rotation.
-        m.r.x = this.r.x;
-        m.r.y = -this.r.y;
-
-        return m;
-      }
-    });
-
-    // Returns the transform as a 3x3 matrix for a 2d context.
-    Object.defineProperty(this, 'transform', {
-      get: function() {
-        return [this.r.x * this.s.x, -this.r.y * this.s.y, this.r.y * this.s.x, this.r.x * this.s.y, this.p.x, this.p.y];
-      }
-    });
-  },
-});
-
-// Set constructors.
-__MODULE__.Mat.prototype.constructor = __MODULE__.Mat;
+spark.module().requires('spark.util');
 
 // Create accessors for <x,y> of array pairs.
 Array.prototype.__defineGetter__('x', function() {
@@ -153,7 +115,7 @@ __MODULE__.vimult = function(a, b) {
 
 // Normalize a vector.
 __MODULE__.vnorm = function(v) {
-  return spark.vec.vscale(spark.vec.vmag(v));
+  return spark.vec.vscale(spark.vmag(v));
 };
 
 // Project vector p0->p1 (a) onto p0->p2 (b).
@@ -200,6 +162,87 @@ __MODULE__.vunrotate = function(v, r) {
 // Linearly interpolate along p->q by k [0,1].
 __MODULE__.vlerp = function(p, q, k) {
   return spark.vec.vadd(spark.vec.vscale(p, k - 1.0), spark.vec.vscale(q, k));
+};
+
+// A matrix.
+__MODULE__.Mat = function(x, y, angle, sx, sy) {
+  this.p = [x || 0.0, y || 0.0];
+
+  // Set the rotation vector.
+  if (angle !== undefined) {
+    var rads = spark.util.degToRad(angle);
+
+    // Compute the rotation vector.
+    this.r = [Math.cos(rads), Math.sin(rads)];
+  } else {
+    this.r = spark.vec.RIGHT;
+  }
+
+  // Set the scale vector.
+  this.s = [sx || 1.0, sy || sx || 1.0];
+},
+
+// Set constructors.
+__MODULE__.Mat.prototype.constructor = spark.Mat;
+
+// A matrix for use with context.setTransform().
+__MODULE__.Mat.prototype.__defineGetter__('transform', function() {
+  return [this.r.x * this.s.x, -this.r.y * this.s.y, this.r.y * this.s.x, this.r.x * this.s.y, this.p.x, this.p.y];
+});
+
+// Matrix inverse.
+__MODULE__.Mat.prototype.__defineGetter__('inverse', function() {
+  var m = new spark.vec.Mat(-this.p.x, -this.p.y, undefined, 1 / this.s.x, 1 / this.s.y);
+
+  // Transpose the rotation.
+  m.r.x = this.r.x;
+  m.r.y = -this.r.y;
+
+  return m;
+});
+
+// Set the absolute translation of a sprite.
+__MODULE__.Mat.prototype.setTranslation = function(x, y) {
+  this.p = [x, y];
+};
+
+// Set the absolute rotation of a sprite.
+__MODULE__.Mat.prototype.setRotation = function(angle) {
+  var rads = spark.util.degToRad(angle);
+  this.r = [Math.cos(rads), Math.sin(rads)];
+};
+
+// Set the absolute scale of a sprite.
+__MODULE__.Mat.prototype.setScale = function(x, y) {
+  this.s = [x || 1.0, y || x || 1.0];
+};
+
+// Translate a pivot entity.
+__MODULE__.Mat.prototype.translate = function(v, local) {
+  if (local) {
+    v = spark.vec.vrotate(v, this.r);
+  }
+
+  // Update the translation vector.
+  this.p.x += v.x;
+  this.p.y += v.y;
+};
+
+// Turn a pivot entity. Positive angle = clockwise.
+__MODULE__.Mat.prototype.rotate = function(angle) {
+  var r = spark.util.degToRad(angle);
+  this.r = spark.vec.vrotate(this.r, [Math.cos(r), Math.sin(r)]);
+};
+
+// Adjust the scale of a pivot entity.
+__MODULE__.Mat.prototype.scale = function(x, y) {
+  this.s.x += x || 1.0;
+  this.s.y += y || x || 1.0;
+};
+
+// Return the angle of rotation (in degrees). This is slow!
+__MODULE__.Mat.prototype.angle = function() {
+  return spark.util.radToDeg(Math.atan2(this.r.y, this.r.x));
 };
 
 // Transform a vector by this.

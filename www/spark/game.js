@@ -4,16 +4,32 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.scene').defines({
-  framecount: 0,
-  frametime: 0.0,
-  step: 0.0,
-  paused: false,
-});
+spark.module().requires('spark.input', 'spark.scene', 'spark.texture', 'spark.audio');
 
-// Called once when the module is done loading.
-__MODULE__.init = function() {
+// Loop controller.
+__MODULE__.run = function(projectFile, onload) {
   this.frametime = performance.now();
+  this.framecount = 0;
+  this.step = 0.0;
+  this.paused = false;
+
+  // Create a new scene module instance for the game.
+  this.scene = Object.create(spark.scene);
+
+  // Load the project file, and call onload once fully loaded.
+  spark.project.load(projectFile, (function() {
+    spark.input.enableMouse();
+    spark.input.enableKeyboard();
+    spark.input.enableTouch();
+
+    // TODO: Additional setup from project file?
+
+    // Allow the game to setup the scene.
+    onload.call(this, this.scene);
+  }).bind(this));
+
+  // Start the main game loop.
+  this.loop();
 };
 
 // Called once per frame.
@@ -50,12 +66,12 @@ __MODULE__.stepFrame = function(now) {
   this.update();
   this.draw();
 
+  // Clear presses.
+  spark.input.flush();
+
   // Show performance graph.
   spark.perf.trace(this.framecount);
   spark.perf.reset();
-
-  // Clear hit counts.
-  spark.input.flush();
 
   // Continue running.
   this.loop();
@@ -63,21 +79,26 @@ __MODULE__.stepFrame = function(now) {
 
 // Called while the framework is loading assets to show progress.
 __MODULE__.loadFrame = function() {
-  var w = 200 * spark.loadProgress();
+  var x = spark.view.canvas.width / 2;
+  var y = spark.view.canvas.height / 2;
+
+  // Max width of the progress bar i 60% of the width.
+  var w = x * 3 / 5;
 
   // Erase the display.
   spark.view.setTransform(1, 0, 0, 1, 0, 0);
   spark.view.clearRect(0, 0, spark.view.canvas.width, spark.view.canvas.height);
 
-  // Display some loading text in the bottom left.
+  // Display a loading bar.
   spark.view.strokeStyle = '#fff';
-  spark.view.fillStyle = '#fff';
   spark.view.font = 'bold 10px "Courier", sans-serif';
-  spark.view.fillText('Loading...', 10, spark.view.canvas.height - 20);
+  spark.view.fillText('Loading...', 10, spark.view.canvas.height - 10);
 
   // Render the progress as a simple load bar.
-  spark.view.strokeRect(10, spark.view.canvas.height - 16, 200, 6);
-  spark.view.fillRect(10, spark.view.canvas.height - 16, w, 6);
+  spark.view.beginPath();
+  spark.view.moveTo(x - w, y);
+  spark.view.lineTo(x - w + w * 2 * spark.loadProgress(), y);
+  spark.view.stroke();
 
   // Continue running.
   this.loop();
@@ -90,34 +111,6 @@ __MODULE__.loop = function() {
   } else {
     this.runLoop = window.requestAnimationFrame(this.loadFrame.bind(this));
   }
-};
-
-// Start the main game loop.
-__MODULE__.run = function(projectFile, onload) {
-  this.quit();
-
-  // Create a new scene.
-  this.scene = Object.create(spark.scene);
-
-  // Initialize a new scene.
-  this.scene.init();
-
-  // Load the project file, and call onload once loaded.
-  this.project = spark.project.load(projectFile, (function() {
-
-    // Initialize all input devices.
-    spark.input.enableMouse();
-    spark.input.enableKeyboard();
-    spark.input.enableTouch();
-
-    // TODO: Additional setup from project file?
-
-    // Allow the game to setup the scene.
-    onload(this.scene);
-  }).bind(this));
-
-  // Run the main game loop.
-  this.loop();
 };
 
 // Stop the main game loop.

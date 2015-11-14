@@ -4,59 +4,44 @@
  * All rights reserved.
  */
 
-spark.module().defines({
-  Clip: function(src, onload) {
-    this.sound = new Audio();
+spark.module();
 
-    // Preloading will cause the 'canplaythrough' event to fire.
-    this.sound.preload = 'auto';
-    this.sound.loop = true;
+// Create an AudioContext for all sounds to use.
+__MODULE__.init = function() {
+  this.context = new AudioContext();
+};
 
-    // When the sound is done loading, resolve the asset.
-    this.sound.addEventListener('canplaythrough', (function() {
-      spark.register(this.sound);
-
-      // Allow the user additional setup.
-      if (onload !== undefined) {
-        onload(this);
-      }
+// Sound resource.
+__MODULE__.Clip = function(src) {
+  spark.loadXHR(src, 'arraybuffer', (function(req) {
+    spark.audio.context.decodeAudioData(req.response, (function(buffer) {
+      this.buffer = buffer;
     }).bind(this));
-
-    // Looping isn't actually implemented in the browser, so we do it here.
-    this.sound.addEventListener('ended', (function() {
-      if (this.sound.loop === true) {
-        this.sound.currentTime = 0;
-        this.sound.play();
-      }
-    }).bind(this));
-
-    // Create an asset for this sound so it loads.
-    spark.request(this.sound, src);
-  },
-});
+  }).bind(this));
+};
 
 // Set constructors.
 __MODULE__.Clip.prototype.constructor = __MODULE__.Clip;
 
 // Play the sound associated with this audio clip.
 __MODULE__.Clip.prototype.woof = function() {
-  var clone = this.sound.cloneNode(true);
+  if (this.buffer === undefined) {
+    return;
+  }
 
-  // Do not loop the clone.
-  clone.loop = false;
-  clone.play();
+  // Create a new source to play from.
+  var source = spark.audio.context.createBufferSource();
+
+  // Wire and go.
+  source.buffer = this.buffer;
+  source.connect(spark.audio.context.destination);
+  source.start(0);
 };
 
 __MODULE__.Clip.prototype.play = function() {
-  if (this.loopClone === undefined) {
-    this.loopClone = this.sound.cloneNode(true);
-  }
-
-  this.loopClone.play();
+//  this.loop.play();
 };
 
 __MODULE__.Clip.prototype.pause = function() {
-  if (this.loopClone !== undefined) {
-    this.loopClone.pause();
-  }
+//  this.loop.pause();
 };

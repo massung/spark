@@ -4,7 +4,18 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.gui', 'spark.layer', 'spark.perf', 'spark.project');
+spark.module().requires('spark.layer', 'spark.perf', 'spark.project');
+
+// The scene module is the prototype for every scene object.
+__MODULE__.init = function() {
+  this.layers = [];
+
+  // Create the camera matrix.
+  this.camera = spark.vec.IDENTITY;
+
+  // Setup the default projection.
+  this.setProjection();
+};
 
 // Read-only top pixel coordinate in projection space.
 __MODULE__.__defineGetter__('top', function() {
@@ -36,22 +47,22 @@ __MODULE__.__defineGetter__('height', function() {
   return spark.view.canvas.height * this.projection.s.y;
 });
 
-// Initialize a new scene.
-__MODULE__.init = function() {
-  this.particles = new spark.layer.SpriteLayer(500);
-  this.sprites = new spark.layer.SpriteLayer(100);
 
-  // The particle and sprite layers are omni-present and on top!
-  this.layers = [
-    this.particles,
-    this.sprites,
-  ];
+// Add a new layer to the scene.
+__MODULE__.addLayer = function(layer, init) {
 
-  // Create an entity to use as the camera.
-  this.camera = new spark.entity.Pivot();
+  // Optionally initialize before adding to the layers.
+  if (init !== undefined) {
+    init(layer);
+  }
 
-  // Setup the default projection.
-  this.setProjection();
+  // Resort the layers based on z-ordering.
+  this.layers.push(layer);
+  this.layers.sort(function(a, b) {
+    return a.z > b.z;
+  });
+
+  return layer;
 };
 
 // Define the projection matrix.
@@ -85,10 +96,10 @@ __MODULE__.setProjection = function(origin, sx, sy) {
 
 // Called once per frame to advance each layer.
 __MODULE__.update = function() {
-  var p1 = this.camera.m.vtransform([this.left, this.top]);
-  var p2 = this.camera.m.vtransform([this.right, this.top]);
-  var p3 = this.camera.m.vtransform([this.left, this.bottom]);
-  var p4 = this.camera.m.vtransform([this.right, this.bottom]);
+  var p1 = this.camera.vtransform([this.left, this.top]);
+  var p2 = this.camera.vtransform([this.right, this.top]);
+  var p3 = this.camera.vtransform([this.left, this.bottom]);
+  var p4 = this.camera.vtransform([this.right, this.bottom]);
 
   // Find the min/max extents of the visible area.
   var x1 = Math.min(p1.x, p2.x, p3.x, p4.x);
@@ -124,15 +135,15 @@ __MODULE__.draw = function() {
   // Retain transforms, etc.
   spark.view.save();
 
+  var projMatrix = this.projection.inverse.transform;
+  var worldMatrix = this.camera.inverse.transform;
+
   // Setup the projection matrix.
   spark.perf.drawTime += spark.perf.sample((function() {
-    spark.view.setTransform.apply(spark.view, this.projection.inverse.transform);
+    spark.view.setTransform.apply(spark.view, projMatrix);
 
     // Transform by the inverse of the camera.
-    this.camera.applyInverseTransform();
-
-    // Turn off anti-aliasing of images (better performance?).
-    //spark.view.imageSmoothingEnabled = false;
+    spark.view.transform.apply(spark.view, worldMatrix);
 
     // Render each layer in reverse order (sprites last).
     for(i = this.layers.length - 1;i >= 0;i--) {
@@ -160,7 +171,7 @@ __MODULE__.draw = function() {
 
 // Transform a point from screen space to world space.
 __MODULE__.screenToWorld = function(p) {
-  return this.camera.m.vtransform([
+  return this.camera.vtransform([
     ((p ? p.x : spark.input.x) + this.projection.p.x) * this.projection.s.x,
     ((p ? p.y : spark.input.y) + this.projection.p.y) * this.projection.s.y,
   ]);
@@ -181,10 +192,10 @@ __MODULE__.pick = function(p, radius) {
   }
 
   // Create a circle shape to collide against.
-  var shape = new spark.collision.Circle(null, c, radius || 5.0);
+  var shape = new spark.CircleShape(null, c, radius || 5.0);
 
   // Update the shape cache for querying.
-  shape.updateShapeCache(spark.vec.IDENTITY);
+  shape.updateShapeCache(spark.IDENTITY);
 
   // Return the owner of all the colliders picked.
   return this.space.collect(shape).map(function(collider) {

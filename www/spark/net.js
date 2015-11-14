@@ -4,6 +4,4 @@
  * All rights reserved.
  */
 
-spark.module().defines({
-  // TODO:
-});
+spark.module();
