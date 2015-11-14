@@ -84,7 +84,10 @@ __MODULE__.trace = function(frame) {
   // Count all the sprites.
   spark.game.scene.layers.forEach(function(layer) {
     layers += 1;
-    sprites += layer.count;
+
+    if (layer.constructor === spark.layer.SpriteLayer) {
+      sprites += layer.count;
+    }
   });
 
   // Clear an around around the draw section.
@@ -129,17 +132,11 @@ __MODULE__.trace = function(frame) {
 
   // Blit the performance canvas onto the spark canvas.
   spark.view.save();
-  spark.view.globalAlpha = 0.8;
   spark.view.setTransform(1, 0, 0, 1, 0, 0);
   spark.view.drawImage(this.canvas, 0, spark.view.canvas.height - h);
   spark.view.restore();
 
   // Show the legend.
-  spark.view.lineWidth = 1;
-  //spark.view.shadowOffsetX = 0;
-  //spark.view.shadowOffsetY = 1;
-  //spark.view.shadowBlur = 3;
-  //spark.view.shadowColor = '#000';
   spark.view.font = 'bold 10px "Courier New", sans-serif';
 
   // Show sprite and particle counts.

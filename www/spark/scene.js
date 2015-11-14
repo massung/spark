@@ -58,9 +58,6 @@ __MODULE__.addLayer = function(layer, init) {
 
   // Resort the layers based on z-ordering.
   this.layers.push(layer);
-  this.layers.sort(function(a, b) {
-    return a.z > b.z;
-  });
 
   return layer;
 };
@@ -146,7 +143,7 @@ __MODULE__.draw = function() {
     spark.view.transform.apply(spark.view, worldMatrix);
 
     // Render each layer in reverse order (sprites last).
-    for(i = this.layers.length - 1;i >= 0;i--) {
+    for(i = 0;i < this.layers.length;i++) {
       this.layers[i].draw();
     }
   }).bind(this));

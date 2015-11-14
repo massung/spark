@@ -23,24 +23,56 @@ Array.prototype.__defineSetter__('y', function(y) {
   return this[1] = y;
 });
 
+// Cloning a vector so it's a unique instance.
+Array.prototype.__defineGetter__('v', function() {
+  return [this[0], this[1]];
+});
+
+// Create a giant vector pool to draw from.
+var vpool = new Array(50000);
+var vpooli = 0;
+
+// Initialize the vector pool.
+__MODULE__.init = function() {
+  for(var i = 0;i < vpool.length;i++) {
+    vpool[i] = [0, 0];
+  }
+};
+
+// Allocate a new vector from the pool.
+__MODULE__.v = function(x, y) {
+  var v = vpool[vpooli++];
+
+  // Wrap the ring.
+  if (vpooli === vpool.length) {
+    vpooli = 0;
+  }
+
+  // Set the array indices.
+  v[0] = x;
+  v[1] = y;
+
+  return v;
+};
+
 // <0,0> zero vector.
 __MODULE__.__defineGetter__('ZERO', function() {
-  return new Array(0.0, 0.0);
+  return [0, 0];
 });
 
 // <1,1> uniform vector.
 __MODULE__.__defineGetter__('ONE', function() {
-  return new Array(1.0, 1.0);
+  return [1, 1];
 });
 
 // <1,0> right vector.
 __MODULE__.__defineGetter__('RIGHT', function() {
-  return new Array(1.0, 0.0);
+  return [1, 0];
 });
 
 // <0,1> up vector.
 __MODULE__.__defineGetter__('UP', function() {
-  return new Array(0.0, 1.0);
+  return [0, 1];
 });
 
 // <1,0,0,1,0,0> identity matrix.
@@ -50,22 +82,22 @@ __MODULE__.__defineGetter__('IDENTITY', function() {
 
 // Add two vectors.
 __MODULE__.vadd = function(a, b) {
-  return [a.x + b.x, a.y + b.y];
+  return spark.vec.v(a.x + b.x, a.y + b.y);
 };
 
 // Subtract two vectors.
 __MODULE__.vsub = function(a, b) {
-  return [a.x - b.x, a.y - b.y];
+  return spark.vec.v(a.x - b.x, a.y - b.y);
 };
 
 // Negate a vector.
 __MODULE__.vneg = function(v) {
-  return [-v.x, -v.y];
+  return spark.vec.v(-v.x, -v.y);
 };
 
 // Invert a vector.
 __MODULE__.vinv = function(v) {
-  return [1 / v.x, 1 / v.y];
+  return spark.vec.v(1 / v.x, 1 / v.y);
 };
 
 // Dot product of two vectors.
@@ -100,17 +132,17 @@ __MODULE__.vdist = function(a, b) {
 
 // Multiple a vector by a scalar.
 __MODULE__.vscale = function(v, s) {
-  return [v.x * s, v.y * s];
+  return spark.vec.v(v.x * s, v.y * s);
 };
 
 // Multiply two vectors.
 __MODULE__.vmult = function(a, b) {
-  return [a.x * b.x, a.y * b.y];
+  return spark.vec.v(a.x * b.x, a.y * b.y);
 };
 
 // Divide two vectors.
 __MODULE__.vimult = function(a, b) {
-  return [a.x / b.x, a.y / b.y];
+  return spark.vec.v(a.x / b.x, a.y / b.y);
 };
 
 // Normalize a vector.
@@ -135,28 +167,28 @@ __MODULE__.vproj = function(p0, p1, p2) {
     if (s > 1.0) return p2;
 
     // The point is somewhere along p0->p2.
-    return [p0.x + (b.x * s), p0.y + (b.y * s)];
+    return spark.vec.v(p0.x + (b.x * s), p0.y + (b.y * s));
   }
 };
 
 // Return the left-handed normal of a vector.
 __MODULE__.vperp = function(v) {
-  return [v.y, -v.x];
+  return spark.vec.v(v.y, -v.x);
 };
 
 // Return the right-handed normal of a vector.
 __MODULE__.vrperp = function(v) {
-  return [-v.y, v.x];
+  return spark.vec.v(-v.y, v.x);
 };
 
 // Rotate a vector.
 __MODULE__.vrotate = function(v, r) {
-  return [(v.x * r.x) + (v.y * r.y), (v.y * r.x) - (v.x * r.y)];
+  return spark.vec.v((v.x * r.x) + (v.y * r.y), (v.y * r.x) - (v.x * r.y));
 };
 
 // Unrotate a vector.
 __MODULE__.vunrotate = function(v, r) {
-  return [(v.x * r.x) - (v.y * r.y), (v.y * r.x) + (v.x * r.y)];
+  return spark.vec.v((v.x * r.x) - (v.y * r.y), (v.y * r.x) + (v.x * r.y));
 };
 
 // Linearly interpolate along p->q by k [0,1].
@@ -175,11 +207,14 @@ __MODULE__.Mat = function(x, y, angle, sx, sy) {
     // Compute the rotation vector.
     this.r = [Math.cos(rads), Math.sin(rads)];
   } else {
-    this.r = spark.vec.RIGHT;
+    this.r = [1.0, 0.0];
   }
 
   // Set the scale vector.
   this.s = [sx || 1.0, sy || sx || 1.0];
+
+  // Allocate an array for the view transform.
+  this.t = new Array(6);
 },
 
 // Set constructors.
@@ -187,7 +222,14 @@ __MODULE__.Mat.prototype.constructor = spark.Mat;
 
 // A matrix for use with context.setTransform().
 __MODULE__.Mat.prototype.__defineGetter__('transform', function() {
-  return [this.r.x * this.s.x, -this.r.y * this.s.y, this.r.y * this.s.x, this.r.x * this.s.y, this.p.x, this.p.y];
+  this.t[0] =  this.r.x * this.s.x;
+  this.t[1] = -this.r.y * this.s.y;
+  this.t[2] =  this.r.y * this.s.x;
+  this.t[3] =  this.r.x * this.s.y;
+  this.t[4] =  this.p.x;
+  this.t[5] =  this.p.y;
+
+  return this.t;
 });
 
 // Matrix inverse.
@@ -203,18 +245,23 @@ __MODULE__.Mat.prototype.__defineGetter__('inverse', function() {
 
 // Set the absolute translation of a sprite.
 __MODULE__.Mat.prototype.setTranslation = function(x, y) {
-  this.p = [x, y];
+  this.p.x = x;
+  this.p.y = y;
 };
 
 // Set the absolute rotation of a sprite.
 __MODULE__.Mat.prototype.setRotation = function(angle) {
   var rads = spark.util.degToRad(angle);
-  this.r = [Math.cos(rads), Math.sin(rads)];
+
+  // Unit vector.
+  this.r.x = Math.cos(rads);
+  this.r.y = Math.sin(rads);
 };
 
 // Set the absolute scale of a sprite.
 __MODULE__.Mat.prototype.setScale = function(x, y) {
-  this.s = [x || 1.0, y || x || 1.0];
+  this.s.x = x || 1.0;
+  this.s.y = y || x || 1.0;
 };
 
 // Translate a pivot entity.
@@ -231,7 +278,9 @@ __MODULE__.Mat.prototype.translate = function(v, local) {
 // Turn a pivot entity. Positive angle = clockwise.
 __MODULE__.Mat.prototype.rotate = function(angle) {
   var r = spark.util.degToRad(angle);
-  this.r = spark.vec.vrotate(this.r, [Math.cos(r), Math.sin(r)]);
+
+  // Rotate and clone.
+  this.r = spark.vec.vrotate(this.r, [Math.cos(r), Math.sin(r)]).v;
 };
 
 // Adjust the scale of a pivot entity.

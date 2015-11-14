@@ -16,18 +16,17 @@ demo.init = function () {
     scene.setProjection('middle', 0.5);
 
     // Create layers for the asteroids, player, and particles.
-    var asteroidsLayer = scene.addLayer(new spark.layer.SpriteLayer(100));
+    var bgLayer = scene.addLayer(new spark.layer.BackgroundLayer());
+    var asteroidsLayer = scene.addLayer(new spark.layer.SpriteLayer(200));
     var playerLayer = scene.addLayer(new spark.layer.SpriteLayer(50));
 
-    // Set the Z values of each. Player layer on top.
-    asteroidsLayer.z = 1;
-    playerLayer.z = 2;
+    bgLayer.image = spark.project.assets.starfield;
 
     // Create the player.
     demo.createPlayer(playerLayer);
 
     // Spawn 3 large asteroids.
-    for(var i = 0;i < 3;i++) {
+    for(var i = 0;i < 6;i++) {
       demo.createAsteroid(asteroidsLayer);
     }
   });
@@ -94,7 +93,7 @@ demo.createAsteroid = function(layer, x, y, scale) {
       }
 
       // Spawn some asteroid particles.
-      spark.project.assets.explode.emit(this.layer, this.m.p, 0, 8);
+      spark.project.assets.explode.emit(this.layer, this.m.p, 0, 20);
 
       // Play the explosion sound.
       spark.project.assets.rumble_sound.woof();

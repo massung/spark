@@ -301,8 +301,8 @@ __MODULE__.Segment.prototype.draw = function() {
 
 // Update the world coordinates of the segment shape.
 __MODULE__.Segment.prototype.updateShapeCache = function(m) {
-  this.tp1 = m.vtransform(this.p1);
-  this.tp2 = m.vtransform(this.p2);
+  this.tp1 = m.vtransform(this.p1).v;
+  this.tp2 = m.vtransform(this.p2).v;
 };
 
 // True if the shape is completely within the bounding box.
@@ -367,7 +367,7 @@ __MODULE__.Circle.prototype.draw = function() {
 
 // Update the world coordinates of the circle shape.
 __MODULE__.Circle.prototype.updateShapeCache = function(m) {
-  this.tc = m.vtransform(this.c);
+  this.tc = m.vtransform(this.c).v;
 };
 
 // Is a circle shape completely within the bounds.

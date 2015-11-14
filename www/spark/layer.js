@@ -6,6 +6,18 @@
 
 spark.module().requires('spark.particle');
 
+// A simple background layer.
+__MODULE__.BackgroundLayer = function() {
+  this.m = new spark.vec.Mat();
+
+  // The background image to display.
+  this.image = null;
+
+  // Is wrapping on/off?
+  this.wrapX = true;
+  this.wrapY = true;
+};
+
 // A layer for rendering.
 __MODULE__.SpriteLayer = function(n) {
   this.sprites = [];
@@ -23,7 +35,31 @@ __MODULE__.SpriteLayer = function(n) {
 };
 
 // Set constructors.
+__MODULE__.BackgroundLayer.prototype.constructor = __MODULE__.BackgroundLayer;
 __MODULE__.SpriteLayer.prototype.constructor = __MODULE__.SpriteLayer;
+
+// No update or collisions on background layers.
+__MODULE__.BackgroundLayer.prototype.update = function() {};
+__MODULE__.BackgroundLayer.prototype.updateCollisions = function() {};
+
+// Render the background, wrapping if set.
+__MODULE__.BackgroundLayer.prototype.draw = function() {
+  if (this.image === undefined) {
+    return;
+  }
+
+  // Save transform information.
+  spark.view.save();
+
+  // Set the transform.
+  spark.view.transform.apply(spark.view, this.m.transform);
+
+  // Blit the image.
+  this.image.blit();
+
+  // Done.
+  spark.view.restore();
+};
 
 // Allocate a new sprite to add to the layer.
 __MODULE__.SpriteLayer.prototype.spawn = function(init) {

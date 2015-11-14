@@ -16,6 +16,14 @@ __MODULE__.Clip = function(src) {
   spark.loadXHR(src, 'arraybuffer', (function(req) {
     spark.audio.context.decodeAudioData(req.response, (function(buffer) {
       this.buffer = buffer;
+
+      // Create a looping source to play.
+      this.loopSource = spark.audio.context.createBufferSource();
+      this.loopSource.buffer = buffer;
+      this.loopSource.loop = true;
+      this.loopSource.loopStart = 0;
+      this.loopSource.loopEnd = 0;
+      this.loopSource.connect(spark.audio.context.destination);
     }).bind(this));
   }).bind(this));
 };
@@ -35,13 +43,13 @@ __MODULE__.Clip.prototype.woof = function() {
   // Wire and go.
   source.buffer = this.buffer;
   source.connect(spark.audio.context.destination);
-  source.start(0);
+  source.start();
 };
 
-__MODULE__.Clip.prototype.play = function() {
-//  this.loop.play();
+__MODULE__.Clip.prototype.loop = function() {
+  this.loopSource.start();
 };
 
-__MODULE__.Clip.prototype.pause = function() {
-//  this.loop.pause();
+__MODULE__.Clip.prototype.stop = function() {
+  this.loopSource.stop();
 };
