@@ -4,31 +4,33 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.input', 'spark.util').defines({
-  Widget: function(contextSettings) {
-    this.contextSettings = {};
+spark.module().requires('spark.input', 'spark.util');
 
-    // Override the default context settings.
-    spark.util.merge(this.contextSettings, contextSettings || {});
-  },
+// Base GUI element.
+__MODULE__.Widget = function(value, contextSettings) {
+  this.contextSettings = contextSettings || {};
 
-  // A text label.
-  Label: function(value, contextSettings) {
-    this.value = value;
+  // Every widget has a value to display.
+  this.value = value;
+  this.visible = true;
 
-    // Initialize context settings.
-    spark.gui.Widget.call(this, contextSettings);
-  },
+  // Widgets are added to the scene at screen coordinates.
+  this.x = 0;
+  this.y = 0;
+};
 
-  // A progress/health meter.
-  Meter: function(value, max, contextSettings) {
-    this.value = value;
-    this.max = max;
+// A text label.
+__MODULE__.Label = function(value, contextSettings) {
+  spark.gui.Widget.call(this, value, contextSettings);
+};
 
-    // Initialize context settings.
-    spark.gui.Widget.call(this, contextSettings);
-  }
-});
+// A progress/health meter.
+__MODULE__.Meter = function(value, max, contextSettings) {
+  spark.gui.Widget.call(this, value, contextSettings);
+
+  // Maximum value to clamp at.
+  this.max = max;
+};
 
 // All widget subclasses.
 __MODULE__.Label.prototype = Object.create(__MODULE__.Widget.prototype);
@@ -39,14 +41,15 @@ __MODULE__.Widget.prototype.constructor = __MODULE__.Widget;
 __MODULE__.Label.prototype.constructor = __MODULE__.Label;
 __MODULE__.Meter.prototype.constructor = __MODULE__.Meter;
 
+// Every widget has an update called at the end of the frame.
+__MODULE__.Widget.prototype.update = function() {};
+
 // Wrapper to assign context settings, draw, and restore.
 __MODULE__.Widget.prototype.withContext = function(draw) {
   spark.view.save();
 
   // Set all the view context settings for this widget.
-  for(var setting in this.contextSettings) {
-    spark.view[setting] = this.contextSettings[setting];
-  }
+  spark.util.merge(spark.view, this.contextSettings);
 
   // Perform the draw.
   draw();
@@ -56,39 +59,32 @@ __MODULE__.Widget.prototype.withContext = function(draw) {
 };
 
 // Render a text label.
-__MODULE__.Label.prototype.draw = function(x, y) {
-  this.withContext((function() {
-    x = x < 0 ? (spark.view.canvas.width + x - w) : x;
-    y = y < 0 ? (spark.view.canvas.height + y - h) : y;
+__MODULE__.Label.prototype.draw = function() {
+  var x = this.x < 0 ? (spark.view.canvas.width + this.x) : this.x;
+  var y = this.y < 0 ? (spark.view.canvas.height + this.y) : this.y;
 
-    // If the value is a function, call it to get the text to draw.
-    var text = typeof(this.value) === 'function' ? this.value() : this.value;
-
-    // Draw the text.
-    spark.view.fillText(text, x, y);
-  }).bind(this));
+  // Draw the text.
+  spark.view.fillText(this.value, this.x, this.y);
 };
 
-// Modify the value of a meter with a constant value.
-__MODULE__.Meter.prototype.update = function(delta) {
-  this.value = spark.util.clamp(this.value + delta, 0, this.max);
+// Every widget has an update called at the end of the frame.
+__MODULE__.Meter.prototype.update = function() {
+  this.value = spark.util.clamp(this.value, 0, this.max);
 };
 
 // Render a meter bar.
-__MODULE__.Meter.prototype.draw = function(x, y, w, h) {
-  this.withContext((function() {
-    var pct = spark.util.clamp(this.value, 0, this.max) / this.max;
+__MODULE__.Meter.prototype.draw = function() {
+  var pct = this.value / this.max;
 
-    // Default width to max value and height.
-    w = w || this.max;
-    h = h || 10;
+  // Default width to max value and height.
+  var w = this.width || this.max;
+  var h = this.height || 10;
 
-    // Negative offsets are fixed to the bottom/right.
-    x = x < 0 ? (spark.view.canvas.width + x - w) : x;
-    y = y < 0 ? (spark.view.canvas.height + y - h) : y;
+  // Negative offsets are fixed to the bottom/right.
+  var x = this.x < 0 ? (spark.view.canvas.width + this.x - w) : this.x;
+  var y = this.y < 0 ? (spark.view.canvas.height + this.y - h) : this.y;
 
-    // Draw the inner bar and then the outer shell.
-    spark.view.fillRect(x, y, w * pct, h);
-    spark.view.strokeRect(x, y, w, h);
-  }).bind(this));
+  // Draw the inner bar and then the outer shell.
+  spark.view.fillRect(x, y, w * pct, h);
+  spark.view.strokeRect(x, y, w, h);
 };

@@ -4,11 +4,14 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.layer', 'spark.perf', 'spark.project');
+spark.module().requires('spark.gui', 'spark.layer', 'spark.perf', 'spark.project');
 
 // The scene module is the prototype for every scene object.
 __MODULE__.init = function() {
   this.layers = [];
+
+  // All GUI elements added to the scene.
+  this.gui = [];
 
   // Create the camera matrix.
   this.camera = spark.vec.IDENTITY;
@@ -49,16 +52,11 @@ __MODULE__.__defineGetter__('right', function() {
 
 // Read-only middle of the screen.
 __MODULE__.__defineGetter__('middle', function() {
-  return [
-    this.left + (this.right - this.left) / 2,
-    this.top + (this.bottom - this.top) / 2,
-  ];
+  return [this.left + (this.width / 2), this.top + (this.height / 2)];
 });
 
 // Add a new layer to the scene.
 __MODULE__.addLayer = function(layer, init) {
-
-  // Optionally initialize before adding to the layers.
   if (init !== undefined) {
     init(layer);
   }
@@ -67,6 +65,18 @@ __MODULE__.addLayer = function(layer, init) {
   this.layers.push(layer);
 
   return layer;
+};
+
+// Add a new GUI element to the scene.
+__MODULE__.addGui = function(widget, init) {
+  if (init !== undefined) {
+    init(widget);
+  }
+
+  // Append to the GUI list.
+  this.gui.push(widget);
+
+  return widget;
 };
 
 // Define the projection matrix.
@@ -167,10 +177,15 @@ __MODULE__.draw = function() {
   // Put everything back.
   spark.view.restore();
 
-  // Render the optional scene GUI for the scene.
-  if (this.gui !== undefined) {
-    spark.perf.guiTime += spark.perf.sample(this.gui.bind(this));
-  }
+  // Update and render all the GUI elements.
+  spark.perf.guiTime += spark.perf.sample((function() {
+    for(i = 0;i < this.gui.length;i++) {
+      this.gui[i].update();
+
+      // Draw, but save/restore the context each time.
+      this.gui[i].withContext(this.gui[i].draw.bind(this.gui[i]));
+    }
+  }).bind(this));
 };
 
 // Transform a point from screen space to world space.

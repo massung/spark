@@ -20,6 +20,7 @@ demo.init = function () {
     this.asteroidsLayer = scene.addLayer(new spark.layer.SpriteLayer(200));
     this.playerLayer = scene.addLayer(new spark.layer.SpriteLayer(50));
 
+    // Setup the background.
     this.bgLayer.image = spark.project.assets.starfield;
     this.bgLayer.m.setScale(2);
 
@@ -30,6 +31,33 @@ demo.init = function () {
     for(var i = 0;i < 6;i++) {
       this.createAsteroid(this.asteroidsLayer);
     }
+
+    // Create the score label.
+    this.score = scene.addGui(new spark.gui.Label(0, {
+      fillStyle: '#ff0',
+      font: '20px BulletproofBB',
+      textBaseline: 'hanging',
+      shadowBlur: 5,
+      shadowOffsetX: 0,
+      shadowOffsetY: 0,
+      shadowColor: '#ff0',
+    }));
+
+    this.score.x = 10;
+    this.score.y = 10;
+
+    // An energy bar.
+    this.energy = scene.addGui(new spark.gui.Meter(100, 100, {
+      strokeStyle: '#fff',
+      fillStyle: '#c8f',
+      shadowBlur: 5,
+      shadowOffsetX: 0,
+      shadowOffsetY: 0,
+      shadowColor: '#f8f',
+    }));
+
+    this.energy.x = 10;
+    this.energy.y = -10;
   }).bind(this));
 };
 
@@ -92,6 +120,9 @@ demo.createAsteroid = function(layer, x, y, scale) {
           demo.createAsteroid(this.layer, this.m.p.x, this.m.p.y, this.m.s.x * 0.75);
         }
       }
+
+      // Increase the score.
+      demo.score.value += 50;
 
       // Spawn some asteroid particles.
       spark.project.assets.explode.emit(this.layer, this.m.p, 0, 20);
@@ -157,6 +188,11 @@ demo.playerControls = function() {
       this.localToWorld([0, 55]),
       this.localToWorldAngle(-90.0),
       1);
+
+    // Use some energy.
+    demo.energy.value -= 10 * spark.game.step;
+  } else {
+    demo.energy.value += 10 * spark.game.step;
   }
 
   // Shooting.
