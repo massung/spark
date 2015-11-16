@@ -260,6 +260,17 @@ __MODULE__.Mat.prototype.scale = function(x, y) {
   this.s.y += y || x || 1.0;
 };
 
+// Apply another matrix and return the new one.
+__MODULE__.Mat.prototype.mult = function(m) {
+  var w = new spark.vec.Mat();
+
+  w.p = spark.vec.vadd(this.p, m.p);
+  w.r = spark.vec.vrotate(this.r, m.r);
+  w.s = spark.vec.vmult(this.s, m.s);
+
+  return w;
+};
+
 // Return the angle of rotation (in degrees). This is slow!
 __MODULE__.Mat.prototype.angle = function() {
   return spark.util.radToDeg(Math.atan2(this.r.y, this.r.x));

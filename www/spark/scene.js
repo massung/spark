@@ -27,16 +27,6 @@ __MODULE__.__defineGetter__('left', function() {
   return this.projection.p.x * this.projection.s.x;
 });
 
-// Read-only bottom pixel coordinate in projection space.
-__MODULE__.__defineGetter__('bottom', function() {
-  return -this.projection.p.y * this.projection.s.y;
-});
-
-// Read-only right pixel coordinate in projection space.
-__MODULE__.__defineGetter__('right', function() {
-  return -this.projection.p.x * this.projection.s.x;
-});
-
 // Read-only width of the scene in pixels.
 __MODULE__.__defineGetter__('width', function() {
   return spark.view.canvas.width * this.projection.s.x;
@@ -47,6 +37,23 @@ __MODULE__.__defineGetter__('height', function() {
   return spark.view.canvas.height * this.projection.s.y;
 });
 
+// Read-only bottom pixel coordinate in projection space.
+__MODULE__.__defineGetter__('bottom', function() {
+  return this.top + this.height;
+});
+
+// Read-only right pixel coordinate in projection space.
+__MODULE__.__defineGetter__('right', function() {
+  return this.left + this.width;
+});
+
+// Read-only middle of the screen.
+__MODULE__.__defineGetter__('middle', function() {
+  return [
+    this.left + (this.right - this.left) / 2,
+    this.top + (this.bottom - this.top) / 2,
+  ];
+});
 
 // Add a new layer to the scene.
 __MODULE__.addLayer = function(layer, init) {

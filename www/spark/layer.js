@@ -12,10 +12,6 @@ __MODULE__.BackgroundLayer = function() {
 
   // The background image to display.
   this.image = null;
-
-  // Is wrapping on/off?
-  this.wrapX = true;
-  this.wrapY = true;
 };
 
 // A layer for rendering.
@@ -48,14 +44,42 @@ __MODULE__.BackgroundLayer.prototype.draw = function() {
     return;
   }
 
-  // Save transform information.
+  // Apply the layer matrix.
   spark.view.save();
-
-  // Set the transform.
   spark.view.transform.apply(spark.view, this.m.transform);
 
-  // Blit the image.
-  this.image.blit();
+  // Calculate the scaling.
+  var sx = spark.game.scene.camera.s.x / this.m.s.x;
+  var sy = spark.game.scene.camera.s.y / this.m.s.y;
+
+  // Cache off the image size.
+  var iw = this.image.width;
+  var ih = this.image.height;
+
+  // No matter what the translation is, always wrap to the image.
+  this.m.p.x %= iw * this.m.s.x;
+  this.m.p.y %= ih * this.m.s.y;
+
+  // Find the middle of the screen.
+  var middle = spark.game.scene.middle;
+
+  // Get the width and height of the scene in local space.
+  var w = (spark.game.scene.width + iw) * sx;
+  var h = (spark.game.scene.height + ih) * sy;
+
+  // Calculate how many tiles need to be drawn.
+  var size = Math.sqrt((w * w) + (h * h));
+
+  // Find the top/left corner to begin tiling from in local space.
+  var left = middle.x * sx - (size / 2);
+  var top = middle.y * sy - (size / 2);
+
+  // Draw all the tiles.
+  for(var x = 0;x <= size;x += iw - 1) {
+    for (var y = 0;y <= size;y += ih - 1) {
+      this.image.blitEx(0, 0, iw, ih, left + x, top + y);
+    }
+  }
 
   // Done.
   spark.view.restore();

@@ -10,26 +10,27 @@ var demo = spark.main('canvas');
 demo.init = function () {
 
   // Create the game and run it.
-  spark.game.run('game/project.json', function(scene) {
+  spark.game.run('game/project.json', (function(scene) {
 
     // Change the projection so the origin is in the middle.
     scene.setProjection('middle', 0.5);
 
     // Create layers for the asteroids, player, and particles.
-    var bgLayer = scene.addLayer(new spark.layer.BackgroundLayer());
-    var asteroidsLayer = scene.addLayer(new spark.layer.SpriteLayer(200));
-    var playerLayer = scene.addLayer(new spark.layer.SpriteLayer(50));
+    this.bgLayer = scene.addLayer(new spark.layer.BackgroundLayer());
+    this.asteroidsLayer = scene.addLayer(new spark.layer.SpriteLayer(200));
+    this.playerLayer = scene.addLayer(new spark.layer.SpriteLayer(50));
 
-    bgLayer.image = spark.project.assets.starfield;
+    this.bgLayer.image = spark.project.assets.starfield;
+    this.bgLayer.m.setScale(2);
 
     // Create the player.
-    demo.createPlayer(playerLayer);
+    this.createPlayer(this.playerLayer);
 
     // Spawn 3 large asteroids.
     for(var i = 0;i < 6;i++) {
-      demo.createAsteroid(asteroidsLayer);
+      this.createAsteroid(this.asteroidsLayer);
     }
-  });
+  }).bind(this));
 };
 
 demo.createPlayer = function(layer) {
@@ -189,6 +190,10 @@ demo.playerControls = function() {
   // Move the player.
   this.m.p.x += this.thrust.x * spark.game.step;
   this.m.p.y += this.thrust.y * spark.game.step;
+
+  // Scroll the background layer by the thrust.
+  demo.bgLayer.m.p.x -= this.thrust.x * spark.game.step * 0.5;
+  demo.bgLayer.m.p.y -= this.thrust.y * spark.game.step * 0.5;
 
   // Dampening.
   this.thrust = spark.vec.vscale(this.thrust, 0.98);

@@ -48,6 +48,21 @@ __MODULE__.Image.prototype.constructor = __MODULE__.Image;
 __MODULE__.Font.prototype.constructor = __MODULE__.Font;
 __MODULE__.Atlas.prototype.constructor = __MODULE__.Atlas;
 
+// Get the width of the texture image.
+__MODULE__.Image.prototype.__defineGetter__('width', function() {
+  return this.source.width;
+});
+
+// Get the width of the texture image.
+__MODULE__.Image.prototype.__defineGetter__('height', function() {
+  return this.source.height;
+});
+
+// Render a texture image to the canvas.
+__MODULE__.Image.prototype.blitEx = function(sx, sy, sw, sh, dx, dy, dw, dh) {
+  spark.view.drawImage(this.source, sx, sy, sw, sh, dx, dy, dw || sw, dh || sh);
+};
+
 // Render the entire texture image to the canvas.
 __MODULE__.Image.prototype.blit = function(frame, pivot) {
   var w = this.source.width;
@@ -73,7 +88,7 @@ __MODULE__.Image.prototype.blit = function(frame, pivot) {
   var dy = -h * (pivot ? pivot.y : 0);
 
   // Render it using the center of the image as its pivot.
-  spark.view.drawImage(this.source, x, y, w, h, dx, dy, w, h);
+  this.blitEx(x, y, w, h, dx, dy);
 };
 
 // Blit a sprite from an atlas to the canvas.
