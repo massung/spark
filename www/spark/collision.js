@@ -56,11 +56,11 @@ __MODULE__.Circle = function(collider, c, r) {
 __MODULE__.Box = function(collider, x, y, w, h) {
   spark.collision.Shape.call(this, collider);
 
-  // Set bounds.
-  this.x = x;
-  this.y = y;
-  this.w = w;
-  this.h = h;
+  // Create local-space bounds.
+  this.v0 = [x, y];
+  this.v1 = [x + w, y];
+  this.v2 = [x, y + h];
+  this.v3 = [x + w, y + h];
 };
 
 // Extend shapes.
@@ -181,11 +181,14 @@ __MODULE__.Quadtree.prototype.processCollisions = function() {
         var child = children.pop();
 
         // Test against all the shapes in the child node.
-        child.shapes.forEach(function(b) {
+        for(var k = 0;k < child.shapes.length;k++) {
+          var b = child.shapes[k];
+
+          // If different colliders and intersecting there's a collision.
           if (a.collider !== b.collider && m.indexOf(b.collider) < 0 && a.shapeQuery(b)) {
             m.push(b.collider);
           }
-        });
+        }
 
         // Append all the child nodes and keep searching.
         if (child.nodes.length > 0) {
@@ -301,8 +304,8 @@ __MODULE__.Segment.prototype.draw = function() {
 
 // Update the world coordinates of the segment shape.
 __MODULE__.Segment.prototype.updateShapeCache = function(m) {
-  this.tp1 = m.vtransform(this.p1).v;
-  this.tp2 = m.vtransform(this.p2).v;
+  this.tp1 = m.vtransform(this.p1);
+  this.tp2 = m.vtransform(this.p2);
 };
 
 // True if the shape is completely within the bounding box.
@@ -367,7 +370,7 @@ __MODULE__.Circle.prototype.draw = function() {
 
 // Update the world coordinates of the circle shape.
 __MODULE__.Circle.prototype.updateShapeCache = function(m) {
-  this.tc = m.vtransform(this.c).v;
+  this.tc = m.vtransform(this.c);
 };
 
 // Is a circle shape completely within the bounds.
@@ -436,14 +439,14 @@ __MODULE__.Box.prototype.draw = function() {
 
 // Update the world coordinates of the circle shape.
 __MODULE__.Box.prototype.updateShapeCache = function(m) {
-  var v0 = m.vtransform([this.x,          this.y]);
-  var v1 = m.vtransform([this.x + this.w, this.y]);
-  var v2 = m.vtransform([this.x,          this.y + this.h]);
-  var v3 = m.vtransform([this.x + this.w, this.y + this.h]);
+  this.tv0 = m.vtransform(this.v0);
+  this.tv1 = m.vtransform(this.v1);
+  this.tv2 = m.vtransform(this.v2);
+  this.tv3 = m.vtransform(this.v3);
 
   // Extend the box to keep it axis-aligned.
-  this.tp1 = [Math.min(v0.x, v1.x, v2.x, v3.x), Math.min(v0.y, v1.y, v2.y, v3.y)];
-  this.tp2 = [Math.max(v0.x, v1.x, v2.x, v3.x), Math.max(v0.y, v1.y, v2.y, v3.y)];
+  this.tp1 = [Math.min(this.tv0.x, this.tv1.x, this.tv2.x, this.tv3.x), Math.min(this.tv0.y, this.tv1.y, this.tv2.y, this.tv3.y)];
+  this.tp2 = [Math.max(this.tv0.x, this.tv1.x, this.tv2.x, this.tv3.x), Math.max(this.tv0.y, this.tv1.y, this.tv2.y, this.tv3.y)];
 };
 
 // Is a circle shape completely within the bounds.

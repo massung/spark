@@ -23,38 +23,6 @@ Array.prototype.__defineSetter__('y', function(y) {
   return this[1] = y;
 });
 
-// Cloning a vector so it's a unique instance.
-Array.prototype.__defineGetter__('v', function() {
-  return [this[0], this[1]];
-});
-
-// Create a giant vector pool to draw from.
-var vpool = new Array(50000);
-var vpooli = 0;
-
-// Initialize the vector pool.
-__MODULE__.init = function() {
-  for(var i = 0;i < vpool.length;i++) {
-    vpool[i] = [0, 0];
-  }
-};
-
-// Allocate a new vector from the pool.
-__MODULE__.v = function(x, y) {
-  var v = vpool[vpooli++];
-
-  // Wrap the ring.
-  if (vpooli === vpool.length) {
-    vpooli = 0;
-  }
-
-  // Set the array indices.
-  v[0] = x;
-  v[1] = y;
-
-  return v;
-};
-
 // <0,0> zero vector.
 __MODULE__.__defineGetter__('ZERO', function() {
   return [0, 0];
@@ -82,22 +50,22 @@ __MODULE__.__defineGetter__('IDENTITY', function() {
 
 // Add two vectors.
 __MODULE__.vadd = function(a, b) {
-  return spark.vec.v(a.x + b.x, a.y + b.y);
+  return [a.x + b.x, a.y + b.y];
 };
 
 // Subtract two vectors.
 __MODULE__.vsub = function(a, b) {
-  return spark.vec.v(a.x - b.x, a.y - b.y);
+  return [a.x - b.x, a.y - b.y];
 };
 
 // Negate a vector.
 __MODULE__.vneg = function(v) {
-  return spark.vec.v(-v.x, -v.y);
+  return [-v.x, -v.y];
 };
 
 // Invert a vector.
 __MODULE__.vinv = function(v) {
-  return spark.vec.v(1 / v.x, 1 / v.y);
+  return [1 / v.x, 1 / v.y];
 };
 
 // Dot product of two vectors.
@@ -122,27 +90,30 @@ __MODULE__.vmag = function(v) {
 
 // Distance squared between two vectors.
 __MODULE__.vdistsq = function(a, b) {
-  return spark.vec.vmagsq(spark.vec.vsub(a, b));
+  var dx = b.x - a.x;
+  var dy = b.y - a.y;
+
+  return (dx * dx) + (dy * dy);
 };
 
 // Distance between two vectors.
 __MODULE__.vdist = function(a, b) {
-  return spark.vec.vmag(spark.vec.vsub(a, b));
+  return Math.sqrt(spark.vec.vdistsq(a, b));
 };
 
 // Multiple a vector by a scalar.
 __MODULE__.vscale = function(v, s) {
-  return spark.vec.v(v.x * s, v.y * s);
+  return [v.x * s, v.y * s];
 };
 
 // Multiply two vectors.
 __MODULE__.vmult = function(a, b) {
-  return spark.vec.v(a.x * b.x, a.y * b.y);
+  return [a.x * b.x, a.y * b.y];
 };
 
 // Divide two vectors.
 __MODULE__.vimult = function(a, b) {
-  return spark.vec.v(a.x / b.x, a.y / b.y);
+  return [a.x / b.x, a.y / b.y];
 };
 
 // Normalize a vector.
@@ -167,33 +138,33 @@ __MODULE__.vproj = function(p0, p1, p2) {
     if (s > 1.0) return p2;
 
     // The point is somewhere along p0->p2.
-    return spark.vec.v(p0.x + (b.x * s), p0.y + (b.y * s));
+    return [p0.x + (b.x * s), p0.y + (b.y * s)];
   }
 };
 
 // Return the left-handed normal of a vector.
 __MODULE__.vperp = function(v) {
-  return spark.vec.v(v.y, -v.x);
+  return [v.y, -v.x];
 };
 
 // Return the right-handed normal of a vector.
 __MODULE__.vrperp = function(v) {
-  return spark.vec.v(-v.y, v.x);
+  return [-v.y, v.x];
 };
 
 // Rotate a vector.
 __MODULE__.vrotate = function(v, r) {
-  return spark.vec.v((v.x * r.x) + (v.y * r.y), (v.y * r.x) - (v.x * r.y));
+  return [(v.x * r.x) + (v.y * r.y), (v.y * r.x) - (v.x * r.y)];
 };
 
 // Unrotate a vector.
 __MODULE__.vunrotate = function(v, r) {
-  return spark.vec.v((v.x * r.x) - (v.y * r.y), (v.y * r.x) + (v.x * r.y));
+  return [(v.x * r.x) - (v.y * r.y), (v.y * r.x) + (v.x * r.y)];
 };
 
 // Linearly interpolate along p->q by k [0,1].
 __MODULE__.vlerp = function(p, q, k) {
-  return spark.vec.vadd(spark.vec.vscale(p, k - 1.0), spark.vec.vscale(q, k));
+  return [p.x + ((q.x - p.x) * k), p.y + ((q.y - p.y) * k)];
 };
 
 // A matrix.
@@ -280,7 +251,7 @@ __MODULE__.Mat.prototype.rotate = function(angle) {
   var r = spark.util.degToRad(angle);
 
   // Rotate and clone.
-  this.r = spark.vec.vrotate(this.r, [Math.cos(r), Math.sin(r)]).v;
+  this.r = spark.vec.vrotate(this.r, [Math.cos(r), Math.sin(r)]);
 };
 
 // Adjust the scale of a pivot entity.
@@ -294,7 +265,11 @@ __MODULE__.Mat.prototype.angle = function() {
   return spark.util.radToDeg(Math.atan2(this.r.y, this.r.x));
 };
 
-// Transform a vector by this.
+// Transform a vector by this matrix.
 __MODULE__.Mat.prototype.vtransform = function(v) {
-  return spark.vec.vadd(spark.vec.vrotate(spark.vec.vmult(v, this.s), this.r), this.p);
+  var x = (v.x * this.s.x * this.r.x) + (v.y * this.s.y * this.r.y);
+  var y = (v.y * this.s.y * this.r.x) - (v.x * this.s.x * this.r.y);
+
+  // Apply translation last.
+  return [x + this.p.x, y + this.p.y];
 };

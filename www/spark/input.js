@@ -7,110 +7,13 @@
 spark.module();
 
 // Private module state.
-var keys = [];
-var buttons = [];
-var touches = [];
-var x = 0;
-var y = 0;
-var relativeX = 0;
-var relativeY = 0;
-
-// Handle keydown events.
-function onKeyDown(event) {
-  var state = keys[event.keyCode];
-
-  // Create a new state if none exists.
-  if (state === undefined) {
-    state = keys[event.keyCode] = { hits: 0 };
-  }
-
-  // Keyboard repeats shouldn't count as hits.
-  if (state.down === false) {
-    state.down = true;
-    state.hits = state.hits + 1;
-  }
-}
-
-// Handle keyup events.
-function onKeyUp(event) {
-  keys[event.keyCode].down = false;
-}
-
-// Handle button down events.
-function onMouseDown(event) {
-  var state = buttons[event.button];
-
-  // Create a new state if none exists.
-  if (state === undefined) {
-    state = buttons[event.button] = { hits: 0 };
-  }
-
-  state.down = true;
-  state.hits = state.hits + 1;
-}
-
-// Handle button up events.
-function onMouseUp(event) {
-  buttons[event.button].down = false;
-}
-
-// Handle mouse movement events.
-function onMouseMove(event) {
-  var eventX = event.clientX - spark.view.canvas.offsetLeft;
-  var eventY = event.clientY - spark.view.canvas.offsetTop;
-
-  // Update relative motion.
-  relativeX += eventX - x;
-  relativeY += eventY - y;
-
-  // Update position.
-  x = eventX;
-  y = eventY;
-}
-
-// Handle touch down.
-function onTouchStart(event) {
-  if (event.targetTouches.length === 1) {
-    touch = true;
-
-    x = event.targetTouches[0].pageX - spark.view.canvas.offsetLeft;
-    y = event.targetTouches[0].pageY - spark.view.canvas.offsetTop;
-
-    // Reset relative motion.
-    relativeX = 0;
-    relativeY = 0;
-  }
-
-  // Don't send mouse events.
-  event.preventDefault();
-}
-
-// Handle touch up.
-function onTouchEnd(event) {
-  if (event.targetTouches.length === 1) {
-    touches[0].down = false;
-  }
-
-  // Don't send mouse events.
-  event.preventDefault();
-}
-
-// Handle touch motion.
-function onTouchMove(event) {
-  if (event.targetTouches.length === 1) {
-    var eventX = event.targetTouches[0].pageX - spark.view.canvas.offsetLeft;
-    var eventY = event.targetTouches[0].pageY - spark.view.canvas.offsetTop;
-
-    // Update the touch data.
-    touches[0].relativeX += x - touches[0].x;
-    touches[0].relativeY += y - touches[0].y;
-    touches[0].x = eventX;
-    touches[0].y = eventY;
-  }
-
-  // Don't send mouse events.
-  event.preventDefault();
-};
+__MODULE__.keys = [];
+__MODULE__.buttons = [];
+__MODULE__.touches = [];
+__MODULE__.x = 0;
+__MODULE__.y = 0;
+__MODULE__.relativeX = 0;
+__MODULE__.relativeY = 0;
 
 // Button constants.
 __MODULE__.BUTTON = {
@@ -216,18 +119,115 @@ __MODULE__.init = function() {
 
   // Initialize the array of keys.
   for(i = 0;i < 256;i++) {
-    keys[i] = { down: false, hits: 0 };
+    this.keys[i] = { down: false, hits: 0 };
   }
 
   // Initialize the array of mouse buttons.
   for(i = 0;i < 16;i++) {
-    buttons[i] = { down: false, hits: 0 };
+    this.buttons[i] = { down: false, hits: 0 };
   }
 
   // Initialize the array of touches.
   for(i = 0;i < 10;i++) {
-    touches[i] = { /* TODO */ };
+    this.touches[i] = { /* TODO */ };
   }
+};
+
+// Handle keydown events.
+__MODULE__.onKeyDown = function(event) {
+  var state = this.keys[event.keyCode];
+
+  // Create a new state if none exists.
+  if (state === undefined) {
+    state = this.keys[event.keyCode] = { hits: 0 };
+  }
+
+  // Keyboard repeats shouldn't count as hits.
+  if (state.down === false) {
+    state.down = true;
+    state.hits = state.hits + 1;
+  }
+};
+
+// Handle keyup events.
+__MODULE__.onKeyUp = function(event) {
+  this.keys[event.keyCode].down = false;
+};
+
+// Handle button down events.
+__MODULE__.onMouseDown = function(event) {
+  var state = this.buttons[event.button];
+
+  // Create a new state if none exists.
+  if (state === undefined) {
+    state = this.buttons[event.button] = { hits: 0 };
+  }
+
+  state.down = true;
+  state.hits = state.hits + 1;
+};
+
+// Handle button up events.
+__MODULE__.onMouseUp = function(event) {
+  this.buttons[event.button].down = false;
+};
+
+// Handle mouse movement events.
+__MODULE__.onMouseMove = function(event) {
+  var eventX = event.clientX - spark.view.canvas.offsetLeft;
+  var eventY = event.clientY - spark.view.canvas.offsetTop;
+
+  // Update relative motion.
+  this.relativeX += eventX - this.x;
+  this.relativeY += eventY - this.y;
+
+  // Update position.
+  this.x = eventX;
+  this.y = eventY;
+};
+
+// Handle touch down.
+__MODULE__.onTouchStart = function(event) {
+  if (event.targetTouches.length === 1) {
+    touch = true;
+
+    this.x = event.targetTouches[0].pageX - spark.view.canvas.offsetLeft;
+    this.y = event.targetTouches[0].pageY - spark.view.canvas.offsetTop;
+
+    // Reset relative motion.
+    this.relativeX = 0;
+    this.relativeY = 0;
+  }
+
+  // Don't send mouse events.
+  event.preventDefault();
+};
+
+// Handle touch up.
+__MODULE__.onTouchEnd = function(event) {
+  if (event.targetTouches.length === 1) {
+    this.touches[0].down = false;
+  }
+
+  // Don't send mouse events.
+  event.preventDefault();
+};
+
+// Handle touch motion.
+__MODULE__.onTouchMove = function(event) {
+  if (event.targetTouches.length === 1) {
+    var eventX = event.targetTouches[0].pageX - spark.view.canvas.offsetLeft;
+    var eventY = event.targetTouches[0].pageY - spark.view.canvas.offsetTop;
+
+    // Update the touch data.
+    this.touches[0].relativeX += x - touches[0].x;
+    this.touches[0].relativeY += y - touches[0].y;
+    this.touches[0].x = eventX;
+    this.touches[0].y = eventY;
+  }
+
+  // Don't send mouse events.
+  event.preventDefault();
 };
 
 // Hide the cursor.
@@ -242,22 +242,22 @@ __MODULE__.showCursor = function(image) {
 
 // Add mouse support.
 __MODULE__.enableMouse = function() {
-  window.addEventListener('mousedown', onMouseDown, false);
-  window.addEventListener('mouseup', onMouseUp, false);
-  window.addEventListener('mousemove', onMouseMove, false);
+  window.addEventListener('mousedown', this.onMouseDown.bind(this), false);
+  window.addEventListener('mouseup', this.onMouseUp.bind(this), false);
+  window.addEventListener('mousemove', this.onMouseMove.bind(this), false);
 };
 
 // Add keyboard support.
 __MODULE__.enableKeyboard = function() {
-  window.addEventListener('keydown', onKeyDown, false);
-  window.addEventListener('keyup', onKeyUp, false);
+  window.addEventListener('keydown', this.onKeyDown.bind(this), false);
+  window.addEventListener('keyup', this.onKeyUp.bind(this), false);
 };
 
 // Add touch support on a mobile device.
 __MODULE__.enableTouch = function() {
-  spark.view.canvas.addEventListener('touchstart', onTouchStart, false);
-  spark.view.canvas.addEventListener('touchend', onTouchEnd, false);
-  spark.view.canvas.addEventListener('touchmove', onTouchMove, false);
+  spark.view.canvas.addEventListener('touchstart', this.onTouchStart.bind(this), false);
+  spark.view.canvas.addEventListener('touchend', this.onTouchEnd.bind(this), false);
+  spark.view.canvas.addEventListener('touchmove', this.onTouchMove.bind(this), false);
 };
 
 // Flush the key states every frame.
@@ -266,40 +266,40 @@ __MODULE__.flush = function() {
     state.hits = 0;
   };
 
-  keys.forEach(flushState);
-  buttons.forEach(flushState);
+  this.keys.forEach(flushState);
+  this.buttons.forEach(flushState);
 
   // Clear all relative motion.
-  relativeX = 0;
-  relativeY = 0;
+  this.relativeX = 0;
+  this.relativeY = 0;
 };
 
 // Returns how many times a key has been hit this frame.
 __MODULE__.keyHits = function(key) {
-  return key < keys.length ? keys[key].hits : 0;
+  return key < this.keys.length ? this.keys[key].hits : 0;
 };
 
 // True if the key was hit at all during the frame.
 __MODULE__.keyHit = function(key) {
-  return key < keys.length ? keys[key].hits > 0 : false;
+  return key < this.keys.length ? this.keys[key].hits > 0 : false;
 };
 
 // True if the key is currently down.
 __MODULE__.keyDown = function(key) {
-  return key < keys.length ? keys[key].down : false;
+  return key < this.keys.length ? this.keys[key].down : false;
 };
 
 // Returns how many times a mouse button has been hit this frame.
 __MODULE__.mouseHits = function(button) {
-  return button < buttons.lenght ? buttons[button || 0].hits : 0;
+  return button < this.buttons.lenght ? this.buttons[button || 0].hits : 0;
 };
 
 // Returns true if the mouse button was hit at all this frame.
 __MODULE__.mouseHit = function(button) {
-  return button < buttons.lenght ? buttons[button || 0].hits > 0 : false;
+  return button < this.buttons.lenght ? this.buttons[button || 0].hits > 0 : false;
 };
 
 // True if the mouse button is currently down.
 __MODULE__.mouseDown = function(button) {
-  return button < buttons.lenght ? buttons[button || 0].down : false;
+  return button < this.buttons.lenght ? this.buttons[button || 0].down : false;
 };
