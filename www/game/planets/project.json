@@ -1,0 +1,23 @@
+{
+  "title": "Planets",
+  "version": 1.0,
+  "assetRelativePath": "assets/",
+  "assets": {
+    "starfield":      { "class": "spark.texture.Image", "source": "background.png" },
+    "planet_19":      { "class": "spark.texture.Image", "source": "planet_19.png" },
+    "planet_20":      { "class": "spark.texture.Image", "source": "planet_20.png" },
+    "planet_21":      { "class": "spark.texture.Image", "source": "planet_21.png" },
+    "planet_22":      { "class": "spark.texture.Image", "source": "planet_22.png" },
+    "planet_23":      { "class": "spark.texture.Image", "source": "planet_23.png" },
+    "planet_24":      { "class": "spark.texture.Image", "source": "planet_24.png" },
+    "planet_25":      { "class": "spark.texture.Image", "source": "planet_25.png" },
+    "planet_26":      { "class": "spark.texture.Image", "source": "planet_26.png" },
+    "planet_27":      { "class": "spark.texture.Image", "source": "planet_27.png" },
+    "planet_28":      { "class": "spark.texture.Image", "source": "planet_28.png" },
+    "planet_29":      { "class": "spark.texture.Image", "source": "planet_29.png" },
+    "planet_30":      { "class": "spark.texture.Image", "source": "planet_30.png" },
+    "planet_31":      { "class": "spark.texture.Image", "source": "planet_31.png" },
+    "planet_32":      { "class": "spark.texture.Image", "source": "planet_32.png" },
+    "planet_33":      { "class": "spark.texture.Image", "source": "planet_33.png" }
+	}
+}
