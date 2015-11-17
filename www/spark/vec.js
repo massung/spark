@@ -214,19 +214,29 @@ __MODULE__.Mat.prototype.__defineGetter__('inverse', function() {
   return m;
 });
 
+// Return the angle of rotation (in degrees). This is slow!
+__MODULE__.Mat.prototype.__defineGetter__('angle', function() {
+  return spark.util.radToDeg(Math.atan2(this.r.y, this.r.x));
+});
+
+// Set the angle of rotation.
+__MODULE__.Mat.prototype.__defineSetter__('angle', function(angle) {
+  var rads = spark.util.degToRad(angle);
+
+  // Unit vector.
+  this.r.x = Math.cos(rads);
+  this.r.y = Math.sin(rads);
+});
+
 // Set the absolute translation of a sprite.
 __MODULE__.Mat.prototype.setTranslation = function(x, y) {
   this.p.x = x;
   this.p.y = y;
 };
 
-// Set the absolute rotation of a sprite.
+// Set the absolute rotation of a sprite. Function for angle setter.
 __MODULE__.Mat.prototype.setRotation = function(angle) {
-  var rads = spark.util.degToRad(angle);
-
-  // Unit vector.
-  this.r.x = Math.cos(rads);
-  this.r.y = Math.sin(rads);
+  this.angle = angle;
 };
 
 // Set the absolute scale of a sprite.
@@ -268,11 +278,6 @@ __MODULE__.Mat.prototype.lookAt = function(p, forwardAngle) {
   // Hard set the rotation.
   this.r.x = Math.cos(angle);
   this.r.y = Math.sin(angle);
-};
-
-// Return the angle of rotation (in degrees). This is slow!
-__MODULE__.Mat.prototype.angle = function() {
-  return spark.util.radToDeg(Math.atan2(this.r.y, this.r.x));
 };
 
 // Apply another matrix and return the new one.

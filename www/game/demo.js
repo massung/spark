@@ -34,6 +34,8 @@ demo.init = function () {
 
     // Create the score label.
     this.score = scene.addGui(new spark.gui.Label(0, {
+      x: 10,
+      y: 10,
       fillStyle: '#ff0',
       font: '20px BulletproofBB',
       textBaseline: 'hanging',
@@ -43,21 +45,15 @@ demo.init = function () {
       shadowColor: '#ff0',
     }));
 
-    this.score.x = 10;
-    this.score.y = 10;
-
     // An energy bar.
     this.energy = scene.addGui(new spark.gui.Meter(100, 100, {
+      x: 10,
+      y: -10,
+      width: 140,
+      height: 16,
       strokeStyle: '#fff',
       fillStyle: '#c8f',
-      shadowBlur: 5,
-      shadowOffsetX: 0,
-      shadowOffsetY: 0,
-      shadowColor: '#f8f',
     }));
-
-    this.energy.x = 10;
-    this.energy.y = -10;
   }).bind(this));
 };
 
@@ -180,6 +176,13 @@ demo.playerControls = function() {
   if (spark.input.keyDown(spark.input.KEY.S))
     spark.game.scene.camera.scale(-2.0 * spark.game.step);
 
+  // Timeline test.
+  if (spark.input.keyHit(spark.input.KEY.T)) {
+    this.playAnimation(spark.project.assets.timeline_test, function(event) {
+      console.log(event);
+    });
+  }
+
   // Thrusting.
   if (spark.input.keyDown(spark.input.KEY.UP)) {
     this.thrust.x += 800.0 * spark.game.step * -this.m.r.y;
@@ -241,5 +244,5 @@ demo.bullet = function() {
   }
 
   // Move the bullet forward.
-  this.m.translate([0, -1200 * spark.game.step], true);
+  this.m.translate([0, -1400 * spark.game.step], true);
 };

@@ -4,7 +4,7 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.collision');
+spark.module().requires('spark.collision', 'spark.timeline');
 
 // A sprite is a rendered quad with behaviors and optional collision.
 __MODULE__.Sprite = function() {
@@ -23,6 +23,9 @@ __MODULE__.Sprite = function() {
   // Update behaviors and shape colliders.
   this.behaviors = [];
   this.colliders = [];
+
+  // Animations that are currently playing.
+  this.anims = [];
 };
 
 // Set constructors.
@@ -35,7 +38,7 @@ __MODULE__.Sprite.prototype.worldToLocal = function(p) {
 
 // Convert a world angle into a local space angle.
 __MODULE__.Sprite.prototype.worldToLocalAngle = function(angle) {
-  return this.m.angle() - angle;
+  return this.m.angle - angle;
 };
 
 // Convert an <x,y> pair (array) from local space to world space.
@@ -45,18 +48,13 @@ __MODULE__.Sprite.prototype.localToWorld = function(p) {
 
 // Convert a local-space angle (in degrees) to a world-space angle.
 __MODULE__.Sprite.prototype.localToWorldAngle = function(angle) {
-  return angle + this.m.angle();
+  return angle + this.m.angle;
 };
 
 // The image is any texture class, and frame is optional.
 __MODULE__.Sprite.prototype.setImage = function(image, frame) {
   this.image = image;
   this.frame = frame;
-};
-
-// Tell the sprite to play an animation.
-__MODULE__.Sprite.prototype.animate = function(frames, fps, loop) {
-  // TODO:
 };
 
 // Append a new behavior to a sprite.
@@ -81,9 +79,24 @@ __MODULE__.Sprite.prototype.updateShapeColliders = function() {
   }
 };
 
+// Tell the sprite to play an animation.
+__MODULE__.Sprite.prototype.playAnimation = function(anim, onevent) {
+  this.anims.push(anim.play(this, onevent));
+};
+
 // Called once per frame to advance the gameplay simulation.
 __MODULE__.Sprite.prototype.update = function() {
-  for(var i = 0;i < this.behaviors.length;i++) {
+  var i;
+
+  // Update all animations.
+  for(i = 0;i < this.anims.length;i++) {
+    if (this.anims[i](spark.game.step) === false) {
+      // TODO: Remove animation.
+    }
+  }
+
+  // Process all behavior functions.
+  for(i = 0;i < this.behaviors.length;i++) {
     this.behaviors[i].call(this);
   }
 
@@ -99,16 +112,18 @@ __MODULE__.Sprite.prototype.draw = function() {
 
   // Render the sprite.
   spark.view.save();
-  {
-    spark.view.globalAlpha = Math.min(1.0, Math.max(this.alpha, 0.0));
-    spark.view.globalCompositeOperation = this.compositeOperation || 'source-over';
 
-    // Apply the transform for this sprite.
-    spark.view.transform.apply(spark.view, this.m.transform);
+  // Set the alpha and composite style.
+  spark.view.globalAlpha = Math.min(1.0, Math.max(this.alpha, 0.0));
+  spark.view.globalCompositeOperation = this.compositeOperation || 'source-over';
 
-    // Render.
-    this.image.blit(this.frame, [0.5, 0.5]);
-  }
+  // Apply the transform for this sprite.
+  spark.view.transform.apply(spark.view, this.m.transform);
+
+  // Render.
+  this.image.blit(this.frame, [0.5, 0.5]);
+
+  // Done.
   spark.view.restore();
 };
 

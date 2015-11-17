@@ -20,6 +20,7 @@
     "rumble_sound":  { "class": "spark.audio.Clip", "source": "rumble.ogg" },
     "thrust":        { "class": "spark.particle.Emitter", "source": "thrust_emitter.json" },
     "explode":       { "class": "spark.particle.Emitter", "source": "asteroid_emitter.json" },
-    "bb":            { "class": "spark.texture.Font", "source": "BulletproofBB.otf" }
+    "bb":            { "class": "spark.texture.Font", "source": "BulletproofBB.otf" },
+    "timeline_test": { "class": "spark.timeline.Anim", "source": "timeline.json" }
   }
 }
