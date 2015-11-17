@@ -91,6 +91,10 @@ __MODULE__.loadFrame = function() {
 
   // Display a loading bar.
   spark.view.strokeStyle = '#fff';
+  spark.view.shadowBlur = 10;
+  spark.view.shadowOffsetX = 0;
+  spark.view.shadowOffsetY = 0;
+  spark.view.shadowColor = '#fff';
   spark.view.font = 'bold 10px "Courier", sans-serif';
   spark.view.fillText('Loading...', 10, spark.view.canvas.height - 10);
 

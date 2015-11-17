@@ -109,8 +109,11 @@ demo.createAsteroid = function(layer, x, y, scale) {
 
   // Add a collision filter and callback.
   var collider = sprite.addCollider('asteroid', function(c) {
-    if (c.filter == 'bullet') {
+    if (c.filter == 'bullet' && !c.owner.dead) {
       this.dead = true;
+
+      // Kill the bullet so it won't collide with more asteroids.
+      c.owner.dead = true;
 
       // Spawn 2-4 smaller asteroids.
       if (this.m.s.x > 0.6) {
@@ -210,11 +213,7 @@ demo.playerControls = function() {
     bullet.addBehavior(game.demo.bullet);
 
     // Add a collision filter and callback.
-    var collider = bullet.addCollider('bullet', function(c) {
-      if (c.filter === 'asteroid') {
-        this.dead = true;
-      }
-    });
+    var collider = bullet.addCollider('bullet');
 
     // Add a simple collider shape.
     collider.addSegment([0, -10], [0, 10]);
