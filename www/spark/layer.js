@@ -75,8 +75,8 @@ __MODULE__.BackgroundLayer.prototype.draw = function() {
   var top = middle.y * sy - (size / 2);
 
   // Draw all the tiles.
-  for(var x = 0;x <= size;x += iw - 1) {
-    for (var y = 0;y <= size;y += ih - 1) {
+  for(var x = -iw;x <= size;x += iw - 1) {
+    for (var y = -ih;y <= size;y += ih - 1) {
       this.image.blitEx(0, 0, iw, ih, left + x, top + y);
     }
   }

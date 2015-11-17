@@ -22,7 +22,7 @@ demo.init = function () {
 
     // Setup the background.
     this.bgLayer.image = spark.project.assets.starfield;
-    this.bgLayer.m.setScale(2);
+    this.bgLayer.m.setScale(4);
 
     // Create the player.
     this.createPlayer(this.playerLayer);

@@ -85,6 +85,8 @@ __MODULE__.Meter.prototype.draw = function() {
   var y = this.y < 0 ? (spark.view.canvas.height + this.y - h) : this.y;
 
   // Draw the inner bar and then the outer shell.
-  spark.view.fillRect(x, y, w * pct, h);
+  if (pct > 0.0) {
+    spark.view.fillRect(x, y, w * pct, h);
+  }
   spark.view.strokeRect(x, y, w, h);
 };

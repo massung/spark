@@ -260,6 +260,21 @@ __MODULE__.Mat.prototype.scale = function(x, y) {
   this.s.y += y || x || 1.0;
 };
 
+// Force to look at a given point.
+__MODULE__.Mat.prototype.lookAt = function(p, forwardAngle) {
+  var r = spark.util.degToRad(forwardAngle || 0.0);
+  var angle = Math.atan2(p.y - this.p.y, this.p.x - p.x) + r;
+
+  // Hard set the rotation.
+  this.r.x = Math.cos(angle);
+  this.r.y = Math.sin(angle);
+};
+
+// Return the angle of rotation (in degrees). This is slow!
+__MODULE__.Mat.prototype.angle = function() {
+  return spark.util.radToDeg(Math.atan2(this.r.y, this.r.x));
+};
+
 // Apply another matrix and return the new one.
 __MODULE__.Mat.prototype.mult = function(m) {
   var w = new spark.vec.Mat();
@@ -269,11 +284,6 @@ __MODULE__.Mat.prototype.mult = function(m) {
   w.s = spark.vec.vmult(this.s, m.s);
 
   return w;
-};
-
-// Return the angle of rotation (in degrees). This is slow!
-__MODULE__.Mat.prototype.angle = function() {
-  return spark.util.radToDeg(Math.atan2(this.r.y, this.r.x));
 };
 
 // Transform a vector by this matrix.

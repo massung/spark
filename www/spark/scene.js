@@ -98,6 +98,14 @@ __MODULE__.setProjection = function(origin, sx, sy) {
     m.p = [0, spark.view.canvas.height];
   } else if (origin === 'bottomright' || origin === 'bottom-right') {
     m.p = [spark.view.canvas.width, spark.view.canvas.height];
+  } else if (origin === 'topmiddle' || origin === 'top-middle') {
+    m.p = [spark.view.canvas.width / 2, 0];
+  } else if (origin === 'bottommiddle' || origin === 'bottom-middle') {
+    m.p = [spark.view.canvas.width / 2, spark.view.canvas.height];
+  } else if (origin === 'leftmiddle' || origin === 'left-middle') {
+    m.p = [0, spark.view.canvas.height / 2];
+  } else if (origin === 'rightmiddle' || origin === 'right-middle') {
+    m.p = [spark.view.canvas.width, spark.view.canvas.height / 2];
   } else if (origin === 'middle' || origin === 'center') {
     m.p = [spark.view.canvas.width / 2, spark.view.canvas.height / 2];
   } else {
