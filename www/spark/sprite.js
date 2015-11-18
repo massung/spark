@@ -89,9 +89,16 @@ __MODULE__.Sprite.prototype.update = function() {
   var i;
 
   // Update all animations.
-  for(i = 0;i < this.anims.length;i++) {
+  for(i = 0;i < this.anims.length;) {
     if (this.anims[i](spark.game.step) === false) {
-      // TODO: Remove animation.
+      var last = this.anims.pop();
+
+      // Swap with last.
+      if (i < this.anims.length) {
+        this.anims[i] = last;
+      }
+    } else {
+      i++;
     }
   }
 
