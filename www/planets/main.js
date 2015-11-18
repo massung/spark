@@ -1,8 +1,8 @@
-var main = spark.main('canvas');
+var main = spark.main('canvas', 1280, 768);
 
 // Called once the spark framework is fully loaded.
 main.init = function () {
-	spark.game.run('game/planets/project.json', (function(scene) {
+	spark.game.run('planets/project.json', (function(scene) {
 		// Change the projection so the origin is in the middle.
     scene.setProjection('middle', 1);
 
