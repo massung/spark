@@ -13,7 +13,8 @@ demo.init = function () {
   spark.game.run('game/project.json', (function(scene) {
 
     // Change the projection so the origin is in the middle.
-    scene.setPlayfield('middle', 1000, 200);
+    scene.setPlayfield('middle', spark.view.canvas.width * 2, spark.view.canvas.height * 2);
+    scene.setViewport(scene.width, scene.height);
 
     // Create layers for the asteroids, player, and particles.
     this.bgLayer = scene.addLayer(new spark.layer.BackgroundLayer());

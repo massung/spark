@@ -18,10 +18,7 @@ __MODULE__.run = function(projectFile, onload) {
 
   // Set the default playfield size and origin.
   this.scene.setPlayfield();
-
-  // Setup the camera zoom for the scene to match the canvas.
-  this.scene.camera.m.s.x = 2 / spark.view.canvas.width;
-  this.scene.camera.m.s.y = 2 / spark.view.canvas.height;
+  this.scene.setViewport();
 
   // Load the project file, and call onload once fully loaded.
   spark.project.load(projectFile, (function() {

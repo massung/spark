@@ -87,6 +87,12 @@ __MODULE__.addGui = function(widget, init) {
   return widget;
 };
 
+// Set the camera scaling to fit the playfield in the viewport.
+__MODULE__.setViewport = function(w, h) {
+  this.camera.m.s.x = 2 / (w || spark.view.canvas.width);
+  this.camera.m.s.y = 2 / (h || spark.view.canvas.height);
+};
+
 // Define the playfield size and origin.
 __MODULE__.setPlayfield = function(origin, w, h) {
   origin = origin ? origin.toLowerCase() : 'top-left';
@@ -143,12 +149,9 @@ __MODULE__.update = function() {
 
 // Called once per frame to draw each layer.
 __MODULE__.draw = function() {
-  var i;
-
-  // Retain transforms, etc.
   spark.view.save();
 
-  //
+  // Scaling for camera -> viewport transformation.
   var w2 = spark.view.canvas.width / 2;
   var h2 = spark.view.canvas.height / 2;
 
@@ -167,7 +170,7 @@ __MODULE__.draw = function() {
     spark.view.translate(-this.camera.m.p.x, -this.camera.m.p.y);
 
     // Render each layer in reverse order (sprites last).
-    for(i = 0;i < this.layers.length;i++) {
+    for(var i = 0;i < this.layers.length;i++) {
       this.layers[i].draw();
     }
   }).bind(this));
@@ -186,7 +189,7 @@ __MODULE__.draw = function() {
 
   // Update and render all the GUI elements.
   spark.perf.guiTime += spark.perf.sample((function() {
-    for(i = 0;i < this.gui.length;i++) {
+    for(var i = 0;i < this.gui.length;i++) {
       this.gui[i].update();
 
       // Draw, but save/restore the context each time.
