@@ -16,6 +16,13 @@ __MODULE__.run = function(projectFile, onload) {
   // Create a new scene module instance for the game.
   this.scene = Object.create(spark.scene);
 
+  // Set the default playfield size and origin.
+  this.scene.setPlayfield();
+
+  // Setup the camera zoom for the scene to match the canvas.
+  this.scene.camera.m.s.x = 2 / spark.view.canvas.width;
+  this.scene.camera.m.s.y = 2 / spark.view.canvas.height;
+
   // Load the project file, and call onload once fully loaded.
   spark.project.load(projectFile, (function() {
     spark.input.enableMouse();

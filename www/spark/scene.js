@@ -13,46 +13,54 @@ __MODULE__.init = function() {
   // All GUI elements added to the scene.
   this.gui = [];
 
+  // Setup the default playfield size and origin.
+  this.playfield = {
+    top: 0,
+    left: 0,
+    width: 100,
+    height: 100,
+  };
+
   // The camera is a special sprite that doesn't render.
   this.camera = new spark.sprite.Sprite();
-
-  // Setup the default projection.
-  this.setProjection();
 };
 
 // Read-only top pixel coordinate in projection space.
 __MODULE__.__defineGetter__('top', function() {
-  return this.projection.p.y * this.projection.s.y;
+  return this.playfield.top;
 });
 
 // Read-only left pixel coordinate in projection space.
 __MODULE__.__defineGetter__('left', function() {
-  return this.projection.p.x * this.projection.s.x;
+  return this.playfield.left;
 });
 
 // Read-only width of the scene in pixels.
 __MODULE__.__defineGetter__('width', function() {
-  return spark.view.canvas.width * this.projection.s.x;
+  return this.playfield.width;
 });
 
 // Read-only height of the scene in pixels.
 __MODULE__.__defineGetter__('height', function() {
-  return spark.view.canvas.height * this.projection.s.y;
+  return this.playfield.height;
 });
 
 // Read-only bottom pixel coordinate in projection space.
 __MODULE__.__defineGetter__('bottom', function() {
-  return this.top + this.height;
+  return this.playfield.top + this.playfield.height;
 });
 
 // Read-only right pixel coordinate in projection space.
 __MODULE__.__defineGetter__('right', function() {
-  return this.left + this.width;
+  return this.playfield.left + this.playfield.width;
 });
 
 // Read-only middle of the screen.
 __MODULE__.__defineGetter__('middle', function() {
-  return [this.left + (this.width / 2), this.top + (this.height / 2)];
+  return [
+    this.playfield.left + (this.playfield.width / 2),
+    this.playfield.top + (this.playfield.height / 2),
+  ];
 });
 
 // Add a new layer to the scene.
@@ -79,61 +87,41 @@ __MODULE__.addGui = function(widget, init) {
   return widget;
 };
 
-// Define the projection matrix.
-__MODULE__.setProjection = function(origin, sx, sy) {
-  origin = origin ? origin.toLowerCase() : 'topleft';
+// Define the playfield size and origin.
+__MODULE__.setPlayfield = function(origin, w, h) {
+  origin = origin ? origin.toLowerCase() : 'top-left';
 
-  // Create a new projection.
-  var m = new spark.vec.Mat();
+  // Default width and height is that of the canvas.
+  w = w || spark.view.canvas.width;
+  h = h || spark.view.canvas.height;
 
-  // Set the scale (must be uniform).
-  m.s = [sx || 1.0, sy || sx || 1.0];
+  // Discover the origin point.
+  if (origin === 'top-left') origin = [0, 0];
+  else if (origin === 'top-right') origin = [w, 0];
+  else if (origin === 'bottom-left') origin = [0, h];
+  else if (origin === 'bottom-right') origin = [w, h];
+  else if (origin === 'top-middle') origin = [w / 2, 0];
+  else if (origin === 'bottom-middle') origin = [w / 2, h];
+  else if (origin === 'left-middle') origin = [0, h / 2];
+  else if (origin === 'right-middle') origin = [w, h / 2];
+  else if (origin === 'middle') origin = [w / 2, h / 2];
 
-  // Discover the offset to 0,0 (the origin).
-  if (origin === 'topleft' || origin === 'top-left') {
-    m.p = [0, 0];
-  } else if (origin === 'topright' || origin === 'top-right') {
-    m.p = [spark.view.canvas.width, 0];
-  } else if (origin === 'bottomleft' || origin === 'bottom-left') {
-    m.p = [0, spark.view.canvas.height];
-  } else if (origin === 'bottomright' || origin === 'bottom-right') {
-    m.p = [spark.view.canvas.width, spark.view.canvas.height];
-  } else if (origin === 'topmiddle' || origin === 'top-middle') {
-    m.p = [spark.view.canvas.width / 2, 0];
-  } else if (origin === 'bottommiddle' || origin === 'bottom-middle') {
-    m.p = [spark.view.canvas.width / 2, spark.view.canvas.height];
-  } else if (origin === 'leftmiddle' || origin === 'left-middle') {
-    m.p = [0, spark.view.canvas.height / 2];
-  } else if (origin === 'rightmiddle' || origin === 'right-middle') {
-    m.p = [spark.view.canvas.width, spark.view.canvas.height / 2];
-  } else if (origin === 'middle' || origin === 'center') {
-    m.p = [spark.view.canvas.width / 2, spark.view.canvas.height / 2];
-  } else {
-    throw 'Invalid origin for projection. Use "top-left", "middle", "bottom-right", etc.';
-  }
+  // Unknown origin for playfield area.
+  else throw 'Invalid origin for projection. Use "top-left", "middle", "bottom-right", etc.';
 
   // The projection is the inverse.
-  this.projection = m.inverse;
+  this.playfield.left = -origin.x;
+  this.playfield.top = -origin.y;
+  this.playfield.width = w;
+  this.playfield.height = h;
 };
 
 // Called once per frame to advance each layer.
 __MODULE__.update = function() {
+  var space = new spark.collision.Quadtree(this.left, this.top, this.width, this.height, 0);
+
+  // Run camera behaviors and animations.
   this.camera.update();
-
-  // Get the screen coordinates in camera space.
-  var p1 = this.camera.m.vtransform([this.left, this.top]);
-  var p2 = this.camera.m.vtransform([this.right, this.top]);
-  var p3 = this.camera.m.vtransform([this.left, this.bottom]);
-  var p4 = this.camera.m.vtransform([this.right, this.bottom]);
-
-  // Find the min/max extents of the visible area.
-  var x1 = Math.min(p1.x, p2.x, p3.x, p4.x);
-  var y1 = Math.min(p1.y, p2.y, p3.y, p4.y);
-  var x2 = Math.max(p1.x, p2.x, p3.x, p4.x);
-  var y2 = Math.max(p1.y, p2.y, p3.y, p4.y);
-
-  // Create a new spacial hash for the frame.
-  var space = new spark.collision.Quadtree(x1, y1, x2 - x1, y2 - y1, 0);
 
   // Update all the layers and allow each layer to push onto the spacial hash.
   for(var i = 0;i < this.layers.length;i++) {
@@ -160,15 +148,23 @@ __MODULE__.draw = function() {
   // Retain transforms, etc.
   spark.view.save();
 
-  var projMatrix = this.projection.inverse.transform;
-  var worldMatrix = this.camera.m.inverse.transform;
+  //
+  var w2 = spark.view.canvas.width / 2;
+  var h2 = spark.view.canvas.height / 2;
 
   // Setup the projection matrix.
   spark.perf.drawTime += spark.perf.sample((function() {
-    spark.view.setTransform.apply(spark.view, projMatrix);
+    spark.view.setTransform(1, 0, 0, 1, 0, 0);
 
-    // Transform by the inverse of the camera.
-    spark.view.transform.apply(spark.view, worldMatrix);
+    // Camera -> viewport.
+    spark.view.transform(w2, 0, 0, h2, w2, h2);
+
+    // Camera projection (zoom).
+    spark.view.scale(this.camera.m.s.x, this.camera.m.s.y);
+
+    // Game -> camera.
+    spark.view.transform(this.camera.m.r.x, this.camera.m.r.y, -this.camera.m.r.y, this.camera.m.r.x, 0, 0);
+    spark.view.translate(-this.camera.m.p.x, -this.camera.m.p.y);
 
     // Render each layer in reverse order (sprites last).
     for(i = 0;i < this.layers.length;i++) {
@@ -176,7 +172,7 @@ __MODULE__.draw = function() {
     }
   }).bind(this));
 
-  // Debugging of spacial hash and scene box.
+  // Debugging of spacial hash and scene box in game space.
   if (spark.DEBUG) {
     this.space.draw();
 
@@ -199,12 +195,24 @@ __MODULE__.draw = function() {
   }).bind(this));
 };
 
+// Transform a point from world to screen space.
+__MODULE__.worldToScreen = function(p) {
+  var s = this.camera.m.inverse.vtransform(p);
+
+  return [
+    s.x * (spark.view.canvas.width / 2) + (spark.view.canvas.width / 2),
+    s.y * (spark.view.canvas.height / 2) + (spark.view.canvas.height / 2),
+  ];
+};
+
 // Transform a point from screen space to world space.
 __MODULE__.screenToWorld = function(p) {
-  return this.camera.m.vtransform([
-    ((p ? p.x : spark.input.x) + this.projection.p.x) * this.projection.s.x,
-    ((p ? p.y : spark.input.y) + this.projection.p.y) * this.projection.s.y,
-  ]);
+  var s = [
+    p.x * (2 / spark.view.canvas.width) - (2 / spark.view.canvas.width),
+    p.y * (2 / spark.view.canvas.height) - (2 / spark.view.canvas.height),
+  ];
+
+  return this.camera.m.vtransform(s);
 };
 
 // Perform a pick at a given point, find all sprites at that point.

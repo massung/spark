@@ -135,10 +135,10 @@ __MODULE__.Sprite.prototype.__defineGetter__('width', function() {
   }
 
   if (this.frame === undefined) {
-    return this.image.source.width;
+    return this.image.source.width * this.m.s.x;
   }
 
-  return this.image.frames[this.frame].frame.w;
+  return this.image.frames[this.frame].frame.w * this.m.s.x;
 });
 
 // Return the height of the sprite.
@@ -148,8 +148,8 @@ __MODULE__.Sprite.prototype.__defineGetter__('height', function() {
   }
 
   if (this.frame === undefined) {
-    return this.image.source.height;
+    return this.image.source.height * this.m.s.y;
   }
 
-  return this.image.frames[this.frame].frame.h;
+  return this.image.frames[this.frame].frame.h * this.m.s.y;
 });

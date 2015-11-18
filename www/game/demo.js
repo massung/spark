@@ -13,7 +13,7 @@ demo.init = function () {
   spark.game.run('game/project.json', (function(scene) {
 
     // Change the projection so the origin is in the middle.
-    scene.setProjection('middle', 0.5);
+    scene.setPlayfield('middle', 1000, 200);
 
     // Create layers for the asteroids, player, and particles.
     this.bgLayer = scene.addLayer(new spark.layer.BackgroundLayer());
@@ -182,9 +182,9 @@ demo.playerControls = function() {
   if (spark.input.keyDown(spark.input.KEY.D))
     spark.game.scene.camera.m.rotate(180 * spark.game.step);
   if (spark.input.keyDown(spark.input.KEY.W))
-    spark.game.scene.camera.m.scale(2.0 * spark.game.step);
+    spark.game.scene.camera.m.scale(0.01 * spark.game.step);
   if (spark.input.keyDown(spark.input.KEY.S))
-    spark.game.scene.camera.m.scale(-2.0 * spark.game.step);
+    spark.game.scene.camera.m.scale(-0.01 * spark.game.step);
 
   // Timeline test.
   if (spark.input.keyHit(spark.input.KEY.T)) {
