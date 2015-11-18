@@ -22,6 +22,6 @@ __MODULE__.__defineGetter__('width', function() {
 });
 
 // Return the height of the window or device display.
-__MODULE__.__defineGetter__('width', function() {
+__MODULE__.__defineGetter__('height', function() {
   return spark.platform.mobile ? screen.height : window.innerHeight;
 });
