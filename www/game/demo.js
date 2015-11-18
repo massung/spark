@@ -64,7 +64,7 @@ demo.createPlayer = function(layer) {
   sprite.thrust = spark.vec.ZERO;
 
   // Sprite rendering.
-  sprite.setImage(spark.project.assets.player_ship);
+  sprite.image = spark.project.assets.player_ship;
   sprite.m.setTranslation(0, 0);
 
   // Add some callback behaviors.
@@ -90,8 +90,15 @@ demo.createAsteroid = function(layer, x, y, scale) {
   sprite.direction = [spark.util.rand(-s, s), spark.util.rand(-s, s)];
   sprite.rot = spark.util.rand(-180, 180);
 
-  // Sprite initialization.
-  sprite.setImage(spark.project.assets.asteroid_1);
+  // Pick a random sprite image.
+  sprite.image = spark.util.arand([
+    spark.project.assets.asteroid_0,
+    spark.project.assets.asteroid_1,
+    spark.project.assets.asteroid_2,
+    spark.project.assets.asteroid_3,
+  ]);
+
+  // Initial position.
   sprite.m.setTranslation(
     x || spark.util.rand(spark.game.scene.left, spark.game.scene.right),
     y || spark.util.rand(spark.game.scene.top, spark.game.scene.bottom));
@@ -206,7 +213,7 @@ demo.playerControls = function() {
     var bullet = this.layer.spawn();
 
     // Sprite rendering.
-    bullet.setImage(spark.project.assets.player_laser);
+    bullet.image = spark.project.assets.player_laser;
 
     // Spawn in front of the player.
     bullet.m.p = this.localToWorld([0, -30]);

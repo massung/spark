@@ -63,7 +63,7 @@ __MODULE__.irand = function(min, max) {
 
 // Returns a random element from an array.
 __MODULE__.arand = function(array) {
-  return array[Math.floor(Math.rand() * array.length)];
+  return array[spark.util.irand(0, array.length)];
 };
 
 // Linearly interpolate across values.

@@ -51,12 +51,6 @@ __MODULE__.Sprite.prototype.localToWorldAngle = function(angle) {
   return angle + this.m.angle;
 };
 
-// The image is any texture class, and frame is optional.
-__MODULE__.Sprite.prototype.setImage = function(image, frame) {
-  this.image = image;
-  this.frame = frame;
-};
-
 // Append a new behavior to a sprite.
 __MODULE__.Sprite.prototype.addBehavior = function(behavior) {
   this.behaviors.push(behavior);

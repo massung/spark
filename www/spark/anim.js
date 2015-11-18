@@ -69,6 +69,9 @@ __MODULE__.Timeline = function(src) {
         }
       }
 
+      // Set the default interpolation style for the track.
+      track.interpolate = track.interpolate || 'cubic';
+
       // Copy the keys, so we can pop them as we crunch frames.
       var ks = track.keys.slice(0);
       var pk = ks.shift();
@@ -85,9 +88,19 @@ __MODULE__.Timeline = function(src) {
           track.frames[x] = (pk = ks.shift()).value;
         }
 
-        // Otherwise we need to interpolate.
-        else {
-          var u = (tk.frame === x) ? 0.0 : (x - pk.frame) / (tk.frame - pk.frame);
+        // Step interpolation just uses the value of the previous key.
+        else if (track.interpolate === 'step') {
+          track.frames[x] = pk.value;
+        }
+
+        // Linear interpolation lerps from the previous key to this key.
+        else if (track.interpolate === 'linear') {
+          track.frames[x] = spark.util.lerp(pk.value, tk.value, x - pk.frame, tk.frame - pk.frame);
+        }
+
+        // Cubic interpolation uses a hermite (cublic) spline.
+        else if (track.interpolate === 'cubic') {
+          var u = (x - pk.frame) / (tk.frame - pk.frame);
 
           // Get the hermite blending values.
           var h0 = (u * u * u * 2) - (u * u * 3) + 1;
@@ -106,6 +119,9 @@ __MODULE__.Timeline = function(src) {
           // Calculate the value.
           track.frames[x] = (h0 * p0) + (h1 * p1) + (h2 * t0) + (h3 * t1);
         }
+
+        // Unknown interpolation style, throw an error.
+        else throw 'No interpolation style set in timeline for track ' + prop;
       }
     }
   }).bind(this));
@@ -121,18 +137,22 @@ __MODULE__.Timeline.prototype.play = function(obj, onevent) {
     time: 0.0,
     eventIndex: 0,
     onevent: onevent,
+    trackData: {},
   };
 
-  // Loop over all the tracks.
+  // Loop over all the tracks, snag instanced track data.
   for(var prop in this.tracks) {
     var track = this.tracks[prop];
+    var property = track.property(instance.object);
 
-    // Local tracks need to get the initial value of the object.
-    if (track.local) {
-      //track.property(obj)[track.key]
+    // If the property doesn't exist, ignore it.
+    if (property === undefined) continue;
 
-      // TODO: save initial value to delta from.
-    }
+    // Lookup the property that will be set by this track.
+    instance.trackData[prop] = {
+      property: property,
+      initialValue: property[track.key],
+    };
   }
 
   // A function that can be called once per frame to update the object.
@@ -165,15 +185,20 @@ __MODULE__.Timeline.prototype.update = function(instance, step) {
   }
 
   // Loop over all the tracks and update each property in the object.
-  for(var prop in this.tracks) {
+  for(var prop in instance.trackData) {
     var track = this.tracks[prop];
+    var trackData = instance.trackData[prop];
 
     // Get the owner of the property and its new value.
-    var property = track.property(instance.object);
     var value = track.frames[frame];
 
-    // Update the value of the object.
-    property[track.key] = value;
+    // If a local track, the value is an offset from the initial value.
+    if (track.local) {
+      value += trackData.initialValue;
+    }
+
+    // Update the value of the property.
+    trackData.property[track.key] = value;
   }
 
   // Was this the last frame?

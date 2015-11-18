@@ -63,7 +63,7 @@ __MODULE__.Emitter.prototype.emit = function(layer, pos, angle, n) {
     var p = layer.spawn();
 
     // Set the texture image to use.
-    p.setImage(spark.project.assets[this.texture]);
+    p.image = spark.project.assets[this.texture];
 
     // Set the alpha and composite operation for the sprite.
     p.alpha = this.startAlpha;

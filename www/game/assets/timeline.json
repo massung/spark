@@ -9,7 +9,7 @@
   ],
   "tracks": {
     "m.p.y": {
-      "local": false,
+      "local": true,
       "keys": [
         { "frame":  0, "value":   0.0 },
         { "frame": 10, "value":  10.0 },
@@ -21,7 +21,7 @@
       ]
     },
     "m.p.x": {
-      "local": false,
+      "local": true,
       "keys": [
         { "frame":  0, "value":   0.0 },
         { "frame": 30, "value": 300.0 },
