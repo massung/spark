@@ -3,7 +3,9 @@
   "looping": false,
   "duration": 60,
   "events": [
-    { "frame": 30, "event": "test" }
+    { "frame": 10, "event": "frame 10" },
+    { "frame": 30, "event": "frame 30" },
+    { "frame": 50, "event": "frame 50" }
   ],
   "tracks": {
     "m.p.y": {

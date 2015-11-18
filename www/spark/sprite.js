@@ -4,7 +4,7 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.collision', 'spark.timeline');
+spark.module().requires('spark.anim', 'spark.collision');
 
 // A sprite is a rendered quad with behaviors and optional collision.
 __MODULE__.Sprite = function() {

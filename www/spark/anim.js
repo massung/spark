@@ -7,7 +7,7 @@
 spark.module().requires('spark.vec', 'spark.util');
 
 // An animation behavior that will keyframe an object.
-__MODULE__.Anim = function(src) {
+__MODULE__.Timeline = function(src) {
   spark.loadJSON(src, (function(json) {
     this.fps = 30;
     this.looping = false;
@@ -112,10 +112,10 @@ __MODULE__.Anim = function(src) {
 };
 
 // Set constructors.
-__MODULE__.Anim.prototype.constructor = __MODULE__.Anim;
+__MODULE__.Timeline.prototype.constructor = __MODULE__.Timeline;
 
 // Clone this animation and create a behavior function bound to the object.
-__MODULE__.Anim.prototype.play = function(obj, onevent) {
+__MODULE__.Timeline.prototype.play = function(obj, onevent) {
   var instance = {
     object: obj,
     time: 0.0,
@@ -140,7 +140,7 @@ __MODULE__.Anim.prototype.play = function(obj, onevent) {
 };
 
 // The behavior code for a given sprite or generic object.
-__MODULE__.Anim.prototype.update = function(instance, step) {
+__MODULE__.Timeline.prototype.update = function(instance, step) {
   var frame = Math.floor(instance.time * this.fps);
 
   // Clamp or wrap the frame.
