@@ -13,8 +13,8 @@ __MODULE__.init = function() {
   // All GUI elements added to the scene.
   this.gui = [];
 
-  // Create the camera matrix.
-  this.camera = spark.vec.IDENTITY;
+  // The camera is a special sprite that doesn't render.
+  this.camera = new spark.sprite.Sprite();
 
   // Setup the default projection.
   this.setProjection();
@@ -109,7 +109,7 @@ __MODULE__.setProjection = function(origin, sx, sy) {
   } else if (origin === 'middle' || origin === 'center') {
     m.p = [spark.view.canvas.width / 2, spark.view.canvas.height / 2];
   } else {
-    throw 'Invalid origin for projection. Use "topLeft", "middle", "bottomRight", etc.';
+    throw 'Invalid origin for projection. Use "top-left", "middle", "bottom-right", etc.';
   }
 
   // The projection is the inverse.
@@ -118,10 +118,13 @@ __MODULE__.setProjection = function(origin, sx, sy) {
 
 // Called once per frame to advance each layer.
 __MODULE__.update = function() {
-  var p1 = this.camera.vtransform([this.left, this.top]);
-  var p2 = this.camera.vtransform([this.right, this.top]);
-  var p3 = this.camera.vtransform([this.left, this.bottom]);
-  var p4 = this.camera.vtransform([this.right, this.bottom]);
+  this.camera.update();
+
+  // Get the screen coordinates in camera space.
+  var p1 = this.camera.m.vtransform([this.left, this.top]);
+  var p2 = this.camera.m.vtransform([this.right, this.top]);
+  var p3 = this.camera.m.vtransform([this.left, this.bottom]);
+  var p4 = this.camera.m.vtransform([this.right, this.bottom]);
 
   // Find the min/max extents of the visible area.
   var x1 = Math.min(p1.x, p2.x, p3.x, p4.x);
@@ -158,7 +161,7 @@ __MODULE__.draw = function() {
   spark.view.save();
 
   var projMatrix = this.projection.inverse.transform;
-  var worldMatrix = this.camera.inverse.transform;
+  var worldMatrix = this.camera.m.inverse.transform;
 
   // Setup the projection matrix.
   spark.perf.drawTime += spark.perf.sample((function() {
@@ -198,7 +201,7 @@ __MODULE__.draw = function() {
 
 // Transform a point from screen space to world space.
 __MODULE__.screenToWorld = function(p) {
-  return this.camera.vtransform([
+  return this.camera.m.vtransform([
     ((p ? p.x : spark.input.x) + this.projection.p.x) * this.projection.s.x,
     ((p ? p.y : spark.input.y) + this.projection.p.y) * this.projection.s.y,
   ]);

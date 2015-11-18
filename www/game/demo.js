@@ -135,6 +135,9 @@ demo.createAsteroid = function(layer, x, y, scale) {
 
       // Play the explosion sound.
       spark.project.assets.rumble_sound.woof();
+
+      // Shake the camera a little.
+      spark.game.scene.camera.playAnimation(spark.project.assets.camera_shake);
     }
   });
 
@@ -175,13 +178,13 @@ demo.playerControls = function() {
 
   // Rotate/zoom the camera for fun.
   if (spark.input.keyDown(spark.input.KEY.A))
-    spark.game.scene.camera.rotate(-180 * spark.game.step);
+    spark.game.scene.camera.m.rotate(-180 * spark.game.step);
   if (spark.input.keyDown(spark.input.KEY.D))
-    spark.game.scene.camera.rotate(180 * spark.game.step);
+    spark.game.scene.camera.m.rotate(180 * spark.game.step);
   if (spark.input.keyDown(spark.input.KEY.W))
-    spark.game.scene.camera.scale(2.0 * spark.game.step);
+    spark.game.scene.camera.m.scale(2.0 * spark.game.step);
   if (spark.input.keyDown(spark.input.KEY.S))
-    spark.game.scene.camera.scale(-2.0 * spark.game.step);
+    spark.game.scene.camera.m.scale(-2.0 * spark.game.step);
 
   // Timeline test.
   if (spark.input.keyHit(spark.input.KEY.T)) {

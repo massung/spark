@@ -49,8 +49,8 @@ __MODULE__.BackgroundLayer.prototype.draw = function() {
   spark.view.transform.apply(spark.view, this.m.transform);
 
   // Calculate the scaling.
-  var sx = spark.game.scene.camera.s.x / this.m.s.x;
-  var sy = spark.game.scene.camera.s.y / this.m.s.y;
+  var sx = spark.game.scene.camera.m.s.x / this.m.s.x;
+  var sy = spark.game.scene.camera.m.s.y / this.m.s.y;
 
   // Cache off the image size.
   var iw = this.image.width;
