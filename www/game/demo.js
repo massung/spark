@@ -210,7 +210,7 @@ demo.playerControls = function() {
 
     // Spawn in front of the player.
     bullet.m.p = this.localToWorld([0, -30]);
-    bullet.m.r = this.m.r;
+    bullet.m.angle = this.m.angle;
 
     // Add some callback behaviors.
     bullet.addBehavior(game.demo.bullet);
