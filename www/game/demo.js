@@ -43,7 +43,7 @@ demo.init = function () {
       shadowBlur: 5,
       shadowOffsetX: 0,
       shadowOffsetY: 0,
-      shadowColor: '#ff0',
+      shadowColor: '#fff',
     }));
 
     // An energy bar.
@@ -53,7 +53,25 @@ demo.init = function () {
       width: 140,
       height: 16,
       strokeStyle: '#fff',
-      fillStyle: '#c8f',
+      fillStyle: '#0f8',
+      shadowBlur: 5,
+      shadowOffsetX: 0,
+      shadowOffsetY: 0,
+      shadowColor: '#fff',
+    }));
+
+    // Ammo counter.
+    this.ammo = scene.addGui(new spark.gui.Label(20, {
+      x: -10,
+      y: 10,
+      fillStyle:'#f40',
+      font: '20px BulletproofBB',
+      textBaseline: 'hanging',
+      textAlign: 'right',
+      shadowBlur: 5,
+      shadowOffsetX: 0,
+      shadowOffsetY: 0,
+      shadowColor: '#f00',
     }));
   }).bind(this));
 };
@@ -135,7 +153,7 @@ demo.createAsteroid = function(layer, x, y, scale) {
       spark.project.assets.explode.emit(this.layer, this.m.p, 0, 20);
 
       // Play the explosion sound.
-      spark.project.assets.rumble_sound.woof();
+      spark.project.assets.explosion.woof();
 
       // Shake the camera a little.
       spark.game.scene.camera.playAnimation(spark.project.assets.camera_shake);
@@ -196,24 +214,34 @@ demo.playerControls = function() {
 
   // Thrusting.
   if (spark.input.keyDown(spark.input.KEY.UP)) {
-    this.thrust.x += 800.0 * spark.game.step * -this.m.r.y;
-    this.thrust.y -= 800.0 * spark.game.step * this.m.r.x;
+    if (demo.energy.value > 0) {
+      this.thrust.x += 800.0 * spark.game.step * -this.m.r.y;
+      this.thrust.y -= 800.0 * spark.game.step * this.m.r.x;
 
-    // Emit some thrust particles.
-    spark.project.assets.thrust.emit(
-      this.layer,
-      this.localToWorld([0, 55]),
-      this.localToWorldAngle(-90.0),
-      1);
+      // Emit some thrust particles.
+      spark.project.assets.thrust.emit(
+        this.layer,
+        this.localToWorld([0, 55]),
+        this.localToWorldAngle(-90.0),
+        1);
 
-    // Use some energy.
-    demo.energy.value -= 10 * spark.game.step;
+      // Use some energy.
+      demo.energy.value -= 20 * spark.game.step;
+
+      // Play the thrust sound.
+      spark.project.assets.thrust_sound.loop();
+    } else {
+      spark.project.assets.thrust_sound.stop();
+    }
   } else {
     demo.energy.value += 10 * spark.game.step;
+
+    // Stop the thrust sound.
+    spark.project.assets.thrust_sound.stop();
   }
 
   // Shooting.
-  if (spark.input.keyHit(spark.input.KEY.SPACE)) {
+  if (spark.input.keyHit(spark.input.KEY.SPACE) && demo.ammo.value > 0) {
     var bullet = this.layer.spawn();
 
     // Sprite rendering.
@@ -234,6 +262,15 @@ demo.playerControls = function() {
 
     // Play a sound.
     spark.project.assets.laser_sound.woof();
+
+    // Use up a bullet.
+    demo.ammo.value--;
+  }
+
+  // Reload.
+  if (spark.input.keyHit(spark.input.KEY.R)) {
+    spark.project.assets.reload_sound.woof();
+    demo.ammo.value = 20;
   }
 
   // Move the player.

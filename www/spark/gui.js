@@ -65,7 +65,7 @@ __MODULE__.Widget.prototype.withContext = function(draw) {
   // Negative positions should render from the right/bottom.
   var x = this.contextSettings.x < 0 ? (r + this.contextSettings.x) : this.contextSettings.x;
   var y = this.contextSettings.y < 0 ? (b + this.contextSettings.y) : this.contextSettings.y;
-  
+
   // Transform to the proper screen coordinates for drawing.
   spark.view.setTransform(1, 0, 0, 1, x, y);
 
