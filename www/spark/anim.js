@@ -139,6 +139,21 @@ __MODULE__.Timeline.prototype.constructor = __MODULE__.Timeline;
 // Add a new animation instance to an animset.
 __MODULE__.Set.prototype.push = function(instance) {
   this.anims.push(instance);
+  return instance;
+};
+
+// Remove an animation from the set.
+__MODULE__.Set.prototype.pop = function(instance) {
+  var i = this.anims.indexOf(instance);
+
+  if (i >= 0) {
+    var last = this.anims.pop();
+
+    // Swap with last.
+    if (i < this.anims.length) {
+      this.anims[i] = last;
+    }
+  }
 };
 
 // Update a set of playing animations on an object.
