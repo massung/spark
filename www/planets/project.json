@@ -18,6 +18,7 @@
     "planet_30":      { "class": "spark.texture.Image", "source": "planet_30.png" },
     "planet_31":      { "class": "spark.texture.Image", "source": "planet_31.png" },
     "planet_32":      { "class": "spark.texture.Image", "source": "planet_32.png" },
-    "planet_33":      { "class": "spark.texture.Image", "source": "planet_33.png" }
+    "planet_33":      { "class": "spark.texture.Image", "source": "planet_33.png" },
+    "player_ship":    { "class": "spark.texture.Image", "source": "player.png" }
 	}
 }
