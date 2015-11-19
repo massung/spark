@@ -169,7 +169,7 @@ __MODULE__.draw = function() {
     spark.view.transform(this.camera.m.r.x, this.camera.m.r.y, -this.camera.m.r.y, this.camera.m.r.x, 0, 0);
     spark.view.translate(-this.camera.m.p.x, -this.camera.m.p.y);
 
-    // Render each layer in reverse order (sprites last).
+    // Render each layer.
     for(var i = 0;i < this.layers.length;i++) {
       this.layers[i].draw();
     }
