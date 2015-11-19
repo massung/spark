@@ -18,7 +18,7 @@ main.init = function () {
 
 		// Setup the background.
     this.bgLayer.image = spark.project.assets.starfield;
-    this.bgLayer.m.setScale(7, 5);
+    this.bgLayer.m.setScale(2.5);
 
 		this.createPlayer(this.playerLayer);
 
@@ -39,7 +39,7 @@ main.createPlayer = function(layer) {
 	// Sprite rendering.
   sprite.image = spark.project.assets.player_ship;
   sprite.m.setTranslation(0, 0);
-	sprite.m.setScale(0.5);
+	sprite.m.setScale(0.1);
 
 	sprite.addBehavior(main.playerControls);
 	return sprite;
@@ -70,8 +70,8 @@ main.playerControls = function() {
 
 	// Thrusting.
   if (spark.input.keyDown(spark.input.KEY.W)) {
-    this.thrust.x += 800.0 * spark.game.step * -this.m.r.y;
-    this.thrust.y -= 800.0 * spark.game.step * this.m.r.x;
+    this.thrust.x += 200.0 * spark.game.step * -this.m.r.y;
+    this.thrust.y -= 200.0 * spark.game.step * this.m.r.x;
   }
 
 
@@ -92,8 +92,8 @@ main.playerControls = function() {
 	spark.game.scene.camera.m.p.y = this.m.p.y;
 
   // Scroll the background layer by the thrust.
-  //main.bgLayer.m.p.x -= this.thrust.x * spark.game.step * 0.5;
-  //main.bgLayer.m.p.y -= this.thrust.y * spark.game.step * 0.5;
+  main.bgLayer.m.p.x += this.thrust.x * spark.game.step * 0.8;
+  main.bgLayer.m.p.y += this.thrust.y * spark.game.step * 0.8;
 
   // Dampening.
   this.thrust = spark.vec.vscale(this.thrust, 0.98);
