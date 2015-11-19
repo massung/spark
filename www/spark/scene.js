@@ -89,8 +89,16 @@ __MODULE__.addGui = function(widget, init) {
 
 // Set the camera scaling to fit the playfield in the viewport.
 __MODULE__.setViewport = function(w, h) {
-  this.camera.m.s.x = 2 / (w || spark.view.canvas.width);
-  this.camera.m.s.y = 2 / (h || spark.view.canvas.height);
+  w = w || spark.view.canvas.width;
+
+  // If the height is undefined, use the aspect ratio of the canvas.
+  if (h === undefined) {
+    h = w * (spark.view.canvas.height / spark.view.canvas.width);
+  }
+
+  // Scale the camera appropriately.
+  this.camera.m.s.x = w / 2;
+  this.camera.m.s.y = h / 2;
 };
 
 // Define the playfield size and origin.
@@ -129,6 +137,9 @@ __MODULE__.update = function() {
   // Run camera behaviors and animations.
   this.camera.update();
 
+  // The projection matrix is the inverse of the camera.
+  this.projection = this.camera.m.inverse;
+
   // Update all the layers and allow each layer to push onto the spacial hash.
   for(var i = 0;i < this.layers.length;i++) {
     var layer = this.layers[i];
@@ -157,13 +168,10 @@ __MODULE__.draw = function() {
 
   // Setup the projection matrix.
   spark.perf.drawTime += spark.perf.sample((function() {
-    spark.view.setTransform(1, 0, 0, 1, 0, 0);
-
-    // Camera -> viewport.
-    spark.view.transform(w2, 0, 0, h2, w2, h2);
+    spark.view.setTransform(w2, 0, 0, h2, w2, h2);
 
     // Camera projection (zoom).
-    spark.view.scale(this.camera.m.s.x, this.camera.m.s.y);
+    spark.view.scale(1 / this.camera.m.s.x, 1 / this.camera.m.s.y);
 
     // Game -> camera.
     spark.view.transform(this.camera.m.r.x, this.camera.m.r.y, -this.camera.m.r.y, this.camera.m.r.x, 0, 0);
@@ -200,22 +208,43 @@ __MODULE__.draw = function() {
 
 // Transform a point from world to screen space.
 __MODULE__.worldToScreen = function(p) {
-  var s = this.camera.m.inverse.vtransform(p);
+  var x = p.x - this.camera.m.p.x;
+  var y = p.y - this.camera.m.p.y;
 
-  return [
-    s.x * (spark.view.canvas.width / 2) + (spark.view.canvas.width / 2),
-    s.y * (spark.view.canvas.height / 2) + (spark.view.canvas.height / 2),
+  // Rotate.
+  var s = [
+    (x * this.camera.m.r.x) - (y * this.camera.m.r.y),
+    (y * this.camera.m.r.x) + (x * this.camera.m.r.y),
   ];
+
+  // Zoom.
+  s.x /= this.camera.m.s.x;
+  s.y /= this.camera.m.s.y;
+
+  // Project.
+  s.x = (s.x * spark.view.canvas.width / 2) + (spark.view.canvas.width / 2);
+  s.y = (s.y * spark.view.canvas.height / 2) + (spark.view.canvas.height / 2);
+
+  return s;
 };
 
 // Transform a point from screen space to world space.
-__MODULE__.screenToWorld = function(p) {
-  var s = [
-    p.x * (2 / spark.view.canvas.width) - (2 / spark.view.canvas.width),
-    p.y * (2 / spark.view.canvas.height) - (2 / spark.view.canvas.height),
+__MODULE__.screenToWorld = function(s) {
+  var p = [
+    (s.x - (spark.view.canvas.width / 2)) * (2 / spark.view.canvas.width),
+    (s.y - (spark.view.canvas.height / 2)) * (2 / spark.view.canvas.height),
   ];
 
-  return this.camera.m.vtransform(s);
+  // Unzoom.
+  p.x *= this.camera.m.s.x;
+  p.y *= this.camera.m.s.y;
+
+  // Unrotate.
+  var x = (p.x * this.camera.m.r.x) + (p.y * this.camera.m.r.y);
+  var y = (p.y * this.camera.m.r.x) - (p.x * this.camera.m.r.y);
+
+  // Untranslate.
+  return [x + this.camera.m.p.x, y + this.camera.m.p.y];
 };
 
 // Perform a pick at a given point, find all sprites at that point.

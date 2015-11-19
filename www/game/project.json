@@ -24,6 +24,7 @@
     "explode":       { "class": "spark.particle.Emitter", "source": "asteroid_emitter.json" },
     "bb":            { "class": "spark.texture.Font", "source": "BulletproofBB.otf" },
     "timeline_test": { "class": "spark.anim.Timeline", "source": "timeline.json" },
-    "camera_shake":  { "class": "spark.anim.Timeline", "source": "shake.json" }
+    "camera_shake":  { "class": "spark.anim.Timeline", "source": "shake.json" },
+    "spawn":         { "class": "spark.anim.Timeline", "source": "spawn.json" }
   }
 }

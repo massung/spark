@@ -13,8 +13,8 @@ demo.init = function () {
   spark.game.run('game/project.json', (function(scene) {
 
     // Change the projection so the origin is in the middle.
-    scene.setPlayfield('middle', spark.view.canvas.width * 2, spark.view.canvas.height * 2);
-    scene.setViewport(scene.width, scene.height);
+    scene.setPlayfield('middle', 4000, 4000);
+    scene.setViewport(1200);
 
     // Create layers for the asteroids, player, and particles.
     this.bgLayer = scene.addLayer(new spark.layer.BackgroundLayer());
@@ -23,7 +23,7 @@ demo.init = function () {
 
     // Setup the background.
     this.bgLayer.image = spark.project.assets.starfield;
-    this.bgLayer.m.setScale(4);
+    this.bgLayer.m.setScale(3);
 
     // Create the player.
     this.createPlayer(this.playerLayer);
@@ -38,12 +38,8 @@ demo.init = function () {
       x: 10,
       y: 10,
       fillStyle: '#ff0',
-      font: '20px BulletproofBB',
+      font: '24px BulletproofBB',
       textBaseline: 'hanging',
-      shadowBlur: 5,
-      shadowOffsetX: 0,
-      shadowOffsetY: 0,
-      shadowColor: '#fff',
     }));
 
     // An energy bar.
@@ -54,10 +50,6 @@ demo.init = function () {
       height: 16,
       strokeStyle: '#fff',
       fillStyle: '#0f8',
-      shadowBlur: 5,
-      shadowOffsetX: 0,
-      shadowOffsetY: 0,
-      shadowColor: '#fff',
     }));
 
     // Ammo counter.
@@ -65,13 +57,9 @@ demo.init = function () {
       x: -10,
       y: 10,
       fillStyle:'#f40',
-      font: '20px BulletproofBB',
+      font: '24px BulletproofBB',
       textBaseline: 'hanging',
       textAlign: 'right',
-      shadowBlur: 5,
-      shadowOffsetX: 0,
-      shadowOffsetY: 0,
-      shadowColor: '#f00',
     }));
   }).bind(this));
 };
@@ -156,12 +144,15 @@ demo.createAsteroid = function(layer, x, y, scale) {
       spark.project.assets.explosion.woof();
 
       // Shake the camera a little.
-      spark.game.scene.camera.playAnimation(spark.project.assets.camera_shake);
+      spark.game.scene.camera.play(spark.project.assets.camera_shake);
     }
   });
 
   // Add a simple collider shape.
   collider.addBox(-30, -30, 60, 60);
+
+  // Play an initial animation on the asteroid.
+  sprite.play(spark.project.assets.spawn);
 };
 
 // All space objects wrap around the viewport.
@@ -196,6 +187,7 @@ demo.playerControls = function() {
   if (spark.input.keyDown(spark.input.KEY.RIGHT)) this.m.rotate(180 * spark.game.step);
 
   // Rotate/zoom the camera for fun.
+  /*
   if (spark.input.keyDown(spark.input.KEY.A))
     spark.game.scene.camera.m.rotate(-180 * spark.game.step);
   if (spark.input.keyDown(spark.input.KEY.D))
@@ -204,13 +196,7 @@ demo.playerControls = function() {
     spark.game.scene.camera.m.scale(0.01 * spark.game.step);
   if (spark.input.keyDown(spark.input.KEY.S))
     spark.game.scene.camera.m.scale(-0.01 * spark.game.step);
-
-  // Timeline test.
-  if (spark.input.keyHit(spark.input.KEY.T)) {
-    this.playAnimation(spark.project.assets.timeline_test, function(event) {
-      console.log(event);
-    });
-  }
+  */
 
   // Thrusting.
   if (spark.input.keyDown(spark.input.KEY.UP)) {
@@ -226,7 +212,7 @@ demo.playerControls = function() {
         1);
 
       // Use some energy.
-      demo.energy.value -= 20 * spark.game.step;
+      demo.energy.value -= 10 * spark.game.step;
 
       // Play the thrust sound.
       spark.project.assets.thrust_sound.loop();
@@ -234,7 +220,7 @@ demo.playerControls = function() {
       spark.project.assets.thrust_sound.stop();
     }
   } else {
-    demo.energy.value += 10 * spark.game.step;
+    demo.energy.value += 8 * spark.game.step;
 
     // Stop the thrust sound.
     spark.project.assets.thrust_sound.stop();
@@ -278,8 +264,11 @@ demo.playerControls = function() {
   this.m.p.y += this.thrust.y * spark.game.step;
 
   // Scroll the background layer by the thrust.
-  demo.bgLayer.m.p.x -= this.thrust.x * spark.game.step * 0.5;
-  demo.bgLayer.m.p.y -= this.thrust.y * spark.game.step * 0.5;
+  demo.bgLayer.m.p.x += this.thrust.x * spark.game.step * 0.85;
+  demo.bgLayer.m.p.y += this.thrust.y * spark.game.step * 0.85;
+
+  // Lock the camera to the player.
+  spark.game.scene.camera.m.p = this.m.p.v;
 
   // Dampening.
   this.thrust = spark.vec.vscale(this.thrust, 0.98);

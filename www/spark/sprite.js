@@ -25,7 +25,7 @@ __MODULE__.Sprite = function() {
   this.colliders = [];
 
   // Animations that are currently playing.
-  this.anims = [];
+  this.animset = new spark.anim.Set();
 };
 
 // Set constructors.
@@ -74,27 +74,15 @@ __MODULE__.Sprite.prototype.updateShapeColliders = function() {
 };
 
 // Tell the sprite to play an animation.
-__MODULE__.Sprite.prototype.playAnimation = function(anim, onevent) {
-  this.anims.push(anim.play(this, onevent));
+__MODULE__.Sprite.prototype.play = function(anim, onevent) {
+  this.animset.push(anim.play(this, onevent));
 };
 
 // Called once per frame to advance the gameplay simulation.
 __MODULE__.Sprite.prototype.update = function() {
-  var i;
 
-  // Update all animations.
-  for(i = 0;i < this.anims.length;) {
-    if (this.anims[i](spark.game.step) === false) {
-      var last = this.anims.pop();
-
-      // Swap with last.
-      if (i < this.anims.length) {
-        this.anims[i] = last;
-      }
-    } else {
-      i++;
-    }
-  }
+  // Process all animations.
+  this.animset.update();
 
   // Process all behavior functions.
   for(i = 0;i < this.behaviors.length;i++) {

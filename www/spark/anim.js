@@ -6,6 +6,11 @@
 
 spark.module().requires('spark.vec', 'spark.util');
 
+// A set of animations playing on an object.
+__MODULE__.Set = function() {
+  this.anims = [];
+};
+
 // An animation behavior that will keyframe an object.
 __MODULE__.Timeline = function(src) {
   spark.loadJSON(src, (function(json) {
@@ -128,7 +133,32 @@ __MODULE__.Timeline = function(src) {
 };
 
 // Set constructors.
+__MODULE__.Set.prototype.constructor = __MODULE__.Set;
 __MODULE__.Timeline.prototype.constructor = __MODULE__.Timeline;
+
+// Add a new animation instance to an animset.
+__MODULE__.Set.prototype.push = function(instance) {
+  this.anims.push(instance);
+};
+
+// Update a set of playing animations on an object.
+__MODULE__.Set.prototype.update = function(step) {
+  var i;
+
+  // Update all animations.
+  for(i = 0;i < this.anims.length;) {
+    if (this.anims[i](spark.game.step) === false) {
+      var last = this.anims.pop();
+
+      // Swap with last.
+      if (i < this.anims.length) {
+        this.anims[i] = last;
+      }
+    } else {
+      i++;
+    }
+  }
+};
 
 // Clone this animation and create a behavior function bound to the object.
 __MODULE__.Timeline.prototype.play = function(obj, onevent) {
@@ -169,6 +199,11 @@ __MODULE__.Timeline.prototype.update = function(instance, step) {
       instance.time %= this.duration / this.fps;
       instance.eventIndex = 0;
 
+      // Post a loop event.
+      if (instance.onevent !== undefined) {
+        instance.onevent('loop');
+      }
+
       // Wrap the frame.
       frame = Math.floor(instance.time);
     }
@@ -186,8 +221,8 @@ __MODULE__.Timeline.prototype.update = function(instance, step) {
 
   // Loop over all the tracks and update each property in the object.
   for(var prop in instance.trackData) {
-    var track = this.tracks[prop];
     var trackData = instance.trackData[prop];
+    var track = this.tracks[prop];
 
     // Get the owner of the property and its new value.
     var value = track.frames[frame];
@@ -202,7 +237,10 @@ __MODULE__.Timeline.prototype.update = function(instance, step) {
   }
 
   // Was this the last frame?
-  if (frame === this.duration -1 && !this.looping) {
+  if (frame === this.duration - 1 && !this.looping) {
+    if (instance.onevent !== undefined) {
+      instance.onevent('complete');
+    }
     return false;
   }
 

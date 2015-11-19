@@ -4,7 +4,7 @@
  * All rights reserved.
  */
 
-spark.module().requires('spark.input', 'spark.util');
+spark.module().requires('spark.anim', 'spark.input', 'spark.util');
 
 // Base GUI element.
 __MODULE__.Widget = function(value, contextSettings) {
@@ -12,7 +12,7 @@ __MODULE__.Widget = function(value, contextSettings) {
     x: 0,
     y: 0,
     width: 0,
-    height: 0
+    height: 0,
   };
 
   // Overwrite draw settings.
@@ -20,6 +20,9 @@ __MODULE__.Widget = function(value, contextSettings) {
 
   // Every widget has a value to display.
   this.value = value;
+
+  // Animations playing on this widget.
+  this.animset = new spark.anim.Set();
 };
 
 // A text label.
@@ -49,7 +52,7 @@ __MODULE__.Label.prototype.constructor = __MODULE__.Label;
 __MODULE__.Meter.prototype.constructor = __MODULE__.Meter;
 
 // Every widget has an update called at the end of the frame.
-__MODULE__.Widget.prototype.update = function() {};
+__MODULE__.Widget.prototype.update = function() { };
 
 // Wrapper to assign context settings, draw, and restore.
 __MODULE__.Widget.prototype.withContext = function(draw) {

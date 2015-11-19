@@ -23,6 +23,10 @@ Array.prototype.__defineSetter__('y', function(y) {
   return this[1] = y;
 });
 
+Array.prototype.__defineGetter__('v', function() {
+  return [this[0], this[1]];
+});
+
 // <0,0> zero vector.
 __MODULE__.__defineGetter__('ZERO', function() {
   return [0, 0];
@@ -298,4 +302,15 @@ __MODULE__.Mat.prototype.vtransform = function(v) {
 
   // Apply translation last.
   return [x + this.p.x, y + this.p.y];
+};
+
+// Untransform a vector.
+__MODULE__.Mat.prototype.vuntransform = function(v) {
+  var tx = v.x - this.p.x;
+  var ty = v.y - this.p.y;
+
+  return [
+    (tx / this.s.x / this.r.x) - (ty / this.s.y / this.r.y),
+    (ty / this.s.y / this.r.x) + (ty / this.s.x / this.r.y),
+  ];
 };
