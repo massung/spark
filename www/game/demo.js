@@ -201,8 +201,13 @@ demo.playerControls = function() {
   // Thrusting.
   if (spark.input.keyDown(spark.input.KEY.UP)) {
     if (demo.energy.value > 0) {
-      this.thrust.x += 800.0 * spark.game.step * -this.m.r.y;
-      this.thrust.y -= 800.0 * spark.game.step * this.m.r.x;
+      this.thrust.x += 600.0 * spark.game.step * -this.m.r.y;
+      this.thrust.y -= 600.0 * spark.game.step * this.m.r.x;
+
+      if (Math.abs(this.thrust.x) > 300)
+        this.thrust.x = 300 * Math.sign(this.thrust.x);
+      if (Math.abs(this.thrust.y) > 300)
+        this.thrust.y = 300 * Math.sign(this.thrust.y);
 
       // Emit some thrust particles.
       spark.project.assets.thrust.emit(
@@ -271,7 +276,7 @@ demo.playerControls = function() {
   spark.game.scene.camera.m.p = this.m.p.v;
 
   // Dampening.
-  this.thrust = spark.vec.vscale(this.thrust, 0.98);
+  //this.thrust = spark.vec.vscale(this.thrust, 0.98);
 };
 
 // Advance the bullet, slowly die off.
