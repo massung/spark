@@ -30,6 +30,7 @@ __MODULE__.Emitter = function(src) {
     // Create a particle behavior function for every sprite emitted.
     this.particleBehavior = function() {
       if ((this.particle.age += spark.game.step) > this.particle.life) {
+        this.particle.age = this.particle.life;
         this.dead = true;
       }
 
@@ -45,7 +46,7 @@ __MODULE__.Emitter = function(src) {
         this.particle.life));
 
       // Linearly interpolate the alpha.
-      this.alpha = spark.util.lerp(
+      this.contextSettings.globalAlpha = spark.util.lerp(
         this.particle.emitter.startAlpha,
         this.particle.emitter.endAlpha,
         this.particle.age,

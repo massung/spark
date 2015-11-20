@@ -11,6 +11,7 @@
     "particle_0":    { "class": "spark.texture.Image", "source": "asteroid_particle_1.png" },
     "particle_1":    { "class": "spark.texture.Image", "source": "asteroid_particle_2.png" },
     "player_ship":   { "class": "spark.texture.Image", "source": "player.png" },
+    "planet":        { "class": "spark.texture.Image", "source": "planet.png" },
     "player_thrust": { "class": "spark.texture.Image", "source": "thrust.png" },
     "player_laser":  { "class": "spark.texture.Image", "source": "laser.png" },
     "player_shield": { "class": "spark.texture.Image", "source": "shield.png" },
@@ -23,7 +24,9 @@
     "thrust":        { "class": "spark.particle.Emitter", "source": "thrust_emitter.json" },
     "explode":       { "class": "spark.particle.Emitter", "source": "asteroid_emitter.json" },
     "bb":            { "class": "spark.texture.Font", "source": "BulletproofBB.otf" },
-    "timeline_test": { "class": "spark.anim.Timeline", "source": "timeline.json" },
+    "virgo":         { "class": "spark.texture.Font", "source": "virgo.ttf" },
+    "new_life":      { "class": "spark.anim.Timeline", "source": "new_life.json" },
+    "reload":        { "class": "spark.anim.Timeline", "source": "reload.json" },
     "camera_shake":  { "class": "spark.anim.Timeline", "source": "shake.json" },
     "spawn":         { "class": "spark.anim.Timeline", "source": "spawn.json" }
   }

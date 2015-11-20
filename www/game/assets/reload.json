@@ -1,0 +1,14 @@
+{
+  "fps": 30,
+  "looping": true,
+  "duration": 30,
+  "tracks": {
+    "contextSettings.globalAlpha": {
+      "keys": [
+        { "frame":  0, "value":  1.0 },
+        { "frame": 15, "value":  0.0 },
+        { "frame": 29, "value":  1.0 }
+      ]
+    }
+  }
+}

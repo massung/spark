@@ -13,20 +13,29 @@ demo.init = function () {
   spark.game.run('game/project.json', (function(scene) {
 
     // Change the projection so the origin is in the middle.
-    scene.setPlayfield('middle', 4000, 4000);
-    scene.setViewport(1200);
+    scene.setPlayfield('middle', 1400, 1400);
+    scene.setViewport(1400, 1400);
 
     // Create layers for the asteroids, player, and particles.
-    this.bgLayer = scene.addLayer(new spark.layer.BackgroundLayer());
+    this.bg0Layer = scene.addLayer(new spark.layer.BackgroundLayer());
+    this.bg1Layer = scene.addLayer(new spark.layer.BackgroundLayer());
+    this.planetLayer = scene.addLayer(new spark.layer.SpriteLayer(10));
     this.asteroidsLayer = scene.addLayer(new spark.layer.SpriteLayer(200));
     this.playerLayer = scene.addLayer(new spark.layer.SpriteLayer(50));
 
+    // Setup the nebula.
+    this.bg0Layer.image = spark.project.assets.starfield;
+    this.bg0Layer.m.setScale(2);
+    this.bg0Layer.alpha = 0.5;
+
     // Setup the background.
-    this.bgLayer.image = spark.project.assets.starfield;
-    this.bgLayer.m.setScale(3);
+    this.bg1Layer.image = spark.project.assets.starfield;
+    this.bg1Layer.m.setScale(6);
+    this.bg1Layer.compositeOperation = 'lighten';
 
     // Create the player.
     this.createPlayer(this.playerLayer);
+    this.createPlanet(this.planetLayer);
 
     // Spawn 3 large asteroids.
     for(var i = 0;i < 6;i++) {
@@ -38,18 +47,8 @@ demo.init = function () {
       x: 10,
       y: 10,
       fillStyle: '#ff0',
-      font: '24px BulletproofBB',
+      font: '36px virgo',
       textBaseline: 'hanging',
-    }));
-
-    // An energy bar.
-    this.energy = scene.addGui(new spark.gui.Meter(100, 100, {
-      x: 10,
-      y: -10,
-      width: 140,
-      height: 16,
-      strokeStyle: '#fff',
-      fillStyle: '#0f8',
     }));
 
     // Ammo counter.
@@ -57,11 +56,38 @@ demo.init = function () {
       x: -10,
       y: 10,
       fillStyle:'#f40',
-      font: '24px BulletproofBB',
+      font: '36px virgo',
       textBaseline: 'hanging',
       textAlign: 'right',
     }));
+
+    // Reload warning.
+    this.reload = scene.addGui(new spark.gui.Label('RELOAD!', {
+      x: -10,
+      y: 10,
+      fillStyle:'#f40',
+      font: '36px virgo',
+      textBaseline: 'hanging',
+      textAlign: 'right',
+      shadowColor: '#f0f',
+      shadowBlur: 10,
+      shadowOffsetX: 0,
+      shadowOffsetY: 0,
+    }));
+
+    // Hide the reload warning.
+    this.reload.visible = false;
+
+    // Play a timeline on the reload warning.
+    this.reload.play(spark.project.assets.reload);
   }).bind(this));
+};
+
+demo.createPlanet = function (layer) {
+  var sprite = layer.spawn();
+  sprite.image = spark.project.assets.planet;
+  sprite.m.setTranslation(0, 0);
+  sprite.m.setScale(0.20);
 };
 
 demo.createPlayer = function(layer) {
@@ -74,17 +100,25 @@ demo.createPlayer = function(layer) {
   sprite.image = spark.project.assets.player_ship;
   sprite.m.setTranslation(0, 0);
 
-  // Add some callback behaviors.
-  sprite.addBehavior(demo.playerControls);
-  sprite.addBehavior(demo.spaceObject);
+  // Start the timeline.
+  sprite.play(spark.project.assets.new_life, (function(event) {
+    if (event === 'add controls') {
+      sprite.addBehavior(demo.playerControls);
+      sprite.addBehavior(demo.spaceObject);
 
-  // Add a collision filter and callback.
-  var collider = sprite.addCollider('player', function(filter) {
-    // TODO: if (filter === 'asteroid') die();
-  });
+      // Add collision now.
+      var collider = sprite.addCollider('player', function(c) {
+        if (c.filter === 'asteroid') {
+          sprite.dead = true;
 
-  // Add a simple collider shape.
-  collider.addCircle([0, 0], 30);
+          // Spawn a new player object.
+          demo.createPlayer(layer);
+        }
+      });
+
+      collider.addCircle([0, 0], 30);
+    }
+  }).bind(sprite));
 
   return sprite;
 };
@@ -126,12 +160,9 @@ demo.createAsteroid = function(layer, x, y, scale) {
       c.owner.dead = true;
 
       // Spawn 2-4 smaller asteroids.
-      if (this.m.s.x > 0.6) {
-        var n = spark.util.irand(2, 4);
-
-        for(var i = 0;i < n;i++) {
-          demo.createAsteroid(this.layer, this.m.p.x, this.m.p.y, this.m.s.x * 0.75);
-        }
+      if (this.m.s.x > 0.7) {
+        demo.createAsteroid(this.layer, this.m.p.x, this.m.p.y, this.m.s.x * 0.75);
+        demo.createAsteroid(this.layer, this.m.p.x, this.m.p.y, this.m.s.x * 0.75);
       }
 
       // Increase the score.
@@ -186,48 +217,26 @@ demo.playerControls = function() {
   if (spark.input.keyDown(spark.input.KEY.LEFT)) this.m.rotate(-180 * spark.game.step);
   if (spark.input.keyDown(spark.input.KEY.RIGHT)) this.m.rotate(180 * spark.game.step);
 
-  // Rotate/zoom the camera for fun.
-  /*
-  if (spark.input.keyDown(spark.input.KEY.A))
-    spark.game.scene.camera.m.rotate(-180 * spark.game.step);
-  if (spark.input.keyDown(spark.input.KEY.D))
-    spark.game.scene.camera.m.rotate(180 * spark.game.step);
-  if (spark.input.keyDown(spark.input.KEY.W))
-    spark.game.scene.camera.m.scale(0.01 * spark.game.step);
-  if (spark.input.keyDown(spark.input.KEY.S))
-    spark.game.scene.camera.m.scale(-0.01 * spark.game.step);
-  */
-
   // Thrusting.
   if (spark.input.keyDown(spark.input.KEY.UP)) {
-    if (demo.energy.value > 0) {
-      this.thrust.x += 600.0 * spark.game.step * -this.m.r.y;
-      this.thrust.y -= 600.0 * spark.game.step * this.m.r.x;
+    this.thrust.x += 800.0 * spark.game.step * -this.m.r.y;
+    this.thrust.y -= 800.0 * spark.game.step * this.m.r.x;
 
-      if (Math.abs(this.thrust.x) > 300)
-        this.thrust.x = 300 * Math.sign(this.thrust.x);
-      if (Math.abs(this.thrust.y) > 300)
-        this.thrust.y = 300 * Math.sign(this.thrust.y);
+    if (Math.abs(this.thrust.x) > 400)
+      this.thrust.x = 400 * Math.sign(this.thrust.x);
+    if (Math.abs(this.thrust.y) > 400)
+      this.thrust.y = 400 * Math.sign(this.thrust.y);
 
-      // Emit some thrust particles.
-      spark.project.assets.thrust.emit(
-        this.layer,
-        this.localToWorld([0, 55]),
-        this.localToWorldAngle(-90.0),
-        1);
+    // Emit some thrust particles.
+    spark.project.assets.thrust.emit(
+      this.layer,
+      this.localToWorld([0, 55]),
+      this.localToWorldAngle(-90.0),
+      1);
 
-      // Use some energy.
-      demo.energy.value -= 10 * spark.game.step;
-
-      // Play the thrust sound.
-      spark.project.assets.thrust_sound.loop();
-    } else {
-      spark.project.assets.thrust_sound.stop();
-    }
+    // Play the thrust sound.
+    spark.project.assets.thrust_sound.loop();
   } else {
-    demo.energy.value += 8 * spark.game.step;
-
-    // Stop the thrust sound.
     spark.project.assets.thrust_sound.stop();
   }
 
@@ -255,13 +264,18 @@ demo.playerControls = function() {
     spark.project.assets.laser_sound.woof();
 
     // Use up a bullet.
-    demo.ammo.value--;
+    if (--demo.ammo.value === 0) {
+      demo.ammo.visible = false;
+      demo.reload.visible = true;
+    }
   }
 
   // Reload.
-  if (spark.input.keyHit(spark.input.KEY.R)) {
+  if (spark.input.keyHit(spark.input.KEY.DOWN)) {
     spark.project.assets.reload_sound.woof();
     demo.ammo.value = 20;
+    demo.ammo.visible = true;
+    demo.reload.visible = false;
   }
 
   // Move the player.
@@ -269,14 +283,13 @@ demo.playerControls = function() {
   this.m.p.y += this.thrust.y * spark.game.step;
 
   // Scroll the background layer by the thrust.
-  demo.bgLayer.m.p.x += this.thrust.x * spark.game.step * 0.85;
-  demo.bgLayer.m.p.y += this.thrust.y * spark.game.step * 0.85;
-
-  // Lock the camera to the player.
-  spark.game.scene.camera.m.p = this.m.p.v;
+  demo.bg0Layer.m.p.x -= this.thrust.x * spark.game.step * 0.05;
+  demo.bg0Layer.m.p.y -= this.thrust.y * spark.game.step * 0.05;
+  demo.bg1Layer.m.p.x -= this.thrust.x * spark.game.step * 0.15;
+  demo.bg1Layer.m.p.y -= this.thrust.y * spark.game.step * 0.15;
 
   // Dampening.
-  //this.thrust = spark.vec.vscale(this.thrust, 0.98);
+  this.thrust = spark.vec.vscale(this.thrust, 0.99);
 };
 
 // Advance the bullet, slowly die off.

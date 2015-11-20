@@ -157,7 +157,7 @@ __MODULE__.Set.prototype.pop = function(instance) {
 };
 
 // Update a set of playing animations on an object.
-__MODULE__.Set.prototype.update = function(step) {
+__MODULE__.Set.prototype.update = function() {
   var i;
 
   // Update all animations.

@@ -7,18 +7,15 @@
 spark.module().requires('spark.anim', 'spark.collision');
 
 // A sprite is a rendered quad with behaviors and optional collision.
-__MODULE__.Sprite = function() {
+__MODULE__.Sprite = function(contextSettings) {
   this.m = spark.vec.IDENTITY;
 
   // Flags.
   this.dead = false;
   this.visible = true;
 
-  // Color tint and alpha.
-  this.red = 1.0;
-  this.green = 1.0;
-  this.blue = 1.0;
-  this.alpha = 1.0;
+  // Rendering context.
+  this.contextSettings = contextSettings || {};
 
   // Update behaviors and shape colliders.
   this.behaviors = [];
@@ -102,9 +99,8 @@ __MODULE__.Sprite.prototype.draw = function() {
   // Render the sprite.
   spark.view.save();
 
-  // Set the alpha and composite style.
-  spark.view.globalAlpha = Math.min(1.0, Math.max(this.alpha, 0.0));
-  spark.view.globalCompositeOperation = this.compositeOperation || 'source-over';
+  // Apply the context settings.
+  spark.util.merge(spark.view, this.contextSettings);
 
   // Apply the transform for this sprite.
   spark.view.transform.apply(spark.view, this.m.transform);

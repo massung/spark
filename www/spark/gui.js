@@ -20,6 +20,7 @@ __MODULE__.Widget = function(value, contextSettings) {
 
   // Every widget has a value to display.
   this.value = value;
+  this.visible = true;
 
   // Animations playing on this widget.
   this.animset = new spark.anim.Set();
@@ -51,32 +52,41 @@ __MODULE__.Widget.prototype.constructor = __MODULE__.Widget;
 __MODULE__.Label.prototype.constructor = __MODULE__.Label;
 __MODULE__.Meter.prototype.constructor = __MODULE__.Meter;
 
+// Play an animation on the widget.
+__MODULE__.Widget.prototype.play = function(anim, onevent) {
+  this.animset.push(anim.play(this, onevent));
+};
+
 // Every widget has an update called at the end of the frame.
-__MODULE__.Widget.prototype.update = function() { };
+__MODULE__.Widget.prototype.update = function() {
+  this.animset.update(spark.game.step);
+};
 
 // Wrapper to assign context settings, draw, and restore.
 __MODULE__.Widget.prototype.withContext = function(draw) {
-  spark.view.save();
+  if (this.visible) {
+    spark.view.save();
 
-  // Set all the view context settings for this widget.
-  spark.util.merge(spark.view, this.contextSettings);
+    // Set all the view context settings for this widget.
+    spark.util.merge(spark.view, this.contextSettings);
 
-  // Get the far-right/bottom coordinates.
-  var r = spark.view.canvas.width - this.contextSettings.width;
-  var b = spark.view.canvas.height - this.contextSettings.height;
+    // Get the far-right/bottom coordinates.
+    var r = spark.view.canvas.width - this.contextSettings.width;
+    var b = spark.view.canvas.height - this.contextSettings.height;
 
-  // Negative positions should render from the right/bottom.
-  var x = this.contextSettings.x < 0 ? (r + this.contextSettings.x) : this.contextSettings.x;
-  var y = this.contextSettings.y < 0 ? (b + this.contextSettings.y) : this.contextSettings.y;
+    // Negative positions should render from the right/bottom.
+    var x = this.contextSettings.x < 0 ? (r + this.contextSettings.x) : this.contextSettings.x;
+    var y = this.contextSettings.y < 0 ? (b + this.contextSettings.y) : this.contextSettings.y;
 
-  // Transform to the proper screen coordinates for drawing.
-  spark.view.setTransform(1, 0, 0, 1, x, y);
+    // Transform to the proper screen coordinates for drawing.
+    spark.view.setTransform(1, 0, 0, 1, x, y);
 
-  // Perform the draw.
-  draw();
+    // Perform the draw.
+    draw();
 
-  // Done.
-  spark.view.restore();
+    // Done.
+    spark.view.restore();
+  }
 };
 
 // Render a text label.
@@ -87,6 +97,9 @@ __MODULE__.Label.prototype.draw = function() {
 // Every widget has an update called at the end of the frame.
 __MODULE__.Meter.prototype.update = function() {
   this.value = spark.util.clamp(this.value, 0, this.max);
+
+  // Supersend.
+  spark.gui.Widget.prototype.update.call(this);
 };
 
 // Render a meter bar.
