@@ -403,7 +403,7 @@ __MODULE__.Circle.prototype.boxQuery = function(s) {
 
   // Circle is left, right, or inside.
   if (this.tc.y >= s.tp1.y && this.tc.y <= s.tp2.y) {
-    return this.tc.x + this.r >= s.tp1.x && this.tc.x - this.r <= s.tp2.y;
+    return this.tc.x + this.r >= s.tp1.x && this.tc.x - this.r <= s.tp2.x;
   }
 
   // Top-left corner.

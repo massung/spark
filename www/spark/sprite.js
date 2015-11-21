@@ -72,7 +72,7 @@ __MODULE__.Sprite.prototype.updateShapeColliders = function() {
 
 // Tell the sprite to play an animation.
 __MODULE__.Sprite.prototype.play = function(anim, onevent) {
-  this.animset.push(anim.play(this, onevent));
+  return this.animset.push(anim.play(this, onevent));
 };
 
 // Called once per frame to advance the gameplay simulation.
