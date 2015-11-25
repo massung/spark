@@ -42,6 +42,8 @@ main.createPlayer = function(layer) {
 	sprite.m.setScale(0.1);
 
 	sprite.addBehavior(main.playerControls);
+	sprite.addBehavior(main.spaceObject);
+
 	return sprite;
 }
 
@@ -97,7 +99,33 @@ main.playerControls = function() {
 
   // Dampening.
   this.thrust = spark.vec.vscale(this.thrust, 0.98);
+
 }
+
+// All space objects cannot go outside of the play area.
+main.spaceObject = function() {
+
+  // Wrap right to left.
+  if (this.m.p.x - this.width / 2 > spark.game.scene.right) {
+    this.m.p.x = spark.game.scene.right + (this.width / 2);
+		this.thrust = spark.vec.ZERO;
+	}
+/*
+  // Wrap left to right.
+  if (this.m.p.x + this.width / 2 < spark.game.scene.left) {
+    //this.m.p.x = spark.game.scene.plawyfieldleft;
+		//this.thrust = spark.vec.ZERO;
+	}
+
+  // Wrap bottom to top.
+  if (this.m.p.y - this.height / 2 > spark.game.scene.bottom)
+    this.m.p.y -= spark.game.scene.height + this.height;
+
+  // Wrap top to bottom.
+  if (this.m.p.y + this.height / 2 < spark.game.scene.top)
+    this.m.p.y += spark.game.scene.height + this.height;
+*/
+};
 
 var setViewportScale = function(adjustment) {
 	viewportScale += adjustment;
