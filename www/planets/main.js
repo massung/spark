@@ -27,6 +27,8 @@ main.init = function () {
 		this.createPlanet(Math.floor(spark.util.rand(19, 33)), this.planetLayer);
 		this.createPlanet(Math.floor(spark.util.rand(19, 33)), this.planetLayer);
 
+
+
 	}).bind(this));
 };
 
@@ -62,26 +64,36 @@ main.createPlanet = function(num, layer, x, y, scale) {
 
 // Handle player input.
 main.playerControls = function() {
-	if (spark.input.keyDown(spark.input.KEY.A)) {
+	if (spark.input.keyDown(spark.input.KEY.A) ||
+			spark.input.gamepadButtonDown(spark.input.GAMEPAD_BUTTON.DPAD_LEFT) ||
+			spark.input.gamepadStickHorizontal(0, 0) < -0.35) {
 		this.m.rotate(-180 * spark.game.step);
 	}
 
-  if (spark.input.keyDown(spark.input.KEY.D)) {
+  if (spark.input.keyDown(spark.input.KEY.D) ||
+		spark.input.gamepadButtonDown(spark.input.GAMEPAD_BUTTON.DPAD_RIGHT) ||
+		spark.input.gamepadStickHorizontal(0, 0) > 0.35) {
 		this.m.rotate(180 * spark.game.step);
 	}
 
 	// Thrusting.
-  if (spark.input.keyDown(spark.input.KEY.W)) {
+  if (spark.input.keyDown(spark.input.KEY.W) ||
+			spark.input.gamepadButtonDown(spark.input.GAMEPAD_BUTTON.A) ||
+			spark.input.gamepadStickVertical(0, 0) < -0.35) {
     this.thrust.x += 200.0 * spark.game.step * -this.m.r.y;
     this.thrust.y -= 200.0 * spark.game.step * this.m.r.x;
   }
 
 
-	if (spark.input.keyDown(spark.input.KEY.Q)) {
+	if (spark.input.keyDown(spark.input.KEY.Q) ||
+			spark.input.gamepadButtonDown(spark.input.GAMEPAD_BUTTON.DPAD_UP) ||
+			spark.input.gamepadStickVertical(1, 0) < -0.35) {
 		setViewportScale(viewportScaleRate * spark.game.step);
 		spark.game.scene.setViewport(spark.game.scene.width * viewportScale, spark.game.scene.height * viewportScale);
 	}
-  if (spark.input.keyDown(spark.input.KEY.E)) {
+  if (spark.input.keyDown(spark.input.KEY.E) ||
+			spark.input.gamepadButtonDown(spark.input.GAMEPAD_BUTTON.DPAD_DOWN) ||
+			spark.input.gamepadStickVertical(1, 0) > 0.35) {
 		setViewportScale(-viewportScaleRate * spark.game.step);
 		spark.game.scene.setViewport(spark.game.scene.width * viewportScale, spark.game.scene.height * viewportScale);
 	}
