@@ -35,6 +35,7 @@ __MODULE__.run = function(projectFile, onload) {
 
 // Called once per frame.
 __MODULE__.update = function() {
+  spark.input.update();
   this.scene.update();
 };
 
