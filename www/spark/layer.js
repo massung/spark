@@ -10,8 +10,15 @@ spark.module().requires('spark.particle');
 __MODULE__.BackgroundLayer = function() {
   this.m = new spark.vec.Mat();
 
+  // Stretched or tiled?
+  this.tiled = true;
+
   // The background image to display.
   this.image = null;
+
+  // Alpha and compositing operation for the layer.
+  this.alpha = 1.0;
+  this.compositeOperation = 'source-over';
 };
 
 // A layer for rendering.
@@ -46,6 +53,10 @@ __MODULE__.BackgroundLayer.prototype.draw = function() {
 
   spark.view.save();
 
+  // Set the alpha and composite operation.
+  spark.view.globalAlpha = this.alpha || 1.0;
+  spark.view.globalCompositeOperation = this.compositeOperation || 'source-over';
+
   // Render the background over the entire playfield.
   var left = spark.game.scene.left;
   var top = spark.game.scene.top;
@@ -60,13 +71,20 @@ __MODULE__.BackgroundLayer.prototype.draw = function() {
   this.m.p.x %= iw * this.m.s.x;
   this.m.p.y %= ih * this.m.s.y;
 
-  // Offset by the layer.
+  // Offset by the layer, rotate and scale.
   spark.view.transform.apply(spark.view, this.m.transform);
 
   // Fill the entire playfield with the background image.
-  for(var x = -iw;x < width;x += iw - 1) {
-    for (var y = -ih;y < height;y += ih - 1) {
-      this.image.blitEx(0, 0, iw, ih, left + x, top + y);
+  if (this.tiled === false) {
+    this.image.blitEx(0, 0, iw, ih, left, top, width, height);
+  }
+
+  // Continuously blit the image, tiled.
+  else {
+    for(var x = -iw;x < width;x += iw - 1) {
+      for (var y = -ih;y < height;y += ih - 1) {
+        this.image.blitEx(0, 0, iw, ih, left + x, top + y);
+      }
     }
   }
 

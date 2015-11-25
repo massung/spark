@@ -27,13 +27,10 @@ __MODULE__.run = function(projectFile, onload) {
     spark.input.enableTouch();
 
     // TODO: Additional setup from project file?
-
-    // Allow the game to setup the scene.
-    onload.call(this, this.scene);
   }).bind(this));
 
-  // Start the main game loop.
-  this.loop();
+  // Start the load loop.
+  this.loop(onload);
 };
 
 // Called once per frame.
@@ -82,7 +79,7 @@ __MODULE__.stepFrame = function(now) {
 };
 
 // Called while the framework is loading assets to show progress.
-__MODULE__.loadFrame = function() {
+__MODULE__.loadFrame = function(onload) {
   var x = spark.view.canvas.width / 2;
   var y = spark.view.canvas.height / 2;
 
@@ -109,15 +106,21 @@ __MODULE__.loadFrame = function() {
   spark.view.stroke();
 
   // Continue running.
-  this.loop();
+  this.loop(onload);
 };
 
 // The main game loop.
-__MODULE__.loop = function() {
+__MODULE__.loop = function(onload) {
   if (spark.loadProgress() === true) {
+    if (onload !== undefined) {
+      onload(this.scene);
+    }
+
     this.runloop = window.requestAnimationFrame(this.stepFrame.bind(this));
   } else {
-    this.runLoop = window.requestAnimationFrame(this.loadFrame.bind(this));
+    this.runLoop = window.requestAnimationFrame((function() {
+      this.loadFrame(onload);
+    }).bind(this));
   }
 };
 

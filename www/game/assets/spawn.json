@@ -1,0 +1,23 @@
+{
+  "fps": 30,
+  "looping": false,
+  "duration": 15,
+  "tracks": {
+    "m.s.x": {
+      "local": true,
+      "keys": [
+        { "frame":  0, "value": -0.15 },
+        { "frame":  7, "value":  0.15 },
+        { "frame": 14, "value":  0.0 }
+      ]
+    },
+    "m.s.y": {
+      "local": true,
+      "keys": [
+        { "frame":  0, "value": -0.15 },
+        { "frame":  7, "value":  0.15 },
+        { "frame": 14, "value":  0.0 }
+      ]
+    }
+  }
+}

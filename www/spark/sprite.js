@@ -7,25 +7,22 @@
 spark.module().requires('spark.anim', 'spark.collision');
 
 // A sprite is a rendered quad with behaviors and optional collision.
-__MODULE__.Sprite = function() {
+__MODULE__.Sprite = function(contextSettings) {
   this.m = spark.vec.IDENTITY;
 
   // Flags.
   this.dead = false;
   this.visible = true;
 
-  // Color tint and alpha.
-  this.red = 1.0;
-  this.green = 1.0;
-  this.blue = 1.0;
-  this.alpha = 1.0;
+  // Rendering context.
+  this.contextSettings = contextSettings || {};
 
   // Update behaviors and shape colliders.
   this.behaviors = [];
   this.colliders = [];
 
   // Animations that are currently playing.
-  this.anims = [];
+  this.animset = new spark.anim.Set();
 };
 
 // Set constructors.
@@ -74,27 +71,15 @@ __MODULE__.Sprite.prototype.updateShapeColliders = function() {
 };
 
 // Tell the sprite to play an animation.
-__MODULE__.Sprite.prototype.playAnimation = function(anim, onevent) {
-  this.anims.push(anim.play(this, onevent));
+__MODULE__.Sprite.prototype.play = function(anim, onevent) {
+  return this.animset.push(anim.play(this, onevent));
 };
 
 // Called once per frame to advance the gameplay simulation.
 __MODULE__.Sprite.prototype.update = function() {
-  var i;
 
-  // Update all animations.
-  for(i = 0;i < this.anims.length;) {
-    if (this.anims[i](spark.game.step) === false) {
-      var last = this.anims.pop();
-
-      // Swap with last.
-      if (i < this.anims.length) {
-        this.anims[i] = last;
-      }
-    } else {
-      i++;
-    }
-  }
+  // Process all animations.
+  this.animset.update();
 
   // Process all behavior functions.
   for(i = 0;i < this.behaviors.length;i++) {
@@ -114,9 +99,8 @@ __MODULE__.Sprite.prototype.draw = function() {
   // Render the sprite.
   spark.view.save();
 
-  // Set the alpha and composite style.
-  spark.view.globalAlpha = Math.min(1.0, Math.max(this.alpha, 0.0));
-  spark.view.globalCompositeOperation = this.compositeOperation || 'source-over';
+  // Apply the context settings.
+  spark.util.merge(spark.view, this.contextSettings);
 
   // Apply the transform for this sprite.
   spark.view.transform.apply(spark.view, this.m.transform);

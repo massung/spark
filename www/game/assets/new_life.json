@@ -1,0 +1,36 @@
+{
+  "fps": 30,
+  "looping": false,
+  "duration": 45,
+  "events": [
+    { "frame": 14, "event": "add controls" }
+  ],
+  "tracks": {
+    "m.s.x": {
+      "keys": [
+        { "frame":  0, "value": 0 },
+        { "frame": 14, "value": 1 }
+      ]
+    },
+    "m.s.y": {
+      "keys": [
+        { "frame":  0, "value": 0 },
+        { "frame": 14, "value": 1 }
+      ]
+    },
+    "contextSettings.globalAlpha": {
+      "interpolate": "cubic",
+      "keys": [
+        { "frame":  0, "value": 1 },
+        { "frame":  5, "value": 0 },
+        { "frame": 10, "value": 1 },
+        { "frame": 15, "value": 0 },
+        { "frame": 20, "value": 1 },
+        { "frame": 25, "value": 0 },
+        { "frame": 30, "value": 1 },
+        { "frame": 35, "value": 0 },
+        { "frame": 40, "value": 1 }
+      ]
+    }
+  }
+}
