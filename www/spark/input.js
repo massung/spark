@@ -10,6 +10,11 @@ spark.module();
 __MODULE__.keys = [];
 __MODULE__.buttons = [];
 __MODULE__.touches = [];
+__MODULE__.gamepads = []
+__MODULE__.gamepads[0] = { active: false, buttons: [], sticks: [] };
+__MODULE__.gamepads[1] = { active: false, buttons: [], sticks: [] };
+__MODULE__.gamepads[2] = { active: false, buttons: [], sticks: [] };
+__MODULE__.gamepads[3] = { active: false, buttons: [], sticks: [] };
 __MODULE__.x = 0;
 __MODULE__.y = 0;
 __MODULE__.relativeX = 0;
@@ -113,6 +118,18 @@ __MODULE__.KEY = {
   'PERIOD': 190,
 };
 
+// XBOX ONE Controller layout
+__MODULE__.GAMEPAD_BUTTON = {
+  'A':          0,
+  'B':          1,
+  'X':          2,
+  'Y':          3,
+  'DPAD_UP':    12,
+  'DPAD_DOWN':  13,
+  'DPAD_LEFT':  14,
+  'DPAD_RIGHT': 15
+};
+
 // Called once when the module's dependencies are met.
 __MODULE__.init = function() {
   var i;
@@ -131,7 +148,59 @@ __MODULE__.init = function() {
   for(i = 0;i < 10;i++) {
     this.touches[i] = { /* TODO */ };
   }
+
+  for(i = 0;i < 4; i++) {
+    var j;
+
+    // Initialize the array of gamepad buttons
+    for(j = 0;j < 17; j++) {
+      this.gamepads[i].buttons[j] = { down: false, hits: 0};
+      this.gamepads[i].buttons[j] = { down: false, hits: 0};
+      this.gamepads[i].buttons[j] = { down: false, hits: 0};
+      this.gamepads[i].buttons[j] = { down: false, hits: 0};
+    }
+
+    // Initialize the gamepad sticks
+    for(j = 0;j < 2;j++) {
+      this.gamepads[i].sticks[j] = { horizontal: 0.0, vertical: 0.0}
+    }
+  }
+
 };
+
+__MODULE__.update = function() {
+  if (!!navigator.getGamepads) {
+    var gamepads = navigator.getGamepads();
+    var i;
+    for(i = 0;i < 1;i++) {
+      var gamepad = gamepads[i];
+      if (!!gamepad) {
+        // Mark this gamepad as actively connected
+        this.gamepads[i].active = true;
+
+        var j;
+        for(j = 0;j < 17;j++) {
+          var state = this.gamepads[i].buttons[j];
+          if(!!gamepad.buttons[j].pressed) {
+            if (state.down === false) {
+              state.hits = state.hits + 1;
+            }
+            state.down = true;
+          } else {
+            state.down = false;
+          }
+        }
+
+        // Fill out stick values
+        this.gamepads[i].sticks[0] = { horizontal: gamepad.axes[0], vertical: gamepad.axes[1] };
+        this.gamepads[i].sticks[1] = { horizontal: gamepad.axes[2], vertical: gamepad.axes[3] };
+      } else {
+        // Mark this gamepad as inactive
+        this.gamepads[i].active = false;
+      }
+    }
+  }
+}
 
 // Handle keydown events.
 __MODULE__.onKeyDown = function(event) {
@@ -268,6 +337,10 @@ __MODULE__.flush = function() {
 
   this.keys.forEach(flushState);
   this.buttons.forEach(flushState);
+  this.gamepads[0].buttons.forEach(flushState);
+  this.gamepads[1].buttons.forEach(flushState);
+  this.gamepads[2].buttons.forEach(flushState);
+  this.gamepads[3].buttons.forEach(flushState);
 
   // Clear all relative motion.
   this.relativeX = 0;
@@ -291,15 +364,84 @@ __MODULE__.keyDown = function(key) {
 
 // Returns how many times a mouse button has been hit this frame.
 __MODULE__.mouseHits = function(button) {
-  return button < this.buttons.lenght ? this.buttons[button || 0].hits : 0;
+  return button < this.buttons.length ? this.buttons[button || 0].hits : 0;
 };
 
 // Returns true if the mouse button was hit at all this frame.
 __MODULE__.mouseHit = function(button) {
-  return button < this.buttons.lenght ? this.buttons[button || 0].hits > 0 : false;
+  return button < this.buttons.length ? this.buttons[button || 0].hits > 0 : false;
 };
 
 // True if the mouse button is currently down.
 __MODULE__.mouseDown = function(button) {
-  return button < this.buttons.lenght ? this.buttons[button || 0].down : false;
+  return button < this.buttons.length ? this.buttons[button || 0].down : false;
 };
+
+// Returns true the the gamepad is valid and active
+__MODULE__.validGamepadID = function(gamepadID) {
+  return gamepadID >= 0 && gamepadID < 4 && this.gamepads[gamepadID].active === true;
+}
+
+// Returns true of the gamepad button index exists on the gamepad ID referenced
+__MODULE__.validGamepadButton = function(gamepadID, gamepadButton) {
+  return gamepadButton >= 0 && gamepadButton < this.gamepads[gamepadID].buttons.length;
+}
+
+// Returns true of the gamepad stick index exists on the gamepad ID referenced
+__MODULE__.validGamepadStick = function(gamepadID, gamepadStick) {
+  return gamepadStick >= 0 && gamepadStick < this.gamepads[gamepadID].sticks.length;
+}
+
+// Returns true if the gamepad button was hit at all this frame
+__MODULE__.gamepadButtonHit = function(gamepadButton, gamepadID) {
+  // If parameters are undefined (not passed in) set them to their defaults.
+  gamepadID = gamepadID || 0;
+  gamepadButton = gamepadButton || 0;
+
+  // Return false if gamepad id is invalid or gamepad is inactive, or if the
+  // passed in button is invalid.
+  if (!this.validGamepadID(gamepadID) || !this.validGamepadButton(gamepadButton)) {
+    return false;
+  }
+
+  return this.gamepads[gamepadID].buttons[gamepadButton].hits > 0;
+}
+
+// True if the gamepad button is currently down
+__MODULE__.gamepadButtonDown = function(gamepadButton, gamepadID) {
+  // If parameters are undefined (not passed in) set them to their defaults.
+  gamepadID = gamepadID || 0;
+  gamepadButton = gamepadButton || 0;
+
+  // Return false if gamepad id is invalid or gamepad is inactive, or if the
+  // passed in button is invalid.
+  if (!this.validGamepadID(gamepadID) || !this.validGamepadButton(gamepadID, gamepadButton)) {
+    return false;
+  }
+
+  return this.gamepads[gamepadID].buttons[gamepadButton].down;
+}
+
+__MODULE__.gamepadStickHorizontal = function(gamepadStick, gamepadID) {
+    // If parameters are undefined (not passed in) set them to their defaults.
+    gamepadID = gamepadID || 0;
+    gamepadStick = gamepadStick || 0;
+
+    if (!this.validGamepadID(gamepadID) || !this.validGamepadStick(gamepadID, gamepadStick)) {
+      return false;
+    }
+
+  return this.gamepads[gamepadID].sticks[gamepadStick].horizontal;
+}
+
+__MODULE__.gamepadStickVertical = function(gamepadStick, gamepadID) {
+    // If parameters are undefined (not passed in) set them to their defaults.
+    gamepadID = gamepadID || 0;
+    gamepadStick = gamepadStick || 0;
+
+    if (!this.validGamepadID(gamepadID) || !this.validGamepadStick(gamepadID, gamepadStick)) {
+      return false;
+    }
+
+  return this.gamepads[gamepadID].sticks[gamepadStick].vertical;
+}
