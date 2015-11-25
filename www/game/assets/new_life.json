@@ -3,7 +3,7 @@
   "looping": false,
   "duration": 45,
   "events": [
-    { "frame": 14, "event": "add controls" }
+    { "frame": 40, "event": "add controls" }
   ],
   "tracks": {
     "m.s.x": {

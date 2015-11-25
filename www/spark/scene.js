@@ -166,12 +166,16 @@ __MODULE__.draw = function() {
   var w2 = spark.view.canvas.width / 2;
   var h2 = spark.view.canvas.height / 2;
 
+  // Need to translate by the origin.
+  var origin = this.middle;
+
   // Setup the projection matrix.
   spark.perf.drawTime += spark.perf.sample((function() {
-    spark.view.setTransform(w2, 0, 0, h2, w2, h2);
+    spark.view.setTransform(1, 0, 0, 1, 0, 0);
 
-    // Camera projection (zoom).
-    spark.view.scale(1 / this.camera.m.s.x, 1 / this.camera.m.s.y);
+    // Camera -> viewport.
+    spark.view.translate(w2, h2);
+    spark.view.scale(w2 / this.camera.m.s.x, h2 / this.camera.m.s.y);
 
     // Game -> camera.
     spark.view.transform(this.camera.m.r.x, this.camera.m.r.y, -this.camera.m.r.y, this.camera.m.r.x, 0, 0);

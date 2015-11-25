@@ -47,7 +47,7 @@ __MODULE__.BackgroundLayer.prototype.updateCollisions = function() {};
 
 // Render the background, wrapping if set.
 __MODULE__.BackgroundLayer.prototype.draw = function() {
-  if (this.image === undefined) {
+  if (!this.image) {
     return;
   }
 

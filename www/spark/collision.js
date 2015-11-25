@@ -21,9 +21,16 @@ __MODULE__.Quadtree = function(x, y, w, h, depth) {
   this.nodes = [];
 };
 
+// Every collision is returned as a contact point and normal.
+__MODULE__.Contact = function(c, p, n) {
+  this.collider = c;
+  this.point = p;
+  this.normal = n;
+};
+
 // A collider can have many shapes.
-__MODULE__.Collider = function(owner, filter, oncollision) {
-  this.owner = owner;
+__MODULE__.Collider = function(object, filter, oncollision) {
+  this.object = object;
   this.filter = filter;
   this.oncollision = oncollision;
   this.shapes = [];
@@ -248,13 +255,13 @@ __MODULE__.Collider.prototype.addToQuadtree = function(space) {
 };
 
 // Add a segment collision shape to the entity.
-__MODULE__.Collider.prototype.addSegment = function(p1, p2) {
-  this.shapes.push(new spark.collision.Segment(this, p1, p2));
+__MODULE__.Collider.prototype.addSegment = function(x1, y1, x2, y2) {
+  this.shapes.push(new spark.collision.Segment(this, [x1, y1], [x2, y2]));
 };
 
 // Add a circle collision shape to the entity.
-__MODULE__.Collider.prototype.addCircle = function(c, r) {
-  this.shapes.push(new spark.collision.Circle(this, c, r));
+__MODULE__.Collider.prototype.addCircle = function(x, y, r) {
+  this.shapes.push(new spark.collision.Circle(this, [x, y], r));
 };
 
 // Add an axis-aligned, bounding box collision shape to the entity.
@@ -272,7 +279,7 @@ __MODULE__.Collider.prototype.updateShapes = function(m) {
 // Call the collision callback of the shape body if there is one.
 __MODULE__.Collider.prototype.collide = function(collider) {
   if (this.oncollision !== undefined) {
-    this.oncollision.call(this.owner, collider);
+    this.oncollision.call(this.object, collider);
   }
 };
 
@@ -282,7 +289,7 @@ __MODULE__.Shape.prototype.shapeQuery = function(shape) {
   if (shape.constructor === spark.collision.Circle) return this.circleQuery(shape);
   if (shape.constructor === spark.collision.Box) return this.boxQuery(shape);
 
-  return false;
+  return null;
 };
 
 // Base prototype shape querying functions.

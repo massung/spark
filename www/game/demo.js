@@ -17,21 +17,14 @@ demo.init = function () {
     scene.setViewport(1400, 1400);
 
     // Create layers for the asteroids, player, and particles.
-    this.bg0Layer = scene.addLayer(new spark.layer.BackgroundLayer());
     this.bg1Layer = scene.addLayer(new spark.layer.BackgroundLayer());
     this.planetLayer = scene.addLayer(new spark.layer.SpriteLayer(10));
     this.asteroidsLayer = scene.addLayer(new spark.layer.SpriteLayer(200));
     this.playerLayer = scene.addLayer(new spark.layer.SpriteLayer(50));
 
-    // Setup the nebula.
-    this.bg0Layer.image = spark.project.assets.starfield;
-    this.bg0Layer.m.setScale(2);
-    this.bg0Layer.alpha = 0.5;
-
     // Setup the background.
     this.bg1Layer.image = spark.project.assets.starfield;
     this.bg1Layer.m.setScale(6);
-    this.bg1Layer.compositeOperation = 'lighten';
 
     // Create the player.
     this.createPlayer(this.playerLayer);
@@ -100,7 +93,23 @@ demo.createPlayer = function(layer) {
   sprite.image = spark.project.assets.player_ship;
   sprite.m.setTranslation(0, 0);
 
+  sprite.addBehavior(demo.playerControls);
+  sprite.addBehavior(demo.spaceObject);
+
+  // Add collision now.
+  var collider = sprite.addCollider('player', function(c) {
+    //if (c.filter === 'asteroid') {
+      //sprite.dead = true;
+
+      // Spawn a new player object.
+      //demo.createPlayer(layer);
+    //}
+  });
+
+  collider.addCircle(0, 0, 30);
+
   // Start the timeline.
+  /*
   sprite.play(spark.project.assets.new_life, (function(event) {
     if (event === 'add controls') {
       sprite.addBehavior(demo.playerControls);
@@ -119,7 +128,7 @@ demo.createPlayer = function(layer) {
       collider.addCircle([0, 0], 30);
     }
   }).bind(sprite));
-
+  */
   return sprite;
 };
 
@@ -128,7 +137,7 @@ demo.createAsteroid = function(layer, x, y, scale) {
   var s = 150;
 
   // Initial properties.
-  sprite.direction = [spark.util.rand(-s, s), spark.util.rand(-s, s)];
+  sprite.v = [spark.util.rand(-s, s), spark.util.rand(-s, s)];
   sprite.rot = spark.util.rand(-180, 180);
 
   // Pick a random sprite image.
@@ -153,11 +162,11 @@ demo.createAsteroid = function(layer, x, y, scale) {
 
   // Add a collision filter and callback.
   var collider = sprite.addCollider('asteroid', function(c) {
-    if (c.filter == 'bullet' && !c.owner.dead) {
+    if (c.filter == 'bullet' && !c.object.dead) {
       this.dead = true;
 
       // Kill the bullet so it won't collide with more asteroids.
-      c.owner.dead = true;
+      c.object.dead = true;
 
       // Spawn 2-4 smaller asteroids.
       if (this.m.s.x > 0.7) {
@@ -208,14 +217,14 @@ demo.spaceObject = function() {
 
 // Asteroids consistently move and spin.
 demo.spin = function() {
-  this.m.translate(spark.vec.vscale(this.direction, spark.game.step));
+  this.m.translate(spark.vec.vscale(this.v, spark.game.step));
   this.m.rotate(this.rot * spark.game.step);
 };
 
 // Handle player input.
 demo.playerControls = function() {
-  if (spark.input.keyDown(spark.input.KEY.LEFT)) this.m.rotate(-180 * spark.game.step);
-  if (spark.input.keyDown(spark.input.KEY.RIGHT)) this.m.rotate(180 * spark.game.step);
+  if (spark.input.keyDown(spark.input.KEY.LEFT)) this.m.angle += 180 * spark.game.step;
+  if (spark.input.keyDown(spark.input.KEY.RIGHT)) this.m.angle -= 180 * spark.game.step;
 
   // Thrusting.
   if (spark.input.keyDown(spark.input.KEY.UP)) {
@@ -246,6 +255,7 @@ demo.playerControls = function() {
 
     // Sprite rendering.
     bullet.image = spark.project.assets.player_laser;
+    bullet.age = 1.0;
 
     // Spawn in front of the player.
     bullet.m.p = this.localToWorld([0, -30]);
@@ -258,7 +268,7 @@ demo.playerControls = function() {
     var collider = bullet.addCollider('bullet');
 
     // Add a simple collider shape.
-    collider.addSegment([0, -10], [0, 10]);
+    collider.addSegment(0, -10, 0, 10);
 
     // Play a sound.
     spark.project.assets.laser_sound.woof();
@@ -283,8 +293,6 @@ demo.playerControls = function() {
   this.m.p.y += this.thrust.y * spark.game.step;
 
   // Scroll the background layer by the thrust.
-  demo.bg0Layer.m.p.x -= this.thrust.x * spark.game.step * 0.05;
-  demo.bg0Layer.m.p.y -= this.thrust.y * spark.game.step * 0.05;
   demo.bg1Layer.m.p.x -= this.thrust.x * spark.game.step * 0.15;
   demo.bg1Layer.m.p.y -= this.thrust.y * spark.game.step * 0.15;
 
@@ -294,7 +302,7 @@ demo.playerControls = function() {
 
 // Advance the bullet, slowly die off.
 demo.bullet = function() {
-  if ((this.alpha -= spark.game.step) < 0) {
+  if ((this.age -= spark.game.step) < 0) {
     this.dead = true;
   }
 
