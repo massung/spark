@@ -4,17 +4,52 @@
  * All rights reserved.
  */
 
-var demo = spark.main('canvas');
+spark.main('canvas');
 
+var t = new spark.Tween([{frame: 1, value: 0}, {frame: 30, value: 360}], 30, 30, spark.Interpolation.LINEAR);
+
+// launch the project...
+spark.launch('game/project.json', proj => {
+  var scene = new spark.Scene(spark.Origin.MIDDLE, 1500, 1500);
+
+  // set the camera viewport size
+  scene.setViewport(1500, 1500);
+
+  // TODO: setup the scene
+  var sprite = scene.spawn();
+
+  sprite.texture = spark.project.assets.player_ship;
+  sprite.addBehavior(emit);
+
+
+  // run the scene
+  scene.run();
+});
+
+function emit(sprite, step) {
+  if (spark.keyHit(spark.Key.T)) {
+    sprite.rig.play(spark.project.assets.spawn.instantiate(sprite, e => {console.log(e);}));
+  }
+  //if (spark.keyDown(spark.Key.LEFT)) sprite.m.rotate(-180 * step);
+  //if (spark.keyDown(spark.Key.RIGHT)) sprite.m.rotate(180 * step);
+  if (spark.keyDown(spark.Key.UP)) sprite.m.translate(0, -10 * step, true);
+  if (spark.keyDown(spark.Key.DOWN)) sprite.m.translate(0, 10 * step, true);
+
+  if (spark.keyDown(spark.Key.SPACE)) {
+    var v = sprite.scene.screenToWorld(spark.x, spark.y);
+
+    spark.project.assets.explosion.woof();
+    spark.project.assets.emitter.emit(sprite.scene, v.x, v.y, 0, 20);
+  }
+}
+
+/*
 // Called once the spark framework is fully loaded.
 demo.init = function () {
 
   // Create the game and run it.
   spark.game.run('game/project.json', (function(scene) {
 
-    // Change the projection so the origin is in the middle.
-    scene.setPlayfield('middle', 1400, 1400);
-    scene.setViewport(1400, 1400);
 
     // Create layers for the asteroids, player, and particles.
     this.bg1Layer = scene.addLayer(new spark.layer.BackgroundLayer());
@@ -109,26 +144,6 @@ demo.createPlayer = function(layer) {
   collider.addCircle(0, 0, 30);
 
   // Start the timeline.
-  /*
-  sprite.play(spark.project.assets.new_life, (function(event) {
-    if (event === 'add controls') {
-      sprite.addBehavior(demo.playerControls);
-      sprite.addBehavior(demo.spaceObject);
-
-      // Add collision now.
-      var collider = sprite.addCollider('player', function(c) {
-        if (c.filter === 'asteroid') {
-          sprite.dead = true;
-
-          // Spawn a new player object.
-          demo.createPlayer(layer);
-        }
-      });
-
-      collider.addCircle([0, 0], 30);
-    }
-  }).bind(sprite));
-  */
   return sprite;
 };
 
@@ -309,3 +324,4 @@ demo.bullet = function() {
   // Move the bullet forward.
   this.m.translate([0, -1400 * spark.game.step], true);
 };
+*/

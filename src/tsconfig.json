@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES5",
+    "removeComments": true,
+    "stripInternal": true,
+    "outFile": "../www/game/spark.js"
+  },
+  "files": [
+    "spark.ts",
+    "platform.ts",
+    "input.ts",
+    "util.ts",
+    "vec.ts",
+    "rect.ts",
+    "matrix.ts",
+    "collision.ts",
+    "net.ts",
+    "audio.ts",
+    "graphics.ts",
+    "anim.ts",
+    "sprite.ts",
+    "particle.ts",
+    "scene.ts"
+  ]
+}

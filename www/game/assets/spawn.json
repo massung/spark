@@ -1,22 +1,22 @@
 {
   "fps": 30,
-  "looping": false,
+  "loop": false,
   "duration": 15,
   "tracks": {
     "m.s.x": {
-      "local": true,
+      "absolute": false,
       "keys": [
-        { "frame":  0, "value": -0.15 },
+        { "frame":  1, "value": -0.15 },
         { "frame":  7, "value":  0.15 },
-        { "frame": 14, "value":  0.0 }
+        { "frame": 15, "value":  0.0 }
       ]
     },
     "m.s.y": {
-      "local": true,
+      "absolute": false,
       "keys": [
-        { "frame":  0, "value": -0.15 },
+        { "frame":  1, "value": -0.15 },
         { "frame":  7, "value":  0.15 },
-        { "frame": 14, "value":  0.0 }
+        { "frame": 15, "value":  0.0 }
       ]
     }
   }
