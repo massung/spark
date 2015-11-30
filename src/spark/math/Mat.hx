@@ -4,13 +4,19 @@
 // All rights reserved.
 //
 
-package spark;
+package spark.math;
 
 @:expose
 class Mat {
   public var p: Vec;
   public var r: Vec;
   public var s: Vec;
+
+  // global matrix properties
+  static public var IDENTITY(get,null): Mat;
+
+  // create constant matrices
+  static public function get_IDENTITY(): Mat return new Mat(0, 0, 1, 0, 1, 1);
 
   // create a new 3x3 matrix
   public function new(x: Float, y: Float, rx: Float, ry: Float, sx: Float, sy: Float) {
@@ -22,6 +28,11 @@ class Mat {
   // return the inverse of the matrix
   public function inverse(): Mat {
     return new Mat(-this.p.x, -this.p.y, this.r.x, -this.r.y, 1 / this.s.x, 1 / this.s.y);
+  }
+
+  // return the angle of rotation in degrees
+  public function angle(): Float {
+    return Util.radToDeg(Math.atan2(this.r.y, this.r.x));
   }
 
   // add the position vector

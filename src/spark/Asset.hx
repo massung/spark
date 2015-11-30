@@ -29,21 +29,28 @@ class XHRAsset extends Asset {
   var req: js.html.XMLHttpRequest;
 
   // issue the request for the asset
-  public function new(src: String, respType: String, onload: js.html.XMLHttpRequest -> Void) {
+  public function new(src: String, respType: js.html.XMLHttpRequestResponseType, onload: js.html.XMLHttpRequest -> Void) {
     super(src);
 
     // create the request
     req = new js.html.XMLHttpRequest();
 
     // when the request is complete, resolve
-    req.onloadend = function() {
-      if (req.status >= 200 && req.status <= 299) {
-        onload(req);
-      }
+    req.onreadystatechange = function() {
+      if (req.readyState == 4) {
+        if (req.status >= 200 && req.status <= 299) {
+          onload(req);
+        }
 
-      // the load is complete
-      this.loaded = true;
+        // the load is complete
+        this.loaded = true;
+      }
     }
+
+    req.responseType = respType;
+
+    req.open('GET', src, true);
+    req.send();
   }
 }
 
@@ -53,7 +60,7 @@ class XMLAsset extends XHRAsset {
 
   // issue the request for the asset
   public function new(src: String, onload: js.html.Document -> Void) {
-    super(src, 'document', function(req) {
+    super(src, js.html.XMLHttpRequestResponseType.DOCUMENT, function(req) {
       onload(this.doc = req.response);
     });
   }
@@ -64,8 +71,8 @@ class JSONAsset extends XHRAsset {
   var json: Dynamic;
 
   // issue the request for the asset
-  public function new(src: String, onload: js.html.Document -> Void) {
-    super(src, 'json', function(req) {
+  public function new(src: String, onload: Dynamic -> Void) {
+    super(src, js.html.XMLHttpRequestResponseType.JSON, function(req) {
       onload(this.json = req.response);
     });
   }

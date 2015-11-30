@@ -4,18 +4,24 @@
 // All rights reserved.
 //
 
-package spark;
+package spark.math;
 
 @:expose
 class Vec {
   public var x: Float;
   public var y: Float;
 
-  // global vectors
-  static public var ZERO: Vec = new Vec(0, 0);
-  static public var ONE: Vec = new Vec(1, 1);
-  static public var RIGHT: Vec = new Vec(1, 0);
-  static public var UP: Vec = new Vec(0, 1);
+  // global vector properties
+  static public var ZERO(get,null): Vec;
+  static public var ONE(get,null): Vec;
+  static public var RIGHT(get,null): Vec;
+  static public var UP(get,null): Vec;
+
+  // create constant vectors
+  static public function get_ZERO(): Vec return new Vec(0, 0);
+  static public function get_ONE(): Vec return new Vec(1, 1);
+  static public function get_RIGHT(): Vec return new Vec(1, 0);
+  static public function get_UP(): Vec return new Vec(0, 1);
 
   // create a new 2d vector
   public function new(x: Float, y: Float) {

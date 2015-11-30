@@ -4,7 +4,7 @@
 // All rights reserved.
 //
 
-package spark;
+package spark.math;
 
 @:expose
 class Util {
@@ -20,7 +20,7 @@ class Util {
   }
 
   // the signum function
-  static public function signum(n: Float): Int {
+  static public function sign(n: Float): Int {
     if (Math.abs(n) < 0.00001) {
       return 0;
     }

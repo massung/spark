@@ -7,12 +7,12 @@
 import js.Lib;
 import js.Browser;
 
+// get all of spark
 import spark.*;
-import spark.Scene;
 
 @:expose
 class Spark {
-  static var loadQueue: Array<Asset>;
+  static private var loadQueue: Array<Asset>;
 
   // the global canvas DOM element to render to and its view context
   static public var canvas: js.html.CanvasElement;
@@ -25,6 +25,9 @@ class Spark {
     // find the view
     canvas = cast js.Browser.document.getElementById('canvas');
     view = canvas.getContext2d();
+
+    // initialize audio
+    spark.Audio.init();
 
     // initialize input devices
     spark.Input.init();

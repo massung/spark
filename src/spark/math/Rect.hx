@@ -4,14 +4,14 @@
 // All rights reserved.
 //
 
-package spark;
+package spark.math;
 
 @:expose
 class Rect {
-  public var x: Float;
-  public var y: Float;
-  public var width: Float;
-  public var height: Float;
+  private var x: Float;
+  private var y: Float;
+  private var width: Float;
+  private var height: Float;
 
   // create a new axis-aligned bounding box
   public function new(x: Float, y: Float, w: Float, h: Float) {
@@ -32,4 +32,6 @@ class Rect {
   public function getTop(): Float return this.y;
   public function getRight(): Float return this.x + this.width;
   public function getBottom(): Float return this.y + this.height;
+  public function getWidth(): Float return this.width;
+  public function getHeight(): Float return this.height;
 }

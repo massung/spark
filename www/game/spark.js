@@ -1,5 +1,8 @@
 (function (console, $hx_exports, $global) { "use strict";
 $hx_exports.spark = $hx_exports.spark || {};
+$hx_exports.spark.math = $hx_exports.spark.math || {};
+;$hx_exports.spark.layer = $hx_exports.spark.layer || {};
+;$hx_exports.spark.anim = $hx_exports.spark.anim || {};
 var $hxClasses = {},$estr = function() { return js_Boot.__string_rec(this,''); };
 function $extend(from, fields) {
 	function Inherit() {} Inherit.prototype = from; var proto = new Inherit();
@@ -197,6 +200,7 @@ Spark.main = function() {
 	Spark.loadQueue = [];
 	Spark.canvas = window.document.getElementById("canvas");
 	Spark.view = Spark.canvas.getContext("2d",null);
+	spark_Audio.init();
 	spark_Input.init();
 	spark_Input.hideCursor();
 	Spark.canvas.oncontextmenu = function(event) {
@@ -436,6 +440,60 @@ haxe_IMap.prototype = {
 	,iterator: null
 	,toString: null
 	,__class__: haxe_IMap
+};
+var haxe_ds__$Vector_Vector_$Impl_$ = {};
+$hxClasses["haxe.ds._Vector.Vector_Impl_"] = haxe_ds__$Vector_Vector_$Impl_$;
+haxe_ds__$Vector_Vector_$Impl_$.__name__ = ["haxe","ds","_Vector","Vector_Impl_"];
+haxe_ds__$Vector_Vector_$Impl_$.__properties__ = {get_length:"get_length"}
+haxe_ds__$Vector_Vector_$Impl_$._new = function(length) {
+	var this1;
+	this1 = new Array(length);
+	return this1;
+};
+haxe_ds__$Vector_Vector_$Impl_$.get = function(this1,index) {
+	return this1[index];
+};
+haxe_ds__$Vector_Vector_$Impl_$.set = function(this1,index,val) {
+	return this1[index] = val;
+};
+haxe_ds__$Vector_Vector_$Impl_$.get_length = function(this1) {
+	return this1.length;
+};
+haxe_ds__$Vector_Vector_$Impl_$.blit = function(src,srcPos,dest,destPos,len) {
+	var _g = 0;
+	while(_g < len) {
+		var i = _g++;
+		dest[destPos + i] = src[srcPos + i];
+	}
+};
+haxe_ds__$Vector_Vector_$Impl_$.toArray = function(this1) {
+	var a = [];
+	var len = this1.length;
+	var _g = 0;
+	while(_g < len) {
+		var i = _g++;
+		a[i] = this1[i];
+	}
+	return a;
+};
+haxe_ds__$Vector_Vector_$Impl_$.toData = function(this1) {
+	return this1;
+};
+haxe_ds__$Vector_Vector_$Impl_$.fromData = function(data) {
+	return data;
+};
+haxe_ds__$Vector_Vector_$Impl_$.fromArrayCopy = function(array) {
+	var vec;
+	var this1;
+	this1 = new Array(array.length);
+	vec = this1;
+	var _g1 = 0;
+	var _g = array.length;
+	while(_g1 < _g) {
+		var i = _g1++;
+		vec[i] = array[i];
+	}
+	return vec;
 };
 var js__$Boot_HaxeError = function(val) {
 	Error.call(this);
@@ -722,10 +780,15 @@ var spark_XHRAsset = function(src,respType,onload) {
 	var _g = this;
 	spark_Asset.call(this,src);
 	this.req = new XMLHttpRequest();
-	this.req.onloadend = function() {
-		if(_g.req.status >= 200 && _g.req.status <= 299) onload(_g.req);
-		_g.loaded = true;
+	this.req.onreadystatechange = function() {
+		if(_g.req.readyState == 4) {
+			if(_g.req.status >= 200 && _g.req.status <= 299) onload(_g.req);
+			_g.loaded = true;
+		}
 	};
+	this.req.responseType = respType;
+	this.req.open("GET",src,true);
+	this.req.send();
 };
 $hxClasses["spark.XHRAsset"] = spark_XHRAsset;
 spark_XHRAsset.__name__ = ["spark","XHRAsset"];
@@ -760,6 +823,87 @@ spark_JSONAsset.prototype = $extend(spark_XHRAsset.prototype,{
 	json: null
 	,__class__: spark_JSONAsset
 });
+var spark_Audio = $hx_exports.spark.Audio = function(src) {
+	var _g = this;
+	spark_XHRAsset.call(this,src,"arraybuffer",function(req) {
+		spark_Audio.context.decodeAudioData(req.response,function(buffer) {
+			_g.buffer = buffer;
+			_g.loaded = true;
+		});
+	});
+};
+$hxClasses["spark.Audio"] = spark_Audio;
+spark_Audio.__name__ = ["spark","Audio"];
+spark_Audio.context = null;
+spark_Audio.init = function() {
+	spark_Audio.context = new AudioContext();
+};
+spark_Audio.__super__ = spark_XHRAsset;
+spark_Audio.prototype = $extend(spark_XHRAsset.prototype,{
+	buffer: null
+	,createSource: function() {
+		if(this.loaded == false) return null;
+		var source = spark_Audio.context.createBufferSource();
+		source.buffer = this.buffer;
+		source.connect(spark_Audio.context.destination);
+		return source;
+	}
+	,woof: function() {
+		var source = this.createSource();
+		if(source != null) source.start();
+		return source;
+	}
+	,loop: function() {
+		var source = this.createSource();
+		if(source != null) {
+			source.loop = true;
+			source.start();
+		}
+		return source;
+	}
+	,__class__: spark_Audio
+});
+var spark_Font = $hx_exports.spark.Font = function(src) {
+	spark_Asset.call(this,src);
+	var family = src.split("/").slice(-1)[0].split(".")[0];
+	var face = "@font-face{ font-family: \"" + family + "\"; src: url(\"" + src + "\"); }";
+	var _this = window.document;
+	this.style = _this.createElement("style");
+	this.style.appendChild(window.document.createTextNode(face));
+	window.document.appendChild(this.style);
+	this.loaded = true;
+};
+$hxClasses["spark.Font"] = spark_Font;
+spark_Font.__name__ = ["spark","Font"];
+spark_Font.__super__ = spark_Asset;
+spark_Font.prototype = $extend(spark_Asset.prototype,{
+	style: null
+	,__class__: spark_Font
+});
+var spark_Game = $hx_exports.spark.Game = function(projectFile) {
+	this.path = projectFile.split("/").slice(0,-1).join("/") + "/";
+};
+$hxClasses["spark.Game"] = spark_Game;
+spark_Game.__name__ = ["spark","Game"];
+spark_Game.launch = function(projectFile,callback) {
+	var game = new spark_Game(projectFile);
+	new spark_JSONAsset(projectFile,function(json) {
+		game.title = json.title;
+		game.version = json.version;
+		game.assetPath = json.assetPath;
+		callback(game);
+	});
+};
+spark_Game.prototype = {
+	path: null
+	,assetPath: null
+	,title: null
+	,version: null
+	,newTexture: function(src) {
+		return new spark_Texture(this.path + this.assetPath + src);
+	}
+	,__class__: spark_Game
+};
 var spark_Input = $hx_exports.spark.Input = function() { };
 $hxClasses["spark.Input"] = spark_Input;
 spark_Input.__name__ = ["spark","Input"];
@@ -864,92 +1008,19 @@ spark_Input.onMouseMove = function(event) {
 	spark_Input.x = eventX;
 	spark_Input.y = eventY;
 };
-var spark_Mat = $hx_exports.spark.Mat = function(x,y,rx,ry,sx,sy) {
-	this.p = new spark_Vec(x,y);
-	this.r = new spark_Vec(rx,ry);
-	this.s = new spark_Vec(sx,sy);
+var spark_Layer = function() { };
+$hxClasses["spark.Layer"] = spark_Layer;
+spark_Layer.__name__ = ["spark","Layer"];
+spark_Layer.prototype = {
+	z: null
+	,m: null
+	,update: null
+	,draw: null
+	,__class__: spark_Layer
 };
-$hxClasses["spark.Mat"] = spark_Mat;
-spark_Mat.__name__ = ["spark","Mat"];
-spark_Mat.prototype = {
-	p: null
-	,r: null
-	,s: null
-	,inverse: function() {
-		return new spark_Mat(-this.p.x,-this.p.y,this.r.x,-this.r.y,1 / this.s.x,1 / this.s.y);
-	}
-	,translate: function(x,y,local) {
-		if(local == null) local = false;
-		var dx = x;
-		var dy = y;
-		if(local) {
-			dx = x * this.r.x + y * this.r.y;
-			dy = y * this.r.x - x * this.r.y;
-		}
-		this.p.x += dx;
-		this.p.y += dy;
-	}
-	,rotate: function(r) {
-		var x = Math.cos(spark_Util.degToRad(r));
-		var y = Math.sin(spark_Util.degToRad(r));
-		this.r.set(this.r.x * x + this.r.y * y,this.r.y * x - this.r.x * y);
-	}
-	,scale: function(x,y) {
-		this.s.x *= x;
-		if(y == null) this.s.y *= x; else this.s.y *= y;
-	}
-	,transform: function(v) {
-		var x = v.x * this.s.x * this.r.x + v.y * this.s.y * this.r.y;
-		var y = v.y * this.s.y * this.r.x - v.x * this.s.x * this.r.y;
-		return new spark_Vec(x,y);
-	}
-	,mult: function(m) {
-		var p = this.transform(m.p);
-		var r = this.r.rotate(m.r);
-		var s = this.s.mult(m.s);
-		return new spark_Mat(p.x,p.y,r.x,r.y,s.x,s.y);
-	}
-	,apply: function() {
-		var a = this.r.x * this.s.x;
-		var b = this.r.y * this.s.y;
-		var c = this.r.y * this.s.x;
-		var d = this.r.x * this.s.y;
-		var e = this.p.x;
-		var f = this.p.y;
-		Spark.view.transform(a,-b,c,d,e,f);
-	}
-	,__class__: spark_Mat
-};
-var spark_Rect = $hx_exports.spark.Rect = function(x,y,w,h) {
-	this.x = x;
-	this.y = y;
-	this.width = w;
-	this.height = h;
-};
-$hxClasses["spark.Rect"] = spark_Rect;
-spark_Rect.__name__ = ["spark","Rect"];
-spark_Rect.prototype = {
-	x: null
-	,y: null
-	,width: null
-	,height: null
-	,contains: function(x,y) {
-		return x >= this.x && x <= this.x + this.width && (y >= this.y && y <= this.y + this.height);
-	}
-	,getLeft: function() {
-		return this.x;
-	}
-	,getTop: function() {
-		return this.y;
-	}
-	,getRight: function() {
-		return this.x + this.width;
-	}
-	,getBottom: function() {
-		return this.y + this.height;
-	}
-	,__class__: spark_Rect
-};
+var spark_Net = $hx_exports.spark.Net = function() { };
+$hxClasses["spark.Net"] = spark_Net;
+spark_Net.__name__ = ["spark","Net"];
 var spark_Scene = $hx_exports.spark.Scene = function(origin,width,height) {
 	var i;
 	var vw = Spark.canvas.width;
@@ -961,47 +1032,48 @@ var spark_Scene = $hx_exports.spark.Scene = function(origin,width,height) {
 	var x = 0;
 	var y = 0;
 	var _g;
-	if(origin == null) _g = spark_Origin.TOP_LEFT; else _g = origin;
-	switch(_g[1]) {
-	case 0:
+	if(origin == null) _g = "top-left"; else _g = origin;
+	switch(_g) {
+	case "top-left":
 		x = 0;
 		y = 0;
 		break;
-	case 1:
+	case "top-middle":
 		x = w / 2;
 		y = 0;
 		break;
-	case 2:
+	case "top-right":
 		x = w;
 		y = 0;
 		break;
-	case 3:
+	case "bottom-left":
 		x = 0;
 		y = h;
 		break;
-	case 4:
+	case "bottom-middle":
 		x = w / 2;
 		y = h;
 		break;
-	case 5:
+	case "bottom-right":
 		x = w;
 		y = h;
 		break;
-	case 6:
+	case "middle-left":
 		x = 0;
 		y = h / 2;
 		break;
-	case 7:
+	case "middle-right":
 		x = w;
 		y = h / 2;
 		break;
-	case 8:
+	case "middle":
 		x = w / 2;
 		y = h / 2;
 		break;
 	}
-	this.rect = new spark_Rect(-x,-y,w,h);
-	this.camera = new spark_Mat(0,0,1,0,Spark.canvas.width / 2,Spark.canvas.height / 2);
+	this.rect = new spark_math_Rect(-x,-y,w,h);
+	this.camera = new spark_math_Mat(0,0,1,0,Spark.canvas.width / 2,Spark.canvas.height / 2);
+	this.layers = [];
 };
 $hxClasses["spark.Scene"] = spark_Scene;
 spark_Scene.__name__ = ["spark","Scene"];
@@ -1009,9 +1081,8 @@ spark_Scene.prototype = {
 	frametime: null
 	,framecount: null
 	,runloop: null
-	,sp: null
-	,count: null
-	,pending: null
+	,space: null
+	,layers: null
 	,rect: null
 	,camera: null
 	,setViewport: function(w,h) {
@@ -1038,6 +1109,14 @@ spark_Scene.prototype = {
 		this.runloop = window.requestAnimationFrame($bind(this,this.stepFrame));
 	}
 	,update: function(step) {
+		var i;
+		var _g1 = 0;
+		var _g = this.layers.length - 1;
+		while(_g1 < _g) {
+			var i1 = _g1++;
+			this.layers[i1].update(step);
+		}
+		this.space = new spark_collision_Quadtree(this.rect);
 	}
 	,draw: function() {
 		var i;
@@ -1051,105 +1130,938 @@ spark_Scene.prototype = {
 		Spark.view.clearRect(0,0,Spark.canvas.width,Spark.canvas.height);
 		var w2 = Spark.canvas.width / 2;
 		var h2 = Spark.canvas.height / 2;
-		var mx = this.rect.x + this.rect.width / 2;
-		var my = this.rect.y + this.rect.height / 2;
+		var mx = this.rect.getLeft() + this.rect.getWidth() / 2;
+		var my = this.rect.getTop() + this.rect.getHeight() / 2;
 		Spark.view.setTransform(1,0,0,1,0,0);
 		Spark.view.translate(w2,h2);
 		Spark.view.scale(w2 / this.camera.s.x,h2 / this.camera.s.y);
 		Spark.view.transform(this.camera.r.x,this.camera.r.y,-this.camera.r.y,this.camera.r.x,0,0);
 		Spark.view.translate(-this.camera.p.x - mx,-this.camera.p.y - my);
+		var _g1 = 0;
+		var _g = this.layers.length - 1;
+		while(_g1 < _g) {
+			var i1 = _g1++;
+			this.layers[i1].draw();
+		}
 		Spark.view.restore();
 	}
 	,worldToScreen: function(x,y) {
-		var mx = this.rect.x + this.rect.width / 2;
-		var my = this.rect.y + this.rect.height / 2;
+		var mx = this.rect.getLeft() + this.rect.getWidth() / 2;
+		var my = this.rect.getTop() + this.rect.getHeight() / 2;
 		var cx = x - (this.camera.p.x + mx);
 		var cy = y - (this.camera.p.y + my);
 		var rx = cx * this.camera.r.x - cy * this.camera.r.y;
 		var ry = cy * this.camera.r.x + cx * this.camera.r.y;
 		var sx = rx * Spark.canvas.height / (2 * this.camera.s.x);
 		var sy = ry * Spark.canvas.width / (2 * this.camera.s.y);
-		return new spark_Vec(sx + Spark.canvas.width / 2,sy + Spark.canvas.height / 2);
+		return new spark_math_Vec(sx + Spark.canvas.width / 2,sy + Spark.canvas.height / 2);
 	}
 	,screenToWorld: function(x,y) {
 		var cx = (x - Spark.canvas.width / 2) * this.camera.s.x * 2 / Spark.canvas.width;
 		var cy = (y - Spark.canvas.height / 2) * this.camera.s.y * 2 / Spark.canvas.height;
 		var vx = cx * this.camera.r.x + cy * this.camera.r.y;
 		var vy = cy * this.camera.r.x - cx * this.camera.r.y;
-		var mx = this.rect.x + this.rect.width / 2;
-		var my = this.rect.y + this.rect.height / 2;
-		return new spark_Vec(vx + this.camera.p.x + mx,vy + this.camera.p.y + my);
+		var mx = this.rect.getLeft() + this.rect.getWidth() / 2;
+		var my = this.rect.getTop() + this.rect.getHeight() / 2;
+		return new spark_math_Vec(vx + this.camera.p.x + mx,vy + this.camera.p.y + my);
+	}
+	,pick: function(x,y,radius) {
+		if(radius == null) radius = 5;
+		if(this.space == null) return [];
+		var c = this.screenToWorld(x,y);
+		if(!this.rect.contains(c.x,c.y)) return [];
+		var shape = new spark_collision_shape_Circle(null,c.x,c.y,radius);
+		shape.updateShapeCache(spark_math_Mat.get_IDENTITY());
+		return this.space.collect(shape);
 	}
 	,__class__: spark_Scene
 };
-var spark_Origin = $hxClasses["spark.Origin"] = { __ename__ : ["spark","Origin"], __constructs__ : ["TOP_LEFT","TOP_MIDDLE","TOP_RIGHT","BOTTOM_LEFT","BOTTOM_MIDDLE","BOTTOM_RIGHT","MIDDLE_LEFT","MIDDLE_RIGHT","MIDDLE"] };
-spark_Origin.TOP_LEFT = ["TOP_LEFT",0];
-spark_Origin.TOP_LEFT.toString = $estr;
-spark_Origin.TOP_LEFT.__enum__ = spark_Origin;
-spark_Origin.TOP_MIDDLE = ["TOP_MIDDLE",1];
-spark_Origin.TOP_MIDDLE.toString = $estr;
-spark_Origin.TOP_MIDDLE.__enum__ = spark_Origin;
-spark_Origin.TOP_RIGHT = ["TOP_RIGHT",2];
-spark_Origin.TOP_RIGHT.toString = $estr;
-spark_Origin.TOP_RIGHT.__enum__ = spark_Origin;
-spark_Origin.BOTTOM_LEFT = ["BOTTOM_LEFT",3];
-spark_Origin.BOTTOM_LEFT.toString = $estr;
-spark_Origin.BOTTOM_LEFT.__enum__ = spark_Origin;
-spark_Origin.BOTTOM_MIDDLE = ["BOTTOM_MIDDLE",4];
-spark_Origin.BOTTOM_MIDDLE.toString = $estr;
-spark_Origin.BOTTOM_MIDDLE.__enum__ = spark_Origin;
-spark_Origin.BOTTOM_RIGHT = ["BOTTOM_RIGHT",5];
-spark_Origin.BOTTOM_RIGHT.toString = $estr;
-spark_Origin.BOTTOM_RIGHT.__enum__ = spark_Origin;
-spark_Origin.MIDDLE_LEFT = ["MIDDLE_LEFT",6];
-spark_Origin.MIDDLE_LEFT.toString = $estr;
-spark_Origin.MIDDLE_LEFT.__enum__ = spark_Origin;
-spark_Origin.MIDDLE_RIGHT = ["MIDDLE_RIGHT",7];
-spark_Origin.MIDDLE_RIGHT.toString = $estr;
-spark_Origin.MIDDLE_RIGHT.__enum__ = spark_Origin;
-spark_Origin.MIDDLE = ["MIDDLE",8];
-spark_Origin.MIDDLE.toString = $estr;
-spark_Origin.MIDDLE.__enum__ = spark_Origin;
-spark_Origin.__empty_constructs__ = [spark_Origin.TOP_LEFT,spark_Origin.TOP_MIDDLE,spark_Origin.TOP_RIGHT,spark_Origin.BOTTOM_LEFT,spark_Origin.BOTTOM_MIDDLE,spark_Origin.BOTTOM_RIGHT,spark_Origin.MIDDLE_LEFT,spark_Origin.MIDDLE_RIGHT,spark_Origin.MIDDLE];
-var spark_Util = $hx_exports.spark.Util = function() { };
-$hxClasses["spark.Util"] = spark_Util;
-spark_Util.__name__ = ["spark","Util"];
-spark_Util.degToRad = function(r) {
+var spark_Sprite = $hx_exports.spark.Sprite = function() {
+	this.init();
+};
+$hxClasses["spark.Sprite"] = spark_Sprite;
+spark_Sprite.__name__ = ["spark","Sprite"];
+spark_Sprite.prototype = {
+	m: null
+	,pivot: null
+	,dead: null
+	,texture: null
+	,quad: null
+	,body: null
+	,rig: null
+	,behaviors: null
+	,init: function() {
+		this.m = spark_math_Mat.get_IDENTITY();
+		this.pivot = new spark_math_Vec(0.5,0.5);
+		this.behaviors = [];
+		this.dead = false;
+		this.body = null;
+	}
+	,addBody: function(filter,oncollision) {
+		return this.body = new spark_collision_Body(this,filter,oncollision);
+	}
+	,addBehavior: function(callback,data) {
+		this.behaviors.push({ callback : callback, data : data});
+	}
+	,getWidth: function() {
+		return 0;
+	}
+	,getHeight: function() {
+		return 0;
+	}
+	,worldToLocal: function(p) {
+		return this.m.inverse().transform(p);
+	}
+	,localToWorld: function(p) {
+		return this.m.transform(p);
+	}
+	,worldToLocalAngle: function(angle) {
+		return this.m.angle() - angle;
+	}
+	,localToWorldAngle: function(angle) {
+		return this.m.angle() + angle;
+	}
+	,update: function(step) {
+		var i;
+		var _g1 = 0;
+		var _g = this.behaviors.length - 1;
+		while(_g1 < _g) {
+			var i1 = _g1++;
+			this.behaviors[i1].callback(this,this.behaviors[i1].data,step);
+		}
+		if(this.body != null) this.body.updateShapeCache(this.m);
+	}
+	,draw: function() {
+		if(this.texture == null) return;
+		Spark.view.save();
+		this.m.apply();
+		if(this.quad == null) this.texture.draw(this.pivot); else this.texture.drawq(this.quad,this.pivot);
+		Spark.view.restore();
+	}
+	,__class__: spark_Sprite
+};
+var spark_Texture = $hx_exports.spark.Texture = function(src) {
+	var _g = this;
+	spark_Asset.call(this,src);
+	this.img = new Image();
+	this.img.onload = function() {
+		_g.loaded = true;
+	};
+	this.img.src = src;
+};
+$hxClasses["spark.Texture"] = spark_Texture;
+spark_Texture.__name__ = ["spark","Texture"];
+spark_Texture.__super__ = spark_Asset;
+spark_Texture.prototype = $extend(spark_Asset.prototype,{
+	img: null
+	,getWidth: function() {
+		if(this.loaded) return this.img.width; else return 0;
+	}
+	,getHeight: function() {
+		if(this.loaded) return this.img.height; else return 0;
+	}
+	,draw: function(pivot) {
+		if(this.loaded) {
+			var w = this.img.width;
+			var h = this.img.height;
+			var x;
+			if(pivot == null) x = 0; else x = -w * pivot.x;
+			var y;
+			if(pivot == null) y = 0; else y = -h * pivot.y;
+			Spark.view.drawImage(this.img,0,0,w,h,x,y,w,h);
+		}
+	}
+	,drawq: function(quad,pivot) {
+		if(this.loaded) {
+			var w = quad.getWidth();
+			var h = quad.getHeight();
+			var x;
+			if(pivot == null) x = 0; else x = -w * pivot.x;
+			var y;
+			if(pivot == null) y = 0; else y = -h * pivot.y;
+			Spark.view.drawImage(this.img,quad.getLeft(),quad.getTop(),w,h,x,y,w,h);
+		}
+	}
+	,__class__: spark_Texture
+});
+var spark_anim_Rig = $hx_exports.spark.anim.Rig = function() {
+	this.anims = [];
+};
+$hxClasses["spark.anim.Rig"] = spark_anim_Rig;
+spark_anim_Rig.__name__ = ["spark","anim","Rig"];
+spark_anim_Rig.prototype = {
+	anims: null
+	,play: function(instance) {
+		this.anims.push(instance);
+	}
+	,stop: function(instance) {
+		var i = HxOverrides.indexOf(this.anims,instance,0);
+		if(i >= 0) {
+			var last = this.anims.pop();
+			if(i < this.anims.length) this.anims[i] = last;
+		}
+	}
+	,update: function(step) {
+		var i = 0;
+		while(i < this.anims.length) if(this.anims[i](step)) {
+			var last = this.anims.pop();
+			if(i < this.anims.length) this.anims[i] = last;
+		} else i++;
+	}
+	,__class__: spark_anim_Rig
+};
+var spark_anim_Timeline = $hx_exports.spark.anim.Timeline = function(src) {
+	var _g = this;
+	spark_JSONAsset.call(this,src,function(json) {
+		var i;
+		if(json.fps == null) _g.fps = 30; else _g.fps = json.fps;
+		if(json.duration == null) _g.duration = 30; else _g.duration = json.duration;
+		if(json.loop == null) _g.loop = false; else _g.loop = true;
+		if(json.events == null) _g.events = []; else _g.events = json.events;
+		_g.events.sort(function(a,b) {
+			return a.frame - b.frame;
+		});
+		_g.tracks = [];
+		if(json.tracks != null) {
+			var _g1 = 0;
+			var _g2 = Reflect.fields(json.tracks);
+			while(_g1 < _g2.length) {
+				var i1 = _g2[_g1];
+				++_g1;
+				var track = Reflect.field(json.tracks,i1);
+				if(track.keys != null) {
+					var tween = new spark_anim_Tween(track.keys,_g.fps,_g.duration,track.method);
+					_g.tracks.push({ property : i1, tween : tween});
+				}
+			}
+		}
+		_g.loaded = true;
+	});
+};
+$hxClasses["spark.anim.Timeline"] = spark_anim_Timeline;
+spark_anim_Timeline.__name__ = ["spark","anim","Timeline"];
+spark_anim_Timeline.__super__ = spark_JSONAsset;
+spark_anim_Timeline.prototype = $extend(spark_JSONAsset.prototype,{
+	tracks: null
+	,events: null
+	,fps: null
+	,duration: null
+	,loop: null
+	,playOn: function(obj,onevent) {
+		var rig = new spark_anim_Rig();
+		var i;
+		var _g1 = 0;
+		var _g = this.tracks.length - 1;
+		while(_g1 < _g) {
+			var i1 = _g1++;
+			this.tracks[i1].tween.playOn(obj,this.tracks[i1].property,this.loop);
+		}
+		var timeline = this;
+		var eventIndex = 0;
+		var time = 0.0;
+		var anim = function(step) {
+			var frame = Math.floor((time += step) * (timeline.fps % timeline.duration));
+			if(timeline.events.length > 0) while(timeline.events[eventIndex].frame <= frame + 1) {
+				onevent(timeline.events[eventIndex++].event);
+				if(eventIndex == timeline.events.length) {
+					eventIndex = 0;
+					break;
+				}
+			}
+			return true;
+		};
+		obj.rig.play(anim);
+	}
+	,__class__: spark_anim_Timeline
+});
+var spark_anim_Tween = $hx_exports.spark.anim.Tween = function(keys,fps,duration,interp) {
+	if(interp == null) interp = "cubic";
+	var i = 0;
+	var k;
+	this.fps = fps;
+	this.duration = duration;
+	var this1;
+	this1 = new Array(duration);
+	this.keys = this1;
+	keys.sort(function(a,b) {
+		return a.frame - b.frame;
+	});
+	while(i < keys.length - 1 && keys[i + 1].frame < 1) i++;
+	var hks = keys.slice(i);
+	var tangent;
+	var this2;
+	this2 = new Array(hks.length);
+	tangent = this2;
+	var _g1 = 1;
+	var _g = hks.length - 2;
+	while(_g1 < _g) {
+		var i1 = _g1++;
+		if(hks[i1].tangent != null) tangent[i1] = hks[i1].tangent; else {
+			var pk = hks[i1 - 1];
+			var tk = hks[i1];
+			var nk = hks[i1 + 1];
+			var dtp = (tk.value - pk.value) / (tk.frame - pk.frame);
+			var dtn = (nk.value - tk.value) / (nk.frame - tk.frame);
+			tangent[i1] = (dtp + dtn) / 2;
+		}
+	}
+	var p;
+	if(hks[0].frame < 1) p = hks.shift(); else p = hks[0];
+	var _g11 = 1;
+	var _g2 = this.duration;
+	while(_g11 < _g2) {
+		var i2 = _g11++;
+		var n = hks[0];
+		if(i2 == n.frame) {
+			this.keys[i2 - 1] = n.value;
+			p = hks.shift();
+		} else if(interp != null) switch(interp) {
+		case "step":
+			this.keys[i2 - 1] = p.value;
+			break;
+		case "linear":
+			var val = spark_math_Util.lerp(p.value,n.value,i2 - p.frame,n.frame - p.frame);
+			this.keys[i2 - 1] = val;
+			break;
+		case "cubic":
+			var u = (i2 - p.frame) / (n.frame - p.frame);
+			var h0 = u * u * u * 2 - u * u * 3 + 1;
+			var h1 = u * u * u * -2 + u * u * 3;
+			var h2 = u * u * u - u * u * 2 + u;
+			var h3 = u * u * u - u * u;
+			var p0 = p.value;
+			var p1 = n.value;
+			var t0 = spark_math_Util.degToRad(tangent[p.frame] == null?0:tangent[p.frame]);
+			var t1 = spark_math_Util.degToRad(tangent[n.frame] == null?0:tangent[n.frame]);
+			this.keys[i2 - 1] = h0 * p0 + h1 * p1 + h2 * t0 + h3 * t1;
+			break;
+		}
+	}
+};
+$hxClasses["spark.anim.Tween"] = spark_anim_Tween;
+spark_anim_Tween.__name__ = ["spark","anim","Tween"];
+spark_anim_Tween.prototype = {
+	fps: null
+	,duration: null
+	,keys: null
+	,playOn: function(obj,property,loop) {
+		if(loop == null) loop = false;
+		var path = property.split(".");
+		var key = path.pop();
+		while(path.length > 0) {
+			obj = Reflect.field(obj,path.shift());
+			if(obj == null) throw new js__$Boot_HaxeError("Cannot find property \"" + property + "\" on object");
+		}
+		var tween = this;
+		var time = 0.0;
+		var anim = function(step) {
+			var frame = Math.floor((time += step) * tween.fps);
+			var shouldStop = false;
+			if(frame >= tween.duration) {
+				shouldStop = !loop;
+				if(!shouldStop) {
+					time %= js_Boot.__cast(tween.duration , Float) / tween.fps;
+					frame = Math.floor(time * tween.fps);
+				} else frame = tween.duration - 1;
+			}
+			Reflect.setProperty(obj,key,tween.keys[frame]);
+			return shouldStop;
+		};
+		obj.rig.play(anim);
+	}
+	,__class__: spark_anim_Tween
+};
+var spark_collision_Body = function(object,filter,oncollision) {
+	this.object = object;
+	this.filter = filter;
+	this.oncollision = oncollision;
+	this.shapes = [];
+};
+$hxClasses["spark.collision.Body"] = spark_collision_Body;
+spark_collision_Body.__name__ = ["spark","collision","Body"];
+spark_collision_Body.prototype = {
+	object: null
+	,filter: null
+	,shapes: null
+	,oncollision: null
+	,getObject: function() {
+		return this.object;
+	}
+	,getFilter: function() {
+		return this.filter;
+	}
+	,updateShapeCache: function(m) {
+		var i;
+		var _g1 = 0;
+		var _g = this.shapes.length - 1;
+		while(_g1 < _g) {
+			var i1 = _g1++;
+			this.shapes[i1].updateShapeCache(m);
+		}
+	}
+	,addToQuadtree: function(space) {
+		var i;
+		var _g1 = 0;
+		var _g = this.shapes.length - 1;
+		while(_g1 < _g) {
+			var i1 = _g1++;
+			space.addShape(this.shapes[i1]);
+		}
+	}
+	,addSegmentShape: function(x1,y1,x2,y2) {
+		this.shapes.push(new spark_collision_shape_Segment(this,x1,y1,x2,y2));
+	}
+	,addCircleShape: function(x,y,radius) {
+		this.shapes.push(new spark_collision_shape_Circle(this,x,y,radius));
+	}
+	,addBoxShape: function(x,y,width,height) {
+		this.shapes.push(new spark_collision_shape_Box(this,x,y,width,height));
+	}
+	,collide: function(body) {
+		if(this.oncollision != null) this.oncollision(body);
+	}
+	,__class__: spark_collision_Body
+};
+var spark_collision_Quadtree = function(rect,depth) {
+	if(depth == null) depth = 0;
+	this.rect = rect;
+	this.shapes = [];
+	this.nodes = [];
+	this.depth = depth;
+};
+$hxClasses["spark.collision.Quadtree"] = spark_collision_Quadtree;
+spark_collision_Quadtree.__name__ = ["spark","collision","Quadtree"];
+spark_collision_Quadtree.prototype = {
+	rect: null
+	,nodes: null
+	,shapes: null
+	,depth: null
+	,addShape: function(shape) {
+		var _g = this;
+		var i;
+		if(this.depth > 0 && !shape.within(this.rect)) return false;
+		var _g1 = 0;
+		var _g2 = this.nodes.length - 1;
+		while(_g1 < _g2) {
+			var i1 = _g1++;
+			if(this.nodes[i1].addShape(shape)) return true;
+		}
+		this.shapes.push(shape);
+		if(this.depth < spark_collision_Quadtree.DEPTH_LIMIT && this.shapes.length >= spark_collision_Quadtree.SHAPE_LIMIT && this.nodes.length == 0) {
+			var w = this.rect.getWidth() / 2;
+			var h = this.rect.getHeight() / 2;
+			var l = this.rect.getLeft();
+			var t = this.rect.getTop();
+			this.nodes = [new spark_collision_Quadtree(new spark_math_Rect(l,t,w,h),this.depth + 1),new spark_collision_Quadtree(new spark_math_Rect(l + w,t,w,h),this.depth + 1),new spark_collision_Quadtree(new spark_math_Rect(l,t + h,w,h),this.depth + 1),new spark_collision_Quadtree(new spark_math_Rect(l + w,t + h,w,h),this.depth + 1)];
+			this.shapes = this.shapes.filter(function(shape1) {
+				var i2;
+				var _g21 = 0;
+				var _g11 = _g.nodes.length - 1;
+				while(_g21 < _g11) {
+					var i3 = _g21++;
+					if(_g.nodes[i3].addShape(shape1)) return false;
+				}
+				return true;
+			});
+		}
+		return true;
+	}
+	,shapeQuery: function(a,b) {
+		if(js_Boot.__instanceof(b,spark_collision_shape_Segment)) return a.segmentQuery(b);
+		if(js_Boot.__instanceof(b,spark_collision_shape_Circle)) return a.circleQuery(b);
+		if(js_Boot.__instanceof(b,spark_collision_shape_Box)) return a.boxQuery(b);
+		return false;
+	}
+	,collect: function(shape) {
+		var i;
+		var m = [];
+		if(this.depth > 0 && !shape.within(this.rect)) return m;
+		var _g1 = 0;
+		var _g = this.shapes.length - 1;
+		while(_g1 < _g) {
+			var i1 = _g1++;
+			var s = this.shapes[i1];
+			if((function($this) {
+				var $r;
+				var x = s.getBody();
+				$r = HxOverrides.indexOf(m,x,0);
+				return $r;
+			}(this)) < 0 && this.shapeQuery(s,shape)) m.push(s.getBody());
+		}
+		var _g11 = 0;
+		var _g2 = this.nodes.length - 1;
+		while(_g11 < _g2) {
+			var i2 = _g11++;
+			m.concat(this.nodes[i2].collect(shape));
+		}
+		return m;
+	}
+	,processCollisions: function() {
+		var nodes = [];
+		var contacts = [];
+		var i;
+		var j;
+		var k;
+		nodes.push(this);
+		while(nodes.length > 0) {
+			var node = nodes.pop();
+			var _g1 = 0;
+			var _g = node.shapes.length - 1;
+			while(_g1 < _g) {
+				var i1 = _g1++;
+				var a = node.shapes[i1];
+				var m = [];
+				var _g3 = i1 + 1;
+				var _g2 = node.shapes.length - 1;
+				while(_g3 < _g2) {
+					var j1 = _g3++;
+					var b = node.shapes[j1];
+					if(a.getBody() != b.getBody() && (function($this) {
+						var $r;
+						var x = b.getBody();
+						$r = HxOverrides.indexOf(m,x,0);
+						return $r;
+					}(this)) < 0 && this.shapeQuery(a,b)) m.push(b.getBody());
+				}
+				var children = node.nodes.concat([]);
+				while(children.length > 0) {
+					var child = children.pop();
+					var _g31 = 0;
+					var _g21 = child.shapes.length - 1;
+					while(_g31 < _g21) {
+						var k1 = _g31++;
+						var b1 = child.shapes[k1];
+						if(a.getBody() != b1.getBody() && (function($this) {
+							var $r;
+							var x1 = b1.getBody();
+							$r = HxOverrides.indexOf(m,x1,0);
+							return $r;
+						}(this)) < 0 && this.shapeQuery(a,b1)) m.push(b1.getBody());
+					}
+					if(child.nodes.length > 0) children = children.concat(child.nodes);
+				}
+				if(m.length > 0) contacts.push({ body : a.getBody(), manifold : m});
+			}
+			nodes = nodes.concat(node.nodes);
+		}
+		var _g11 = 0;
+		var _g4 = contacts.length - 1;
+		while(_g11 < _g4) {
+			var i2 = _g11++;
+			var body = contacts[i2].body;
+			var manifold = contacts[i2].manifold;
+			var _g32 = 0;
+			var _g22 = manifold.length - 1;
+			while(_g32 < _g22) {
+				var j2 = _g32++;
+				body.collide(manifold[j2]);
+				manifold[j2].collide(body);
+			}
+		}
+	}
+	,__class__: spark_collision_Quadtree
+};
+var spark_collision_Shape = function() { };
+$hxClasses["spark.collision.Shape"] = spark_collision_Shape;
+spark_collision_Shape.__name__ = ["spark","collision","Shape"];
+spark_collision_Shape.prototype = {
+	getBody: null
+	,within: null
+	,updateShapeCache: null
+	,segmentQuery: null
+	,circleQuery: null
+	,boxQuery: null
+	,__class__: spark_collision_Shape
+};
+var spark_collision_shape_Box = function(body,x,y,w,h) {
+	this.body = body;
+	this.p1 = new spark_math_Vec(x,y);
+	this.p2 = new spark_math_Vec(x + w,y);
+	this.p3 = new spark_math_Vec(x,y + h);
+	this.p4 = new spark_math_Vec(x + w,y + h);
+};
+$hxClasses["spark.collision.shape.Box"] = spark_collision_shape_Box;
+spark_collision_shape_Box.__name__ = ["spark","collision","shape","Box"];
+spark_collision_shape_Box.__interfaces__ = [spark_collision_Shape];
+spark_collision_shape_Box.prototype = {
+	body: null
+	,p1: null
+	,p2: null
+	,p3: null
+	,p4: null
+	,tp1: null
+	,tp2: null
+	,getBody: function() {
+		return this.body;
+	}
+	,getTopLeft: function() {
+		return this.tp1;
+	}
+	,getBottomRight: function() {
+		return this.tp2;
+	}
+	,within: function(rect) {
+		if(this.tp2.x < rect.getLeft()) return false;
+		if(this.tp1.x > rect.getRight()) return false;
+		if(this.tp2.y < rect.getTop()) return false;
+		if(this.tp1.y > rect.getBottom()) return false;
+		return true;
+	}
+	,updateShapeCache: function(m) {
+		var v1 = m.transform(this.p1);
+		var v2 = m.transform(this.p2);
+		var v3 = m.transform(this.p3);
+		var v4 = m.transform(this.p4);
+		this.tp1.x = Math.min(Math.min(Math.min(v1.x,v2.x),v3.x),v4.x);
+		this.tp1.y = Math.min(Math.min(Math.min(v1.y,v2.y),v3.y),v4.y);
+		this.tp2.x = Math.max(Math.max(Math.max(v1.x,v2.x),v3.x),v4.x);
+		this.tp2.y = Math.max(Math.max(Math.max(v1.y,v2.y),v3.y),v4.y);
+	}
+	,segmentQuery: function(s) {
+		return s.boxQuery(this);
+	}
+	,circleQuery: function(s) {
+		return s.boxQuery(this);
+	}
+	,boxQuery: function(s) {
+		var tp1 = s.getTopLeft();
+		var tp2 = s.getBottomRight();
+		if(this.tp2.x < tp1.x || this.tp1.x > tp2.x) return false;
+		if(this.tp2.y < tp1.y || this.tp1.y > tp2.y) return false;
+		return true;
+	}
+	,__class__: spark_collision_shape_Box
+};
+var spark_collision_shape_Circle = function(body,x,y,r) {
+	this.body = body;
+	this.c = new spark_math_Vec(x,y);
+	this.r = r;
+};
+$hxClasses["spark.collision.shape.Circle"] = spark_collision_shape_Circle;
+spark_collision_shape_Circle.__name__ = ["spark","collision","shape","Circle"];
+spark_collision_shape_Circle.__interfaces__ = [spark_collision_Shape];
+spark_collision_shape_Circle.prototype = {
+	body: null
+	,c: null
+	,r: null
+	,tc: null
+	,getBody: function() {
+		return this.body;
+	}
+	,getCenter: function() {
+		return this.tc;
+	}
+	,getRadius: function() {
+		return this.r;
+	}
+	,within: function(rect) {
+		if(this.tc.x + this.r < rect.getLeft()) return false;
+		if(this.tc.x - this.r > rect.getRight()) return false;
+		if(this.tc.y + this.r < rect.getTop()) return false;
+		if(this.tc.y - this.r > rect.getBottom()) return false;
+		return true;
+	}
+	,updateShapeCache: function(m) {
+		this.tc = m.transform(this.c);
+	}
+	,segmentQuery: function(s) {
+		return this.tc.proj(s.getStart(),s.getEnd()).distsq(this.tc) < this.r * this.r;
+	}
+	,circleQuery: function(s) {
+		return this.tc.distsq(s.tc) < this.r * this.r + s.r * s.r;
+	}
+	,boxQuery: function(s) {
+		var tp1 = s.getTopLeft();
+		var tp2 = s.getBottomRight();
+		if(this.tc.x > tp1.x && this.tc.x <= tp2.x) return this.tc.y + this.r >= tp1.y && this.tc.y - this.r <= tp2.y;
+		if(this.tc.y >= tp1.y && this.tc.y <= tp2.y) return this.tc.x + this.r >= tp1.x && this.tc.x - this.r <= tp2.x;
+		if(this.tc.x < tp1.x && this.tc.y < tp1.y) return this.tc.distsq(tp1) <= this.r * this.r;
+		if(this.tc.x > tp2.x && this.tc.y < tp1.y) return this.tc.distsq(new spark_math_Vec(tp2.x,tp1.y)) <= this.r * this.r;
+		if(this.tc.x < tp1.x && this.tc.y > tp2.y) return this.tc.distsq(new spark_math_Vec(tp1.x,tp2.y)) <= this.r * this.r;
+		return this.tc.distsq(tp2) <= this.r * this.r;
+	}
+	,__class__: spark_collision_shape_Circle
+};
+var spark_collision_shape_Segment = function(body,x1,y1,x2,y2) {
+	this.body = body;
+	this.p1 = new spark_math_Vec(x1,y1);
+	this.p2 = new spark_math_Vec(x2,y2);
+};
+$hxClasses["spark.collision.shape.Segment"] = spark_collision_shape_Segment;
+spark_collision_shape_Segment.__name__ = ["spark","collision","shape","Segment"];
+spark_collision_shape_Segment.__interfaces__ = [spark_collision_Shape];
+spark_collision_shape_Segment.prototype = {
+	body: null
+	,p1: null
+	,p2: null
+	,tp1: null
+	,tp2: null
+	,getBody: function() {
+		return this.body;
+	}
+	,getStart: function() {
+		return this.tp1;
+	}
+	,getEnd: function() {
+		return this.tp2;
+	}
+	,within: function(rect) {
+		return rect.contains(this.tp1.x,this.tp1.y) && rect.contains(this.tp2.x,this.tp2.y);
+	}
+	,updateShapeCache: function(m) {
+		this.tp1 = m.transform(this.p1);
+		this.tp2 = m.transform(this.p2);
+	}
+	,segmentQuery: function(s) {
+		if(Math.min(s.tp1.x,s.tp2.x) > Math.max(this.tp1.x,this.tp2.x) || Math.min(s.tp1.y,s.tp2.y) > Math.max(this.tp1.y,this.tp2.y) || Math.max(s.tp1.x,s.tp2.x) < Math.min(this.tp1.x,this.tp2.x) || Math.max(s.tp1.y,s.tp2.y) < Math.min(this.tp1.y,this.tp2.y)) return false;
+		var sa = spark_math_Util.sign(this.tp1.cross(s.tp1));
+		var sb = spark_math_Util.sign(this.tp1.cross(s.tp2));
+		if(sa == sb && sa != 0 && sb != 0) return false;
+		var da = spark_math_Util.sign(s.tp1.cross(this.tp1));
+		var db = spark_math_Util.sign(s.tp1.cross(this.tp2));
+		if(da == db && da != 0 && db != 0) return false;
+		return true;
+	}
+	,circleQuery: function(s) {
+		return s.segmentQuery(this);
+	}
+	,boxQuery: function(s) {
+		var tp1 = s.getTopLeft();
+		var tp2 = s.getBottomRight();
+		if(this.tp1.x < tp1.x && this.tp2.x < tp1.x) return false;
+		if(this.tp1.x > tp2.x && this.tp2.x > tp2.x) return false;
+		if(this.tp1.y < tp1.y && this.tp2.y < tp1.y) return false;
+		if(this.tp1.y > tp2.y && this.tp2.y > tp2.y) return false;
+		return true;
+	}
+	,__class__: spark_collision_shape_Segment
+};
+var spark_layer_SpriteLayer = $hx_exports.spark.layer.SpriteLayer = function(n) {
+	if(n == null) n = 100;
+	var i;
+	this.z = 0;
+	this.m = spark_math_Mat.get_IDENTITY();
+	this.sprites = [];
+	this.pool = [];
+	var _g = 1;
+	while(_g < n) {
+		var i1 = _g++;
+		this.pool.push(new spark_Sprite());
+	}
+	this.sp = 0;
+	this.count = 0;
+	this.pending = 0;
+};
+$hxClasses["spark.layer.SpriteLayer"] = spark_layer_SpriteLayer;
+spark_layer_SpriteLayer.__name__ = ["spark","layer","SpriteLayer"];
+spark_layer_SpriteLayer.__interfaces__ = [spark_Layer];
+spark_layer_SpriteLayer.prototype = {
+	z: null
+	,m: null
+	,sprites: null
+	,pool: null
+	,sp: null
+	,count: null
+	,pending: null
+	,length: null
+	,get_length: function() {
+		return this.count;
+	}
+	,get: function(i) {
+		return this.sprites[i];
+	}
+	,spawn: function() {
+		var sprite;
+		if(this.sp == 0) sprite = new spark_Sprite(); else {
+			sprite = this.pool[--this.sp];
+			sprite.init();
+		}
+		if(this.count + this.pending < this.sprites.length) this.sprites[this.count + this.pending] = sprite; else this.sprites.push(sprite);
+		this.pending++;
+		return sprite;
+	}
+	,update: function(step) {
+		var i = 0;
+		this.count += this.pending;
+		this.pending = 0;
+		while(i < this.count) {
+			var sprite = this.sprites[i];
+			sprite.update(step);
+			if(sprite.dead) {
+				this.sprites[i] = this.sprites[--this.count];
+				if(this.sp < this.pool.length) this.pool[this.sp] = sprite; else this.pool.push(sprite);
+				this.sp++;
+			} else i++;
+		}
+	}
+	,draw: function() {
+		var i;
+		var _g1 = 0;
+		var _g = this.sprites.length - 1;
+		while(_g1 < _g) {
+			var i1 = _g1++;
+			this.sprites[i1].draw();
+		}
+	}
+	,__class__: spark_layer_SpriteLayer
+	,__properties__: {get_length:"get_length"}
+};
+var spark_math_Mat = $hx_exports.spark.math.Mat = function(x,y,rx,ry,sx,sy) {
+	this.p = new spark_math_Vec(x,y);
+	this.r = new spark_math_Vec(rx,ry);
+	this.s = new spark_math_Vec(sx,sy);
+};
+$hxClasses["spark.math.Mat"] = spark_math_Mat;
+spark_math_Mat.__name__ = ["spark","math","Mat"];
+spark_math_Mat.__properties__ = {get_IDENTITY:"get_IDENTITY"}
+spark_math_Mat.IDENTITY = null;
+spark_math_Mat.get_IDENTITY = function() {
+	return new spark_math_Mat(0,0,1,0,1,1);
+};
+spark_math_Mat.prototype = {
+	p: null
+	,r: null
+	,s: null
+	,inverse: function() {
+		return new spark_math_Mat(-this.p.x,-this.p.y,this.r.x,-this.r.y,1 / this.s.x,1 / this.s.y);
+	}
+	,angle: function() {
+		return spark_math_Util.radToDeg(Math.atan2(this.r.y,this.r.x));
+	}
+	,translate: function(x,y,local) {
+		if(local == null) local = false;
+		var dx = x;
+		var dy = y;
+		if(local) {
+			dx = x * this.r.x + y * this.r.y;
+			dy = y * this.r.x - x * this.r.y;
+		}
+		this.p.x += dx;
+		this.p.y += dy;
+	}
+	,rotate: function(r) {
+		var x = Math.cos(spark_math_Util.degToRad(r));
+		var y = Math.sin(spark_math_Util.degToRad(r));
+		this.r.set(this.r.x * x + this.r.y * y,this.r.y * x - this.r.x * y);
+	}
+	,scale: function(x,y) {
+		this.s.x *= x;
+		if(y == null) this.s.y *= x; else this.s.y *= y;
+	}
+	,transform: function(v) {
+		var x = v.x * this.s.x * this.r.x + v.y * this.s.y * this.r.y;
+		var y = v.y * this.s.y * this.r.x - v.x * this.s.x * this.r.y;
+		return new spark_math_Vec(x,y);
+	}
+	,mult: function(m) {
+		var p = this.transform(m.p);
+		var r = this.r.rotate(m.r);
+		var s = this.s.mult(m.s);
+		return new spark_math_Mat(p.x,p.y,r.x,r.y,s.x,s.y);
+	}
+	,apply: function() {
+		var a = this.r.x * this.s.x;
+		var b = this.r.y * this.s.y;
+		var c = this.r.y * this.s.x;
+		var d = this.r.x * this.s.y;
+		var e = this.p.x;
+		var f = this.p.y;
+		Spark.view.transform(a,-b,c,d,e,f);
+	}
+	,__class__: spark_math_Mat
+};
+var spark_math_Rect = $hx_exports.spark.math.Rect = function(x,y,w,h) {
+	this.x = x;
+	this.y = y;
+	this.width = w;
+	this.height = h;
+};
+$hxClasses["spark.math.Rect"] = spark_math_Rect;
+spark_math_Rect.__name__ = ["spark","math","Rect"];
+spark_math_Rect.prototype = {
+	x: null
+	,y: null
+	,width: null
+	,height: null
+	,contains: function(x,y) {
+		return x >= this.x && x <= this.x + this.width && (y >= this.y && y <= this.y + this.height);
+	}
+	,getLeft: function() {
+		return this.x;
+	}
+	,getTop: function() {
+		return this.y;
+	}
+	,getRight: function() {
+		return this.x + this.width;
+	}
+	,getBottom: function() {
+		return this.y + this.height;
+	}
+	,getWidth: function() {
+		return this.width;
+	}
+	,getHeight: function() {
+		return this.height;
+	}
+	,__class__: spark_math_Rect
+};
+var spark_math_Util = $hx_exports.spark.math.Util = function() { };
+$hxClasses["spark.math.Util"] = spark_math_Util;
+spark_math_Util.__name__ = ["spark","math","Util"];
+spark_math_Util.degToRad = function(r) {
 	return r * Math.PI / 180.0;
 };
-spark_Util.radToDeg = function(r) {
+spark_math_Util.radToDeg = function(r) {
 	return r * 180.0 / Math.PI;
 };
-spark_Util.signum = function(n) {
+spark_math_Util.sign = function(n) {
 	if(Math.abs(n) < 0.00001) return 0;
 	if(n > 0) return 1; else return -1;
 };
-spark_Util.nextPow2 = function(n) {
+spark_math_Util.nextPow2 = function(n) {
 	return Math.pow(2,Math.ceil(Math.log(n) / Math.log(2)));
 };
-spark_Util.clamp = function(n,min,max) {
+spark_math_Util.clamp = function(n,min,max) {
 	return Math.max(min,Math.min(n,max));
 };
-spark_Util.rand = function(min,max) {
+spark_math_Util.rand = function(min,max) {
 	return Math.random() * (max - min) + min;
 };
-spark_Util.irand = function(min,max) {
-	return Math.floor(spark_Util.rand(min,max));
+spark_math_Util.irand = function(min,max) {
+	return Math.floor(spark_math_Util.rand(min,max));
 };
-spark_Util.arand = function(array) {
-	return array[spark_Util.irand(0,array.length)];
+spark_math_Util.arand = function(array) {
+	return array[spark_math_Util.irand(0,array.length)];
 };
-spark_Util.lerp = function(p,q,k,max) {
+spark_math_Util.lerp = function(p,q,k,max) {
 	if(max == null) max = 1;
 	return p + (q - p) * k / max;
 };
-var spark_Vec = $hx_exports.spark.Vec = function(x,y) {
+var spark_math_Vec = $hx_exports.spark.math.Vec = function(x,y) {
 	this.x = x;
 	this.y = y;
 };
-$hxClasses["spark.Vec"] = spark_Vec;
-spark_Vec.__name__ = ["spark","Vec"];
-spark_Vec.prototype = {
+$hxClasses["spark.math.Vec"] = spark_math_Vec;
+spark_math_Vec.__name__ = ["spark","math","Vec"];
+spark_math_Vec.__properties__ = {get_UP:"get_UP",get_RIGHT:"get_RIGHT",get_ONE:"get_ONE",get_ZERO:"get_ZERO"}
+spark_math_Vec.ZERO = null;
+spark_math_Vec.ONE = null;
+spark_math_Vec.RIGHT = null;
+spark_math_Vec.UP = null;
+spark_math_Vec.get_ZERO = function() {
+	return new spark_math_Vec(0,0);
+};
+spark_math_Vec.get_ONE = function() {
+	return new spark_math_Vec(1,1);
+};
+spark_math_Vec.get_RIGHT = function() {
+	return new spark_math_Vec(1,0);
+};
+spark_math_Vec.get_UP = function() {
+	return new spark_math_Vec(0,1);
+};
+spark_math_Vec.prototype = {
 	x: null
 	,y: null
 	,set: function(x,y) {
@@ -1157,25 +2069,25 @@ spark_Vec.prototype = {
 		this.y = y;
 	}
 	,add: function(v) {
-		return new spark_Vec(this.x + v.x,this.y + v.y);
+		return new spark_math_Vec(this.x + v.x,this.y + v.y);
 	}
 	,sub: function(v) {
-		return new spark_Vec(this.x - v.x,this.y - v.y);
+		return new spark_math_Vec(this.x - v.x,this.y - v.y);
 	}
 	,mult: function(v) {
-		return new spark_Vec(this.x * v.x,this.y * v.y);
+		return new spark_math_Vec(this.x * v.x,this.y * v.y);
 	}
 	,imult: function(v) {
-		return new spark_Vec(this.x / v.x,this.y / v.y);
+		return new spark_math_Vec(this.x / v.x,this.y / v.y);
 	}
 	,scale: function(s) {
-		return new spark_Vec(this.x * s,this.y * s);
+		return new spark_math_Vec(this.x * s,this.y * s);
 	}
 	,neg: function() {
-		return new spark_Vec(-this.x,-this.y);
+		return new spark_math_Vec(-this.x,-this.y);
 	}
 	,inv: function() {
-		return new spark_Vec(1 / this.x,1 / this.y);
+		return new spark_math_Vec(1 / this.x,1 / this.y);
 	}
 	,dot: function(v) {
 		return this.x * v.x + this.y * v.y;
@@ -1201,7 +2113,7 @@ spark_Vec.prototype = {
 		return this.scale(1.0 / this.mag());
 	}
 	,lerp: function(v,k) {
-		return new spark_Vec(this.x + (v.x - this.x) * k,this.y + (v.y - this.y) * k);
+		return new spark_math_Vec(this.x + (v.x - this.x) * k,this.y + (v.y - this.y) * k);
 	}
 	,proj: function(p,q) {
 		var a = this.sub(p);
@@ -1216,18 +2128,18 @@ spark_Vec.prototype = {
 		}
 	}
 	,perp: function() {
-		return new spark_Vec(this.y,-this.x);
+		return new spark_math_Vec(this.y,-this.x);
 	}
 	,rperp: function() {
-		return new spark_Vec(-this.y,this.x);
+		return new spark_math_Vec(-this.y,this.x);
 	}
 	,rotate: function(r) {
-		return new spark_Vec(this.x * r.x + this.y * r.y,this.y * r.x - this.x * r.y);
+		return new spark_math_Vec(this.x * r.x + this.y * r.y,this.y * r.x - this.x * r.y);
 	}
 	,unrotate: function(r) {
-		return new spark_Vec(this.x * r.x - this.y * r.y,this.y * r.x + this.x * r.y);
+		return new spark_math_Vec(this.x * r.x - this.y * r.y,this.y * r.x + this.x * r.y);
 	}
-	,__class__: spark_Vec
+	,__class__: spark_math_Vec
 };
 function $iterator(o) { if( o instanceof Array ) return function() { return HxOverrides.iter(o); }; return typeof(o.iterator) == 'function' ? $bind(o,o.iterator) : o.iterator; }
 var $_, $fid = 0;
@@ -1279,9 +2191,7 @@ if(Array.prototype.filter == null) Array.prototype.filter = function(f1) {
 js_Boot.__toStr = {}.toString;
 spark_Input.Button = { 'LEFT' : 0, 'MIDDLE' : 1, 'RIGHT' : 2};
 spark_Input.Key = { 'BACKSPACE' : 8, 'TAB' : 9, 'ENTER' : 13, 'PAUSE' : 19, 'CAPS' : 20, 'ESC' : 27, 'SPACE' : 32, 'PAGE_UP' : 33, 'PAGE_DOWN' : 34, 'END' : 35, 'HOME' : 36, 'LEFT' : 37, 'UP' : 38, 'RIGHT' : 39, 'DOWN' : 40, 'INSERT' : 45, 'DELETE' : 46, '_0' : 48, '_1' : 49, '_2' : 50, '_3' : 51, '_4' : 52, '_5' : 53, '_6' : 54, '_7' : 55, '_8' : 56, '_9' : 57, 'A' : 65, 'B' : 66, 'C' : 67, 'D' : 68, 'E' : 69, 'F' : 70, 'G' : 71, 'H' : 72, 'I' : 73, 'J' : 74, 'K' : 75, 'L' : 76, 'M' : 77, 'N' : 78, 'O' : 79, 'P' : 80, 'Q' : 81, 'R' : 82, 'S' : 83, 'T' : 84, 'U' : 85, 'V' : 86, 'W' : 87, 'X' : 88, 'Y' : 89, 'Z' : 90, 'NUMPAD_0' : 96, 'NUMPAD_1' : 97, 'NUMPAD_2' : 98, 'NUMPAD_3' : 99, 'NUMPAD_4' : 100, 'NUMPAD_5' : 101, 'NUMPAD_6' : 102, 'NUMPAD_7' : 103, 'NUMPAD_8' : 104, 'NUMPAD_9' : 105, 'MULTIPLY' : 106, 'ADD' : 107, 'SUBSTRACT' : 109, 'DECIMAL' : 110, 'DIVIDE' : 111, 'F1' : 112, 'F2' : 113, 'F3' : 114, 'F4' : 115, 'F5' : 116, 'F6' : 117, 'F7' : 118, 'F8' : 119, 'F9' : 120, 'F10' : 121, 'F11' : 122, 'F12' : 123, 'SHIFT' : 16, 'CTRL' : 17, 'ALT' : 18, 'PLUS' : 187, 'COMMA' : 188, 'MINUS' : 189, 'PERIOD' : 190};
-spark_Vec.ZERO = new spark_Vec(0,0);
-spark_Vec.ONE = new spark_Vec(1,1);
-spark_Vec.RIGHT = new spark_Vec(1,0);
-spark_Vec.UP = new spark_Vec(0,1);
+spark_collision_Quadtree.DEPTH_LIMIT = 3;
+spark_collision_Quadtree.SHAPE_LIMIT = 8;
 Spark.main();
 })(typeof console != "undefined" ? console : {log:function(){}}, typeof window != "undefined" ? window : exports, typeof window != "undefined" ? window : typeof global != "undefined" ? global : typeof self != "undefined" ? self : this);
