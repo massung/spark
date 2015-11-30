@@ -1,0 +1,5 @@
+--macro include('spark', true)
+-js "../www/game/spark.js"
+-main Spark
+-D js-flatten
+-dce no

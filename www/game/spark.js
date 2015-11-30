@@ -1,1572 +1,1287 @@
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+(function (console, $hx_exports, $global) { "use strict";
+$hx_exports.spark = $hx_exports.spark || {};
+var $hxClasses = {},$estr = function() { return js_Boot.__string_rec(this,''); };
+function $extend(from, fields) {
+	function Inherit() {} Inherit.prototype = from; var proto = new Inherit();
+	for (var name in fields) proto[name] = fields[name];
+	if( fields.toString !== Object.prototype.toString ) proto.toString = fields.toString;
+	return proto;
+}
+var HxOverrides = function() { };
+$hxClasses["HxOverrides"] = HxOverrides;
+HxOverrides.__name__ = ["HxOverrides"];
+HxOverrides.dateStr = function(date) {
+	var m = date.getMonth() + 1;
+	var d = date.getDate();
+	var h = date.getHours();
+	var mi = date.getMinutes();
+	var s = date.getSeconds();
+	return date.getFullYear() + "-" + (m < 10?"0" + m:"" + m) + "-" + (d < 10?"0" + d:"" + d) + " " + (h < 10?"0" + h:"" + h) + ":" + (mi < 10?"0" + mi:"" + mi) + ":" + (s < 10?"0" + s:"" + s);
 };
-var spark;
-(function (spark) {
-    var loadQueue;
-    spark.project = {
-        title: 'Untitled',
-        author: 'Someone',
-        date: 'Today',
-        version: 1.0,
-        path: '/',
-        assetRelativePath: '',
-        assets: {},
-    };
-    function main(canvasId, width, height) {
-        spark.canvas = document.getElementById(canvasId);
-        if (!spark.canvas) {
-            return false;
-        }
-        width = width || spark.canvas.width;
-        height = height || width * spark.canvas.height / spark.canvas.width;
-        spark.canvas.width = width;
-        spark.canvas.height = height;
-        spark.hideCursor();
-        spark.canvas.oncontextmenu = function (event) {
-            event.preventDefault();
-        };
-        spark.view = spark.canvas.getContext('2d');
-        loadQueue = [];
-        return true;
-    }
-    spark.main = main;
-    function launch(projectFile, onload) {
-        new JSONAsset(projectFile, function (json) {
-            spark.enableMouse();
-            spark.enableKeyboard();
-            spark.initAudio();
-            spark.project.path = projectFile.split('/').slice(0, -1).join('/') + '/';
-            spark.merge(spark.project, json);
-            for (var id in spark.project.assets) {
-                var cls = spark.project.assets[id].class;
-                var src = spark.project.assets[id].source;
-                var ctor = assetCtor(cls);
-                var path = spark.project.path + spark.project.assetRelativePath + src;
-                spark.project.assets[id] = new ctor(path);
-            }
-        });
-        load(onload);
-    }
-    spark.launch = launch;
-    function assetCtor(path) {
-        var ctor = window;
-        path.split('.').forEach(function (name) {
-            if ((ctor = ctor[name]) === undefined) {
-                throw 'Unknown asset class constructor: "' + path + '"';
-            }
-        });
-        if (typeof (ctor.constructor) !== 'function') {
-            throw 'Not an asset class constructor: "' + path + '"';
-        }
-        return ctor;
-    }
-    spark.assetCtor = assetCtor;
-    function load(onload) {
-        if (loadProgress() === true) {
-            onload(spark.project);
-        }
-        else {
-            window.requestAnimationFrame(function (now) {
-                var x = spark.canvas.width / 2;
-                var y = spark.canvas.height / 2;
-                var w = x * 3 / 5;
-                spark.view.save();
-                spark.view.setTransform(1, 0, 0, 1, 0, 0);
-                spark.view.clearRect(0, 0, spark.canvas.width, spark.canvas.height);
-                spark.view.strokeStyle = '#fff';
-                spark.view.shadowBlur = 10;
-                spark.view.shadowOffsetX = 0;
-                spark.view.shadowOffsetY = 0;
-                spark.view.shadowColor = '#fff';
-                spark.view.font = 'bold 10px "Courier", sans-serif';
-                spark.view.fillStyle = '#fff';
-                spark.view.fillText('Loading...', 10, spark.canvas.height - 10);
-                spark.view.beginPath();
-                spark.view.moveTo(x - w, y);
-                spark.view.lineTo(x - w + w * 2 * spark.loadProgress(), y);
-                spark.view.stroke();
-                spark.view.restore();
-                load(onload);
-            });
-        }
-    }
-    spark.load = load;
-    function loadProgress() {
-        var n = 0;
-        for (var i = 0; i < loadQueue.length; i++) {
-            if (loadQueue[i].data)
-                n++;
-        }
-        return (n === loadQueue.length) ? true : n / loadQueue.length;
-    }
-    spark.loadProgress = loadProgress;
-    var Asset = (function () {
-        function Asset(src) {
-            this.source = src;
-            this.data = null;
-            loadQueue.push(this);
-        }
-        return Asset;
-    })();
-    spark.Asset = Asset;
-    var XHRAsset = (function (_super) {
-        __extends(XHRAsset, _super);
-        function XHRAsset(src, resType, onload) {
-            var req = new XMLHttpRequest();
-            req.onreadystatechange = (function () {
-                if (req.readyState === 4) {
-                    if (req.status >= 200 && req.status <= 299) {
-                        onload(req);
-                        this.data = this.data || req;
-                    }
-                }
-            }).bind(this);
-            _super.call(this, src);
-            req.responseType = resType;
-            req.open('GET', src, true);
-            req.send();
-        }
-        return XHRAsset;
-    })(Asset);
-    spark.XHRAsset = XHRAsset;
-    var XMLAsset = (function (_super) {
-        __extends(XMLAsset, _super);
-        function XMLAsset(src, onload) {
-            _super.call(this, src, 'document', function (req) {
-                onload(req.response);
-            });
-        }
-        return XMLAsset;
-    })(XHRAsset);
-    spark.XMLAsset = XMLAsset;
-    var JSONAsset = (function (_super) {
-        __extends(JSONAsset, _super);
-        function JSONAsset(src, onload) {
-            _super.call(this, src, 'json', function (req) {
-                onload(req.response);
-            });
-        }
-        return JSONAsset;
-    })(XHRAsset);
-    spark.JSONAsset = JSONAsset;
-})(spark || (spark = {}));
-var spark;
-(function (spark) {
-    function getDevice() {
-        return window['cordova'] ? window['cordova'].platformId : 'browser';
-    }
-    spark.getDevice = getDevice;
-    function isMobile() {
-        return getDevice() !== 'browser';
-    }
-    spark.isMobile = isMobile;
-    function getWidth() {
-        return isMobile() ? screen.width : window.innerWidth;
-    }
-    spark.getWidth = getWidth;
-    function getHeight() {
-        return isMobile() ? screen.height : window.innerHeight;
-    }
-    spark.getHeight = getHeight;
-})(spark || (spark = {}));
-var spark;
-(function (spark) {
-    var keys = [];
-    var buttons = [];
-    spark.x = 0;
-    spark.y = 0;
-    spark.relativeX = 0;
-    spark.relativeY = 0;
-    function hideCursor() {
-        spark.canvas.style.cursor = 'none';
-    }
-    spark.hideCursor = hideCursor;
-    function showCursor(image) {
-        spark.canvas.style.cursor = image || 'pointer';
-    }
-    spark.showCursor = showCursor;
-    function enableMouse() {
-        window.addEventListener('mousedown', onMouseDown, false);
-        window.addEventListener('mouseup', onMouseUp, false);
-        window.addEventListener('mousemove', onMouseMove, false);
-    }
-    spark.enableMouse = enableMouse;
-    function enableKeyboard() {
-        window.addEventListener('keydown', onKeyDown, false);
-        window.addEventListener('keyup', onKeyUp, false);
-    }
-    spark.enableKeyboard = enableKeyboard;
-    function flushInput() {
-        var flushState = function (state) { if (state)
-            state.hits = 0; };
-        keys.forEach(flushState);
-        buttons.forEach(flushState);
-        spark.relativeX = 0;
-        spark.relativeY = 0;
-    }
-    spark.flushInput = flushInput;
-    function keyDown(key) {
-        var state = keys[key];
-        if (state) {
-            return state.down;
-        }
-        return false;
-    }
-    spark.keyDown = keyDown;
-    function keyHits(key) {
-        var state = keys[key];
-        if (state) {
-            return state.hits;
-        }
-        return 0;
-    }
-    spark.keyHits = keyHits;
-    function keyHit(key) {
-        return keyHits(key) > 0;
-    }
-    spark.keyHit = keyHit;
-    function mouseDown(button) {
-        var state = buttons[button];
-        if (state) {
-            return state.down;
-        }
-        return false;
-    }
-    spark.mouseDown = mouseDown;
-    ;
-    function mouseHits(button) {
-        var state = buttons[button];
-        if (state) {
-            return state.hits;
-        }
-        return 0;
-    }
-    spark.mouseHits = mouseHits;
-    ;
-    function mouseHit(button) {
-        return mouseHits(button) > 0;
-    }
-    spark.mouseHit = mouseHit;
-    ;
-    (function (Button) {
-        Button[Button["LEFT"] = 0] = "LEFT";
-        Button[Button["MIDDLE"] = 1] = "MIDDLE";
-        Button[Button["RIGHT"] = 2] = "RIGHT";
-    })(spark.Button || (spark.Button = {}));
-    var Button = spark.Button;
-    (function (Key) {
-        Key[Key["BACKSPACE"] = 8] = "BACKSPACE";
-        Key[Key["TAB"] = 9] = "TAB";
-        Key[Key["ENTER"] = 13] = "ENTER";
-        Key[Key["PAUSE"] = 19] = "PAUSE";
-        Key[Key["CAPS"] = 20] = "CAPS";
-        Key[Key["ESC"] = 27] = "ESC";
-        Key[Key["SPACE"] = 32] = "SPACE";
-        Key[Key["PAGE_UP"] = 33] = "PAGE_UP";
-        Key[Key["PAGE_DOWN"] = 34] = "PAGE_DOWN";
-        Key[Key["END"] = 35] = "END";
-        Key[Key["HOME"] = 36] = "HOME";
-        Key[Key["LEFT"] = 37] = "LEFT";
-        Key[Key["UP"] = 38] = "UP";
-        Key[Key["RIGHT"] = 39] = "RIGHT";
-        Key[Key["DOWN"] = 40] = "DOWN";
-        Key[Key["INSERT"] = 45] = "INSERT";
-        Key[Key["DELETE"] = 46] = "DELETE";
-        Key[Key["_0"] = 48] = "_0";
-        Key[Key["_1"] = 49] = "_1";
-        Key[Key["_2"] = 50] = "_2";
-        Key[Key["_3"] = 51] = "_3";
-        Key[Key["_4"] = 52] = "_4";
-        Key[Key["_5"] = 53] = "_5";
-        Key[Key["_6"] = 54] = "_6";
-        Key[Key["_7"] = 55] = "_7";
-        Key[Key["_8"] = 56] = "_8";
-        Key[Key["_9"] = 57] = "_9";
-        Key[Key["A"] = 65] = "A";
-        Key[Key["B"] = 66] = "B";
-        Key[Key["C"] = 67] = "C";
-        Key[Key["D"] = 68] = "D";
-        Key[Key["E"] = 69] = "E";
-        Key[Key["F"] = 70] = "F";
-        Key[Key["G"] = 71] = "G";
-        Key[Key["H"] = 72] = "H";
-        Key[Key["I"] = 73] = "I";
-        Key[Key["J"] = 74] = "J";
-        Key[Key["K"] = 75] = "K";
-        Key[Key["L"] = 76] = "L";
-        Key[Key["M"] = 77] = "M";
-        Key[Key["N"] = 78] = "N";
-        Key[Key["O"] = 79] = "O";
-        Key[Key["P"] = 80] = "P";
-        Key[Key["Q"] = 81] = "Q";
-        Key[Key["R"] = 82] = "R";
-        Key[Key["S"] = 83] = "S";
-        Key[Key["T"] = 84] = "T";
-        Key[Key["U"] = 85] = "U";
-        Key[Key["V"] = 86] = "V";
-        Key[Key["W"] = 87] = "W";
-        Key[Key["X"] = 88] = "X";
-        Key[Key["Y"] = 89] = "Y";
-        Key[Key["Z"] = 90] = "Z";
-        Key[Key["NUMPAD_0"] = 96] = "NUMPAD_0";
-        Key[Key["NUMPAD_1"] = 97] = "NUMPAD_1";
-        Key[Key["NUMPAD_2"] = 98] = "NUMPAD_2";
-        Key[Key["NUMPAD_3"] = 99] = "NUMPAD_3";
-        Key[Key["NUMPAD_4"] = 100] = "NUMPAD_4";
-        Key[Key["NUMPAD_5"] = 101] = "NUMPAD_5";
-        Key[Key["NUMPAD_6"] = 102] = "NUMPAD_6";
-        Key[Key["NUMPAD_7"] = 103] = "NUMPAD_7";
-        Key[Key["NUMPAD_8"] = 104] = "NUMPAD_8";
-        Key[Key["NUMPAD_9"] = 105] = "NUMPAD_9";
-        Key[Key["MULTIPLY"] = 106] = "MULTIPLY";
-        Key[Key["ADD"] = 107] = "ADD";
-        Key[Key["SUBSTRACT"] = 109] = "SUBSTRACT";
-        Key[Key["DECIMAL"] = 110] = "DECIMAL";
-        Key[Key["DIVIDE"] = 111] = "DIVIDE";
-        Key[Key["F1"] = 112] = "F1";
-        Key[Key["F2"] = 113] = "F2";
-        Key[Key["F3"] = 114] = "F3";
-        Key[Key["F4"] = 115] = "F4";
-        Key[Key["F5"] = 116] = "F5";
-        Key[Key["F6"] = 117] = "F6";
-        Key[Key["F7"] = 118] = "F7";
-        Key[Key["F8"] = 119] = "F8";
-        Key[Key["F9"] = 120] = "F9";
-        Key[Key["F10"] = 121] = "F10";
-        Key[Key["F11"] = 122] = "F11";
-        Key[Key["F12"] = 123] = "F12";
-        Key[Key["SHIFT"] = 16] = "SHIFT";
-        Key[Key["CTRL"] = 17] = "CTRL";
-        Key[Key["ALT"] = 18] = "ALT";
-        Key[Key["PLUS"] = 187] = "PLUS";
-        Key[Key["COMMA"] = 188] = "COMMA";
-        Key[Key["MINUS"] = 189] = "MINUS";
-        Key[Key["PERIOD"] = 190] = "PERIOD";
-    })(spark.Key || (spark.Key = {}));
-    var Key = spark.Key;
-    function onKeyDown(event) {
-        var state = keys[event.keyCode];
-        if (state) {
-            state.down = true;
-            state.hits++;
-        }
-        else {
-            keys[event.keyCode] = {
-                down: true,
-                hits: 1,
-            };
-        }
-    }
-    function onKeyUp(event) {
-        var state = keys[event.keyCode];
-        if (state) {
-            state.down = false;
-        }
-    }
-    function onMouseDown(event) {
-        var state = buttons[event.button];
-        if (state) {
-            state.down = true;
-            state.hits++;
-        }
-        else {
-            buttons[event.button] = {
-                down: true,
-                hits: 1,
-            };
-        }
-    }
-    function onMouseUp(event) {
-        var state = buttons[event.button];
-        if (state) {
-            state.down = false;
-        }
-    }
-    function onMouseMove(event) {
-        var eventX = event.clientX - spark.canvas.offsetLeft;
-        var eventY = event.clientY - spark.canvas.offsetTop;
-        spark.relativeX += eventX - spark.x;
-        spark.relativeY += eventY - spark.y;
-        spark.x = eventX;
-        spark.y = eventY;
-    }
-})(spark || (spark = {}));
-var spark;
-(function (spark) {
-    function merge(a, b) {
-        for (var k in b) {
-            if (b.hasOwnProperty(k)) {
-                var v = b[k];
-                if (typeof (v) === 'object' && typeof (a[k]) === 'object') {
-                    merge(a[k], v);
-                }
-                else {
-                    a[k] = v;
-                }
-            }
-        }
-    }
-    spark.merge = merge;
-    function wipe(obj) {
-        for (var k in obj) {
-            if (obj.hasOwnProperty(k)) {
-                delete obj[k];
-            }
-        }
-    }
-    spark.wipe = wipe;
-    function degToRad(r) {
-        return r * Math.PI / 180.0;
-    }
-    spark.degToRad = degToRad;
-    function radToDeg(r) {
-        return r * 180.0 / Math.PI;
-    }
-    spark.radToDeg = radToDeg;
-    function signum(n) {
-        if (Math.abs(n) < 0.00001) {
-            return 0;
-        }
-        return (n > 0) ? 1 : -1;
-    }
-    spark.signum = signum;
-    function nextPow2(n) {
-        return Math.pow(2, Math.ceil(Math.log(n) / Math.log(2)));
-    }
-    spark.nextPow2 = nextPow2;
-    function clamp(n, min, max) {
-        return Math.max(min, Math.min(n, max));
-    }
-    spark.clamp = clamp;
-    function rand(min, max) {
-        return Math.random() * (max - min) + min;
-    }
-    spark.rand = rand;
-    function irand(min, max) {
-        return Math.floor(rand(min, max));
-    }
-    spark.irand = irand;
-    function arand(array) {
-        return array[irand(0, array.length)];
-    }
-    spark.arand = arand;
-    function lerp(p, q, k, max) {
-        return p + (q - p) * k / (max || 1);
-    }
-    spark.lerp = lerp;
-})(spark || (spark = {}));
-var spark;
-(function (spark) {
-    var Vec = (function () {
-        function Vec(x, y) {
-            this.x = x;
-            this.y = y;
-        }
-        Vec.prototype.set = function (x, y) {
-            this.x = x;
-            this.y = y;
-        };
-        Vec.prototype.add = function (v) {
-            return new Vec(this.x + v.x, this.y + v.y);
-        };
-        Vec.prototype.sub = function (v) {
-            return new Vec(this.x - v.x, this.y - v.y);
-        };
-        Vec.prototype.mult = function (v) {
-            return new Vec(this.x * v.x, this.y * v.y);
-        };
-        Vec.prototype.imult = function (v) {
-            return new Vec(this.x / v.x, this.y / v.y);
-        };
-        Vec.prototype.scale = function (s) {
-            return new Vec(this.x * s, this.y * s);
-        };
-        Vec.prototype.neg = function () {
-            return new Vec(-this.x, -this.y);
-        };
-        Vec.prototype.inv = function () {
-            return new Vec(1 / this.x, 1 / this.y);
-        };
-        Vec.prototype.dot = function (v) {
-            return (this.x * v.x) + (this.y * v.y);
-        };
-        Vec.prototype.cross = function (v) {
-            return (this.x * v.y) - (this.y * v.x);
-        };
-        Vec.prototype.magsq = function () {
-            return (this.x * this.x) + (this.y * this.y);
-        };
-        Vec.prototype.mag = function () {
-            return Math.sqrt((this.x * this.x) + (this.y * this.y));
-        };
-        Vec.prototype.distsq = function (v) {
-            var dx = this.x - v.x;
-            var dy = this.y - v.y;
-            return (dx * dx) + (dy * dy);
-        };
-        Vec.prototype.dist = function (v) {
-            return Math.sqrt(this.magsq());
-        };
-        Vec.prototype.norm = function () {
-            return this.scale(1.0 / this.mag());
-        };
-        Vec.prototype.lerp = function (v, k) {
-            return new Vec(this.x + (v.x - this.x) * k, this.y + (v.y - this.y) * k);
-        };
-        Vec.prototype.proj = function (p, q) {
-            var a = this.sub(p);
-            var b = q.sub(p);
-            var k = a.dot(b);
-            var d = b.magsq();
-            if (d < 0.00001) {
-                return b;
-            }
-            else {
-                var s = k / d;
-                if (s < 0.0)
-                    return p;
-                if (s > 1.0)
-                    return q;
-                return p.lerp(q, s);
-            }
-        };
-        Vec.prototype.perp = function () {
-            return new Vec(this.y, -this.x);
-        };
-        Vec.prototype.rperp = function () {
-            return new Vec(-this.y, this.x);
-        };
-        Vec.prototype.rotate = function (r) {
-            return new Vec((this.x * r.x) + (this.y * r.y), (this.y * r.x) - (this.x * r.y));
-        };
-        Vec.prototype.unrotate = function (r) {
-            return new Vec((this.x * r.x) - (this.y * r.y), (this.y * r.x) + (this.x * r.y));
-        };
-        Vec.ZERO = new Vec(0, 0);
-        Vec.ONE = new Vec(1, 1);
-        Vec.RIGHT = new Vec(1, 0);
-        Vec.UP = new Vec(0, 1);
-        return Vec;
-    })();
-    spark.Vec = Vec;
-})(spark || (spark = {}));
-var spark;
-(function (spark) {
-    var Rect = (function () {
-        function Rect(x, y, w, h) {
-            this.x = x;
-            this.y = y;
-            this.width = w;
-            this.height = h;
-        }
-        Rect.prototype.contains = function (x, y) {
-            return (x >= this.x && x <= this.x + this.width) &&
-                (y >= this.y && y <= this.y + this.height);
-        };
-        Object.defineProperty(Rect.prototype, "left", {
-            get: function () {
-                return this.x;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Rect.prototype, "top", {
-            get: function () {
-                return this.y;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Rect.prototype, "right", {
-            get: function () {
-                return this.x + this.width;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Rect.prototype, "bottom", {
-            get: function () {
-                return this.y + this.height;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        return Rect;
-    })();
-    spark.Rect = Rect;
-})(spark || (spark = {}));
-var spark;
-(function (spark) {
-    var Mat = (function () {
-        function Mat(x, y, rx, ry, sx, sy) {
-            this.p = new spark.Vec(x, y);
-            this.r = new spark.Vec(rx, ry);
-            this.s = new spark.Vec(sx, sy);
-        }
-        Object.defineProperty(Mat.prototype, "angle", {
-            get: function () {
-                return spark.radToDeg(Math.atan2(this.r.y, this.r.x));
-            },
-            set: function (r) {
-                this.r.x = Math.cos(spark.degToRad(r));
-                this.r.y = Math.sin(spark.degToRad(r));
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Mat.prototype, "inverse", {
-            get: function () {
-                return new Mat(-this.p.x, -this.p.y, this.r.x, -this.r.y, 1 / this.s.x, 1 / this.s.y);
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Mat.prototype.translate = function (x, y, local) {
-            var dx = x;
-            var dy = y;
-            if (local) {
-                dx = (x * this.r.x) + (y * this.r.y);
-                dy = (y * this.r.x) - (x * this.r.y);
-            }
-            this.p.x += dx;
-            this.p.y += dy;
-        };
-        Mat.prototype.rotate = function (r) {
-            var x = Math.cos(spark.degToRad(r));
-            var y = Math.sin(spark.degToRad(r));
-            this.r.set((this.r.x * x) + (this.r.y * y), (this.r.y * x) - (this.r.x * y));
-        };
-        Mat.prototype.scale = function (x, y) {
-            this.s.x *= (x || 1.0);
-            this.s.y *= (y || x || 1.0);
-        };
-        Mat.prototype.transform = function (v) {
-            return new spark.Vec((v.x * this.s.x * this.r.x) + (v.y * this.s.y * this.r.y), (v.y * this.s.y * this.r.x) - (v.x * this.s.x * this.r.y));
-        };
-        Mat.prototype.mult = function (m) {
-            var p = this.transform(m.p);
-            var r = this.r.rotate(m.r);
-            var s = this.s.mult(m.s);
-            return new Mat(p.x, p.y, r.x, r.y, s.x, s.y);
-        };
-        Mat.prototype.apply = function () {
-            var a = this.r.x * this.s.x;
-            var b = this.r.y * this.s.y;
-            var c = this.r.y * this.s.x;
-            var d = this.r.x * this.s.y;
-            var e = this.p.x;
-            var f = this.p.y;
-            spark.view.transform(a, -b, c, d, e, f);
-        };
-        Mat.IDENTITY = new Mat(0, 0, 1, 0, 1, 1);
-        return Mat;
-    })();
-    spark.Mat = Mat;
-})(spark || (spark = {}));
-var spark;
-(function (spark) {
-    var Quadtree = (function () {
-        function Quadtree(rect, depth) {
-            this.rect = rect;
-            this.shapes = [];
-            this.nodes = [];
-            this.depth = depth || 0;
-        }
-        Quadtree.prototype.addShape = function (shape) {
-            var i;
-            if (this.depth > 0 && !shape.within(this.rect)) {
-                return false;
-            }
-            for (i = 0; i < this.nodes.length; i++) {
-                if (this.nodes[i].addShape(shape)) {
-                    return true;
-                }
-            }
-            this.shapes.push(shape);
-            if (this.depth < Quadtree.DEPTH_LIMIT && this.shapes.length >= Quadtree.SHAPE_LIMIT && this.nodes.length === 0) {
-                var w = this.rect.width / 2;
-                var h = this.rect.height / 2;
-                var l = this.rect.left;
-                var t = this.rect.top;
-                this.nodes = [
-                    new Quadtree(new spark.Rect(l, t, w, h), this.depth + 1),
-                    new Quadtree(new spark.Rect(l + w, t, w, h), this.depth + 1),
-                    new Quadtree(new spark.Rect(l, t + h, w, h), this.depth + 1),
-                    new Quadtree(new spark.Rect(l + w, t + h, w, h), this.depth + 1),
-                ];
-                this.shapes = this.shapes.filter((function (shape) {
-                    for (var i = 0; i < this.nodes.length; i++) {
-                        if (this.nodes[i].addShape(shape)) {
-                            return false;
-                        }
-                    }
-                    return true;
-                }).bind(this));
-            }
-            return true;
-        };
-        Quadtree.prototype.collect = function (shape) {
-            if (this.depth > 0 && !shape.within(this.rect)) {
-                return [];
-            }
-            var i, m = [];
-            for (i = 0; i < this.shapes.length; i++) {
-                var s = this.shapes[i];
-                if (m.indexOf(s.collider) < 0 && shapeQuery(s, shape)) {
-                    m.push(s.collider);
-                }
-            }
-            for (i = 0; i < this.nodes.length; i++) {
-                m.concat(this.nodes[i].collect(shape));
-            }
-            return m;
-        };
-        Quadtree.prototype.processCollisions = function () {
-            var nodes = [this];
-            var contacts = [];
-            while (nodes.length > 0) {
-                var node = nodes.pop();
-                for (var i = 0; i < node.shapes.length; i++) {
-                    var a = node.shapes[i];
-                    var m = [];
-                    for (var j = i + 1; j < node.shapes.length; j++) {
-                        var b = node.shapes[j];
-                        if (a.collider !== b.collider && m.indexOf(b.collider) < 0 && shapeQuery(a, b)) {
-                            m.push(b.collider);
-                        }
-                    }
-                    var children = node.nodes.concat([]);
-                    while (children.length > 0) {
-                        var child = children.pop();
-                        for (var k = 0; k < child.shapes.length; k++) {
-                            var b = child.shapes[k];
-                            if (a.collider !== b.collider && m.indexOf(b.collider) < 0 && shapeQuery(a, b)) {
-                                m.push(b.collider);
-                            }
-                        }
-                        if (child.nodes.length > 0) {
-                            children = children.concat(child.nodes);
-                        }
-                    }
-                    if (m.length > 0) {
-                        contacts.push([a.collider, m]);
-                    }
-                }
-                nodes = nodes.concat(node.nodes);
-            }
-            for (var i = 0; i < contacts.length; i++) {
-                var ca = contacts[i][0];
-                var cm = contacts[i][1];
-                for (var j = 0; j < m.length; j++) {
-                    ca.collide(cm[j]);
-                    cm[j].collide(ca);
-                }
-            }
-        };
-        Quadtree.DEPTH_LIMIT = 3;
-        Quadtree.SHAPE_LIMIT = 8;
-        return Quadtree;
-    })();
-    spark.Quadtree = Quadtree;
-    var Collider = (function () {
-        function Collider() {
-            this.filter = null;
-            this.oncollision = null;
-            this.shapes = [];
-        }
-        Collider.prototype.updateShapes = function (m) {
-            for (var i = 0; i < this.shapes.length; i++) {
-                this.shapes[i].updateShapeCache(m);
-            }
-        };
-        Collider.prototype.addToQuadtree = function (space) {
-            for (var i = 0; i < this.shapes.length; i++) {
-                space.addShape(this.shapes[i]);
-            }
-        };
-        Collider.prototype.addSegment = function (x1, y1, x2, y2) {
-            this.shapes.push(new Segment(this, x1, y1, x2, y2));
-        };
-        Collider.prototype.addCircle = function (x, y, radius) {
-            this.shapes.push(new Circle(this, x, y, radius));
-        };
-        Collider.prototype.addBox = function (x, y, width, height) {
-            this.shapes.push(new Box(this, x, y, width, height));
-        };
-        Collider.prototype.collide = function (c) {
-            if (this.oncollision) {
-                this.oncollision(this, c);
-            }
-        };
-        return Collider;
-    })();
-    spark.Collider = Collider;
-    function shapeQuery(a, b) {
-        if (b instanceof Segment)
-            return a.segmentQuery(b);
-        if (b instanceof Circle)
-            return a.circleQuery(b);
-        if (b instanceof Box)
-            return a.boxQuery(b);
-        return false;
-    }
-    spark.shapeQuery = shapeQuery;
-    var Segment = (function () {
-        function Segment(collider, x1, y1, x2, y2) {
-            this.collider = collider;
-            this.p1 = new spark.Vec(x1, y1);
-            this.p2 = new spark.Vec(x2, y2);
-        }
-        Segment.prototype.updateShapeCache = function (m) {
-            this.tp1 = m.transform(this.p1);
-            this.tp2 = m.transform(this.p2);
-        };
-        Segment.prototype.within = function (rect) {
-            return rect.contains(this.tp1.x, this.tp1.y) &&
-                rect.contains(this.tp2.x, this.tp2.y);
-        };
-        Segment.prototype.segmentQuery = function (s) {
-            if (Math.min(s.tp1.x, s.tp2.x) > Math.max(this.tp1.x, this.tp2.x) ||
-                Math.min(s.tp1.y, s.tp2.y) > Math.max(this.tp1.y, this.tp2.y) ||
-                Math.max(s.tp1.x, s.tp2.x) < Math.min(this.tp1.x, this.tp2.x) ||
-                Math.max(s.tp1.y, s.tp2.y) < Math.min(this.tp1.y, this.tp2.y)) {
-                return false;
-            }
-            var sa = spark.signum(this.tp1.cross(s.tp1));
-            var sb = spark.signum(this.tp1.cross(s.tp2));
-            if (sa === sb && sa !== 0 && sb !== 0) {
-                return false;
-            }
-            var da = spark.signum(s.tp1.cross(this.tp1));
-            var db = spark.signum(s.tp1.cross(this.tp2));
-            if (da === db && da !== 0 && db !== 0) {
-                return false;
-            }
-            return true;
-        };
-        Segment.prototype.circleQuery = function (s) {
-            return s.tc.proj(this.tp1, this.tp2).distsq(s.tc) < s.r * s.r;
-        };
-        Segment.prototype.boxQuery = function (s) {
-            if (this.tp1.x < s.tp1.x && this.tp2.x < s.tp1.x)
-                return false;
-            if (this.tp1.x > s.tp2.x && this.tp2.x > s.tp2.x)
-                return false;
-            if (this.tp1.y < s.tp1.y && this.tp2.y < s.tp1.y)
-                return false;
-            if (this.tp1.y > s.tp2.y && this.tp2.y > s.tp2.y)
-                return false;
-            return true;
-        };
-        return Segment;
-    })();
-    spark.Segment = Segment;
-    var Circle = (function () {
-        function Circle(collider, x, y, radius) {
-            this.collider = collider;
-            this.c = new spark.Vec(x, y);
-            this.r = radius;
-        }
-        Circle.prototype.updateShapeCache = function (m) {
-            this.tc = m.transform(this.c);
-        };
-        Circle.prototype.within = function (rect) {
-            if (this.tc.x + this.r < rect.left)
-                return false;
-            if (this.tc.x - this.r > rect.right)
-                return false;
-            if (this.tc.y + this.r < rect.top)
-                return false;
-            if (this.tc.y - this.r > rect.bottom)
-                return false;
-            return true;
-        };
-        Circle.prototype.segmentQuery = function (s) {
-            return s.circleQuery(this);
-        };
-        Circle.prototype.circleQuery = function (s) {
-            return this.tc.distsq(s.tc) < (this.r * this.r) + (s.r * s.r);
-        };
-        Circle.prototype.boxQuery = function (s) {
-            if (this.tc.x > s.tp1.x && this.tc.x <= s.tp2.x) {
-                return this.tc.y + this.r >= s.tp1.y && this.tc.y - this.r <= s.tp2.y;
-            }
-            if (this.tc.y >= s.tp1.y && this.tc.y <= s.tp2.y) {
-                return this.tc.x + this.r >= s.tp1.x && this.tc.x - this.r <= s.tp2.x;
-            }
-            if (this.tc.x < s.tp1.x && this.tc.y < s.tp1.y) {
-                return this.tc.distsq(s.tp1) <= this.r * this.r;
-            }
-            if (this.tc.x > s.tp2.x && this.tc.y < s.tp1.y) {
-                return this.tc.distsq(new spark.Vec(s.tp2.x, s.tp1.y)) <= this.r * this.r;
-            }
-            if (this.tc.x < s.tp1.x && this.tc.y > s.tp2.y) {
-                return this.tc.distsq(new spark.Vec(s.tp1.x, s.tp2.y)) <= this.r * this.r;
-            }
-            return this.tc.distsq(s.tp2) <= this.r * this.r;
-        };
-        return Circle;
-    })();
-    spark.Circle = Circle;
-    var Box = (function () {
-        function Box(collider, x, y, width, height) {
-            this.collider = collider;
-            this.p1 = new spark.Vec(x, y);
-            this.p2 = new spark.Vec(x + width, y);
-            this.p3 = new spark.Vec(x + width, y + height);
-            this.p4 = new spark.Vec(x, y + height);
-        }
-        Box.prototype.updateShapeCache = function (m) {
-            var v1 = m.transform(this.p1);
-            var v2 = m.transform(this.p2);
-            var v3 = m.transform(this.p3);
-            var v4 = m.transform(this.p4);
-            this.tp1.x = Math.min(v1.x, v2.x, v3.x, v4.x);
-            this.tp1.y = Math.min(v1.y, v2.y, v3.y, v4.y);
-            this.tp2.x = Math.max(v1.x, v2.x, v3.x, v4.x);
-            this.tp2.y = Math.max(v1.y, v2.y, v3.y, v4.y);
-        };
-        Box.prototype.within = function (rect) {
-            if (this.tp2.x < rect.left)
-                return false;
-            if (this.tp1.x > rect.right)
-                return false;
-            if (this.tp2.y < rect.top)
-                return false;
-            if (this.tp1.y > rect.bottom)
-                return false;
-            return true;
-        };
-        Box.prototype.segmentQuery = function (s) {
-            return s.boxQuery(this);
-        };
-        Box.prototype.circleQuery = function (s) {
-            return s.boxQuery(this);
-        };
-        Box.prototype.boxQuery = function (s) {
-            if (this.tp2.x < s.tp1.x || this.tp1.x > s.tp2.x)
-                return false;
-            if (this.tp2.y < s.tp1.y || this.tp1.y > s.tp2.y)
-                return false;
-            return true;
-        };
-        return Box;
-    })();
-    spark.Box = Box;
-})(spark || (spark = {}));
-var spark;
-(function (spark) {
-    var context;
-    function initAudio() {
-        context = new AudioContext();
-    }
-    spark.initAudio = initAudio;
-    var Clip = (function (_super) {
-        __extends(Clip, _super);
-        function Clip(src) {
-            var _this = this;
-            _super.call(this, src, 'arraybuffer', function (req) {
-                context.decodeAudioData(req.response, function (buffer) {
-                    _this.data = buffer;
-                });
-            });
-        }
-        Clip.prototype.woof = function () {
-            if (!this.data) {
-                return null;
-            }
-            var source = context.createBufferSource();
-            source.buffer = this.data;
-            source.connect(context.destination);
-            source.start();
-            return source;
-        };
-        Clip.prototype.play = function () {
-            if (!this.data) {
-                return null;
-            }
-            var source = context.createBufferSource();
-            source.buffer = this.data;
-            source.loop = true;
-            source.connect(context.destination);
-            source.start();
-            return source;
-        };
-        return Clip;
-    })(spark.XHRAsset);
-    spark.Clip = Clip;
-})(spark || (spark = {}));
-var spark;
-(function (spark) {
-    var Texture = (function (_super) {
-        __extends(Texture, _super);
-        function Texture(src) {
-            _super.call(this, src);
-            var img = new Image();
-            img.onload = (function () {
-                this.data = img;
-            }).bind(this);
-            img.src = src;
-        }
-        Object.defineProperty(Texture.prototype, "width", {
-            get: function () {
-                return this.data ? this.data.width : 0;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Texture.prototype, "height", {
-            get: function () {
-                return this.data ? this.data.height : 0;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Texture.prototype.draw = function (pivot) {
-            if (this.data) {
-                var w = this.data.width;
-                var h = this.data.height;
-                var x = pivot ? -w * pivot.x : 0;
-                var y = pivot ? -h * pivot.y : 0;
-                spark.view.drawImage(this.data, 0, 0, w, h, x, y, w, h);
-            }
-        };
-        Texture.prototype.drawq = function (quad, pivot) {
-            if (this.data) {
-                var w = quad.width;
-                var h = quad.height;
-                var x = pivot ? -w * pivot.x : 0;
-                var y = pivot ? -h * pivot.y : 0;
-                spark.view.drawImage(this.data, quad.left, quad.top, w, h, x, y, w, h);
-            }
-        };
-        return Texture;
-    })(spark.Asset);
-    spark.Texture = Texture;
-    var Font = (function (_super) {
-        __extends(Font, _super);
-        function Font(src) {
-            _super.call(this, src);
-            var family = src.split('/').slice(-1)[0].split('.')[0];
-            var face = "@font-face{ font-family: \"" + family + "\"; src: url(\"" + src + "\"); }";
-            this.data = document.createElement('style');
-            this.data.appendChild(document.createTextNode(face));
-            document.head.appendChild(this.data);
-        }
-        return Font;
-    })(spark.Asset);
-    spark.Font = Font;
-})(spark || (spark = {}));
-var spark;
-(function (spark) {
-    (function (Interpolation) {
-        Interpolation[Interpolation["LINEAR"] = 0] = "LINEAR";
-        Interpolation[Interpolation["STEP"] = 1] = "STEP";
-        Interpolation[Interpolation["CUBIC"] = 2] = "CUBIC";
-    })(spark.Interpolation || (spark.Interpolation = {}));
-    var Interpolation = spark.Interpolation;
-    var Rig = (function () {
-        function Rig() {
-            this.anims = [];
-        }
-        Rig.prototype.play = function (instance) {
-            this.anims.push(instance);
-        };
-        Rig.prototype.stop = function (instance) {
-            var i = this.anims.indexOf(instance);
-            if (i >= 0) {
-                var last = this.anims.pop();
-                if (i < this.anims.length) {
-                    this.anims[i] = last;
-                }
-            }
-        };
-        Rig.prototype.update = function (step) {
-            var i;
-            for (i = 0; i < this.anims.length;) {
-                if (this.anims[i](step)) {
-                    var last = this.anims.pop();
-                    if (i < this.anims.length) {
-                        this.anims[i] = last;
-                    }
-                }
-                else {
-                    i++;
-                }
-            }
-        };
-        return Rig;
-    })();
-    spark.Rig = Rig;
-    var Tween = (function () {
-        function Tween(keys, fps, duration, interp) {
-            var i, k, hks, tangent;
-            this.fps = fps;
-            this.duration = duration;
-            this.keys = new Array(duration);
-            keys.sort(function (a, b) { return a.frame - b.frame; });
-            for (i = 0; i < keys.length - 1 && keys[i + 1].frame < 1; i++)
-                ;
-            hks = keys.slice(i);
-            tangent = new Array(hks.length);
-            for (i = 1; i < hks.length - 1; i++) {
-                if (hks[i].tangent) {
-                    tangent[i] = hks[i].tangent;
-                }
-                else {
-                    var pk = hks[i - 1];
-                    var tk = hks[i];
-                    var nk = hks[i + 1];
-                    var dtp = (tk.value - pk.value) / (tk.frame - pk.frame);
-                    var dtn = (nk.value - tk.value) / (nk.frame - tk.frame);
-                    tangent[i] = (dtp + dtn) / 2;
-                }
-            }
-            var p = (hks[0].frame < 1) ? hks.shift() : hks[0];
-            for (i = 1; i <= duration; i++) {
-                var n = hks[0];
-                if (i == n.frame) {
-                    this.keys[i - 1] = n.value;
-                    p = hks.shift();
-                }
-                else {
-                    switch (interp) {
-                        case Interpolation.STEP:
-                            this.keys[i - 1] = p.value;
-                            break;
-                        case Interpolation.LINEAR:
-                            this.keys[i - 1] = spark.lerp(p.value, n.value, i - p.frame, n.frame - p.frame);
-                            break;
-                        case Interpolation.CUBIC:
-                            var u = (i - p.frame) / (n.frame - p.frame);
-                            var h0 = (u * u * u * 2) - (u * u * 3) + 1;
-                            var h1 = (u * u * u * -2) + (u * u * 3);
-                            var h2 = (u * u * u) - (u * u * 2) + u;
-                            var h3 = (u * u * u) - (u * u);
-                            var p0 = p.value;
-                            var p1 = n.value;
-                            var t0 = spark.degToRad(tangent[p.frame] || 0.0);
-                            var t1 = spark.degToRad(tangent[n.frame] || 0.0);
-                            this.keys[i - 1] = (h0 * p0) + (h1 * p1) + (h2 * t0) + (h3 * t1);
-                            break;
-                    }
-                }
-            }
-        }
-        Tween.prototype.instantiate = function (obj, property, loop) {
-            var path = property.split('.');
-            var key = path.pop();
-            while (path.length > 0) {
-                if (!(obj = obj[path.shift()])) {
-                    throw 'Cannot find property "' + property + '" on object!';
-                }
-            }
-            return (function (step) {
-                var frame = Math.floor((this.time += step) * this.tween.fps);
-                var shouldStop = false;
-                if (frame >= this.tween.duration) {
-                    shouldStop = !loop;
-                    if (!shouldStop) {
-                        this.time %= this.tween.duration / this.tween.fps;
-                        frame = Math.floor(this.time * this.tween.fps);
-                    }
-                    else
-                        frame = this.tween.duration - 1;
-                }
-                obj[key] = this.tween.keys[frame];
-                return shouldStop;
-            }).bind({ tween: this, time: 0 });
-        };
-        return Tween;
-    })();
-    spark.Tween = Tween;
-    var Timeline = (function (_super) {
-        __extends(Timeline, _super);
-        function Timeline(src) {
-            var _this = this;
-            _super.call(this, src, function (json) {
-                _this.fps = json.fps || 30;
-                _this.duration = json.duration || 30;
-                _this.loop = json.loop || false;
-                _this.events = json.events || [];
-                _this.tracks = json.tracks || {};
-                _this.events.sort(function (a, b) { return (a.frame - b.frame); });
-                for (var t in _this.tracks) {
-                    var keys = _this.tracks[t].keys;
-                    var interpolation = _this.tracks[t].interpolation || Interpolation.CUBIC;
-                    _this.tracks[t] = new Tween(keys, _this.fps, _this.duration, interpolation);
-                }
-            });
-        }
-        Timeline.prototype.instantiate = function (obj, onevent) {
-            var rig = new Rig();
-            for (var track in this.tracks) {
-                rig.play(this.tracks[track].instantiate(obj, track, this.loop));
-            }
-            return (function (step) {
-                var frame = Math.floor((this.time += step) * this.timeline.fps % this.timeline.duration);
-                if (this.timeline.events.length > 0) {
-                    while (this.timeline.events[this.eventIndex].frame <= frame + 1) {
-                        onevent(this.timeline.events[this.eventIndex++].event);
-                        if (this.eventIndex == this.timeline.events.length) {
-                            this.eventIndex = 0;
-                            break;
-                        }
-                    }
-                }
-                rig.update(step);
-                return rig.anims.length === 0;
-            }).bind({
-                timeline: this,
-                time: 0,
-                eventIndex: 0,
-            });
-        };
-        return Timeline;
-    })(spark.JSONAsset);
-    spark.Timeline = Timeline;
-})(spark || (spark = {}));
-var spark;
-(function (spark) {
-    var Sprite = (function (_super) {
-        __extends(Sprite, _super);
-        function Sprite() {
-            _super.call(this);
-            this.m = new spark.Mat(0, 0, 1, 0, 1, 1);
-            this.pivot = new spark.Vec(0.5, 0.5);
-            this.rig = new spark.Rig();
-            this.texture = null;
-            this.quad = null;
-            this.behaviors = [];
-            this.dead = false;
-            this.contextSettings = {};
-        }
-        Object.defineProperty(Sprite.prototype, "width", {
-            get: function () {
-                if (this.quad)
-                    return this.quad.width;
-                else if (this.texture)
-                    return this.texture.width;
-                else
-                    return 0;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Sprite.prototype, "height", {
-            get: function () {
-                if (this.quad)
-                    return this.quad.height;
-                else if (this.texture)
-                    return this.texture.height;
-                else
-                    return 0;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Sprite.prototype.worldToLocal = function (p) {
-            return this.m.inverse.transform(p);
-        };
-        Sprite.prototype.localToWorld = function (p) {
-            return this.m.transform(p);
-        };
-        Sprite.prototype.worldToLocalAngle = function (angle) {
-            return this.m.angle - angle;
-        };
-        Sprite.prototype.localToWorldAngle = function (angle) {
-            return this.m.angle + angle;
-        };
-        Sprite.prototype.addBehavior = function (behavior) {
-            this.behaviors.push(behavior);
-        };
-        Sprite.prototype.update = function (step) {
-            var i;
-            this.rig.update(step);
-            for (i = 0; i < this.behaviors.length; i++) {
-                this.behaviors[i](this, step);
-            }
-            this.updateShapes(this.m);
-        };
-        Sprite.prototype.draw = function () {
-            if (!this.texture) {
-                return;
-            }
-            spark.view.save();
-            this.m.apply();
-            spark.merge(spark.view, this.contextSettings);
-            if (this.quad) {
-                this.texture.drawq(this.quad, this.pivot);
-            }
-            else {
-                this.texture.draw(this.pivot);
-            }
-            spark.view.restore();
-        };
-        return Sprite;
-    })(spark.Collider);
-    spark.Sprite = Sprite;
-})(spark || (spark = {}));
-var spark;
-(function (spark) {
-    var Emitter = (function (_super) {
-        __extends(Emitter, _super);
-        function Emitter(src) {
-            var _this = this;
-            this.minLife = 1.0;
-            this.maxLife = 1.0;
-            this.startAlpha = 1.0;
-            this.endAlpha = 0.0;
-            this.startScale = 1.0;
-            this.endScale = 1.0;
-            this.spread = 180.0;
-            this.minSpeed = 10.0;
-            this.maxSpeed = 15.0;
-            this.minAngularVelocity = -5.0;
-            this.maxAngularVelocity = 5.0;
-            this.forwardAngle = 0.0;
-            _super.call(this, src, function (json) {
-                spark.merge(_this, json);
-            });
-            this.particleBehavior = function (sprite, step) {
-                var emitter = this.emitter;
-                if ((this.age += step) > this.life) {
-                    this.age = this.life;
-                    sprite.dead = true;
-                }
-                var s = spark.lerp(this.emitter.startScale, this.emitter.endScale, this.age, this.life);
-                sprite.m.translate(this.v.x * step, this.v.y * step);
-                sprite.m.rotate(this.w * step);
-                sprite.m.s.set(s, s);
-                sprite.contextSettings.globalAlpha = spark.lerp(this.emitter.startAlpha, this.emitter.endAlpha, this.age, this.life);
-            };
-        }
-        Emitter.prototype.emit = function (scene, x, y, angle, n) {
-            for (var i = 0; i < (n || 1); i++) {
-                var sprite = scene.spawn();
-                sprite.texture = this.texture && spark.project.assets[this.texture];
-                sprite.quad = this.quad && spark.project.assets[this.quad];
-                var s = spark.rand(this.minSpeed, this.maxSpeed);
-                var a = spark.rand(-this.spread, this.spread) + angle;
-                sprite.m.p.set(x, y);
-                sprite.m.angle = this.forwardAngle + a;
-                sprite.addBehavior(this.particleBehavior.bind({
-                    emitter: this,
-                    age: 0.0,
-                    life: spark.rand(this.minLife, this.maxLife),
-                    v: new spark.Vec(s * Math.cos(spark.degToRad(a)), s * Math.sin(spark.degToRad(a))),
-                    w: spark.rand(this.minAngularVelocity, this.maxAngularVelocity),
-                }));
-            }
-        };
-        return Emitter;
-    })(spark.JSONAsset);
-    spark.Emitter = Emitter;
-})(spark || (spark = {}));
-var spark;
-(function (spark) {
-    (function (Origin) {
-        Origin[Origin["TOP_LEFT"] = 0] = "TOP_LEFT";
-        Origin[Origin["TOP_MIDDLE"] = 1] = "TOP_MIDDLE";
-        Origin[Origin["TOP_RIGHT"] = 2] = "TOP_RIGHT";
-        Origin[Origin["BOTTOM_LEFT"] = 3] = "BOTTOM_LEFT";
-        Origin[Origin["BOTTOM_MIDDLE"] = 4] = "BOTTOM_MIDDLE";
-        Origin[Origin["BOTTOM_RIGHT"] = 5] = "BOTTOM_RIGHT";
-        Origin[Origin["MIDDLE_LEFT"] = 6] = "MIDDLE_LEFT";
-        Origin[Origin["MIDDLE_RIGHT"] = 7] = "MIDDLE_RIGHT";
-        Origin[Origin["MIDDLE"] = 8] = "MIDDLE";
-    })(spark.Origin || (spark.Origin = {}));
-    var Origin = spark.Origin;
-    var Scene = (function () {
-        function Scene(origin, width, height) {
-            this.sprites = [];
-            this.pool = [];
-            this.sp = 0;
-            this.count = 0;
-            this.pending = 0;
-            var i;
-            var vw = spark.canvas.width;
-            var vh = spark.canvas.height;
-            var w = width || vw;
-            var h = height || vh * w / vw;
-            var x = 0;
-            var y = 0;
-            switch (origin || Origin.TOP_LEFT) {
-                case Origin.TOP_LEFT:
-                    x = 0;
-                    y = 0;
-                    break;
-                case Origin.TOP_MIDDLE:
-                    x = w / 2;
-                    y = 0;
-                    break;
-                case Origin.TOP_RIGHT:
-                    x = w;
-                    y = 0;
-                    break;
-                case Origin.BOTTOM_LEFT:
-                    x = 0;
-                    y = h;
-                    break;
-                case Origin.BOTTOM_MIDDLE:
-                    x = w / 2;
-                    y = h;
-                    break;
-                case Origin.BOTTOM_RIGHT:
-                    x = w;
-                    y = h;
-                    break;
-                case Origin.MIDDLE_LEFT:
-                    x = 0;
-                    y = h / 2;
-                    break;
-                case Origin.MIDDLE_RIGHT:
-                    x = w;
-                    y = h / 2;
-                    break;
-                case Origin.MIDDLE:
-                    x = w / 2;
-                    y = h / 2;
-                    break;
-            }
-            this.rect = new spark.Rect(-x, -y, w, h);
-            this.camera = new spark.Mat(0, 0, 1, 0, spark.canvas.width / 2, spark.canvas.height / 2);
-            for (i = 0; i < 1000; i++) {
-                this.pool.push(new spark.Sprite());
-            }
-        }
-        Scene.prototype.setViewport = function (w, h) {
-            w = w || spark.canvas.width;
-            if (!h) {
-                h = w * spark.canvas.height / spark.canvas.width;
-            }
-            this.camera.s.x = w / 2;
-            this.camera.s.y = h / 2;
-        };
-        Scene.prototype.run = function () {
-            this.frametime = performance.now();
-            this.framecount = 0;
-            this.paused = false;
-            this.runloop = requestAnimationFrame(this.stepFrame.bind(this));
-        };
-        Scene.prototype.quit = function () {
-            cancelAnimationFrame(this.runloop);
-        };
-        Scene.prototype.spawn = function () {
-            var sprite;
-            if (this.sp === 0) {
-                sprite = new spark.Sprite();
-            }
-            else {
-                sprite = this.pool[--this.sp];
-                spark.Sprite.call(sprite);
-            }
-            sprite.scene = this;
-            if (this.count + this.pending < this.sprites.length) {
-                this.sprites[this.count + this.pending] = sprite;
-            }
-            else {
-                this.sprites.push(sprite);
-            }
-            this.pending++;
-            return sprite;
-        };
-        Scene.prototype.stepFrame = function (now) {
-            var step = this.paused ? 0 : (now - this.frametime) / 1000;
-            this.frametime = now;
-            this.framecount++;
-            this.update(step);
-            this.draw();
-            spark.flushInput();
-            this.runloop = requestAnimationFrame(this.stepFrame.bind(this));
-        };
-        Scene.prototype.update = function (step) {
-            var i;
-            this.count += this.pending;
-            this.pending = 0;
-            for (i = 0; i < this.count;) {
-                var sprite = this.sprites[i];
-                if (sprite.dead) {
-                    this.sprites[i] = this.sprites[--this.count];
-                    spark.wipe(sprite);
-                    if (this.sp < this.pool.length) {
-                        this.pool[this.sp] = sprite;
-                    }
-                    else {
-                        this.pool.push(sprite);
-                    }
-                    this.sp++;
-                }
-                else {
-                    i++;
-                }
-            }
-            this.space = new spark.Quadtree(this.rect);
-            for (i = 0; i < this.count; i++) {
-                this.sprites[i].update(step);
-                this.sprites[i].addToQuadtree(this.space);
-            }
-        };
-        Scene.prototype.draw = function () {
-            var i;
-            spark.view.save();
-            spark.view.globalAlpha = 1.0;
-            spark.view.globalCompositeOperation = 'source-over';
-            spark.view.shadowBlur = 0.0;
-            spark.view.lineWidth = 1;
-            spark.view.fillStyle = '#000';
-            spark.view.strokeStyle = '#fff';
-            spark.view.clearRect(0, 0, spark.canvas.width, spark.canvas.height);
-            var w2 = spark.canvas.width / 2;
-            var h2 = spark.canvas.height / 2;
-            var mx = this.rect.x + (this.rect.width / 2);
-            var my = this.rect.y + (this.rect.height / 2);
-            spark.view.setTransform(1, 0, 0, 1, 0, 0);
-            spark.view.translate(w2, h2);
-            spark.view.scale(w2 / this.camera.s.x, h2 / this.camera.s.y);
-            spark.view.transform(this.camera.r.x, this.camera.r.y, -this.camera.r.y, this.camera.r.x, 0, 0);
-            spark.view.translate(-this.camera.p.x - mx, -this.camera.p.y - my);
-            for (i = 0; i < this.count; i++) {
-                this.sprites[i].draw();
-            }
-            spark.view.restore();
-        };
-        Scene.prototype.worldToScreen = function (x, y) {
-            var mx = this.rect.x + (this.rect.width / 2);
-            var my = this.rect.y + (this.rect.height / 2);
-            var cx = x - (this.camera.p.x + mx);
-            var cy = y - (this.camera.p.y + my);
-            var rx = (cx * this.camera.r.x) - (cy * this.camera.r.y);
-            var ry = (cy * this.camera.r.x) + (cx * this.camera.r.y);
-            var sx = rx * spark.canvas.height / (2 * this.camera.s.x);
-            var sy = ry * spark.canvas.width / (2 * this.camera.s.y);
-            return new spark.Vec(sx + spark.canvas.width / 2, sy + spark.canvas.height / 2);
-        };
-        Scene.prototype.screenToWorld = function (x, y) {
-            var cx = (x - spark.canvas.width / 2) * this.camera.s.x * 2 / spark.canvas.width;
-            var cy = (y - spark.canvas.height / 2) * this.camera.s.y * 2 / spark.canvas.height;
-            var vx = (cx * this.camera.r.x) + (cy * this.camera.r.y);
-            var vy = (cy * this.camera.r.x) - (cx * this.camera.r.y);
-            var mx = this.rect.x + (this.rect.width / 2);
-            var my = this.rect.y + (this.rect.height / 2);
-            return new spark.Vec(vx + this.camera.p.x + mx, vy + this.camera.p.y + my);
-        };
-        Scene.prototype.pick = function (x, y, radius) {
-            if (!this.space) {
-                return [];
-            }
-            var c = this.screenToWorld(x, y);
-            if (!this.rect.contains(c.x, c.y)) {
-                return [];
-            }
-            var shape = new spark.Circle(null, c.x, c.y, radius || 5.0);
-            shape.updateShapeCache(spark.Mat.IDENTITY);
-            return this.space.collect(shape);
-        };
-        return Scene;
-    })();
-    spark.Scene = Scene;
-})(spark || (spark = {}));
+HxOverrides.strDate = function(s) {
+	var _g = s.length;
+	switch(_g) {
+	case 8:
+		var k = s.split(":");
+		var d = new Date();
+		d.setTime(0);
+		d.setUTCHours(k[0]);
+		d.setUTCMinutes(k[1]);
+		d.setUTCSeconds(k[2]);
+		return d;
+	case 10:
+		var k1 = s.split("-");
+		return new Date(k1[0],k1[1] - 1,k1[2],0,0,0);
+	case 19:
+		var k2 = s.split(" ");
+		var y = k2[0].split("-");
+		var t = k2[1].split(":");
+		return new Date(y[0],y[1] - 1,y[2],t[0],t[1],t[2]);
+	default:
+		throw new js__$Boot_HaxeError("Invalid date format : " + s);
+	}
+};
+HxOverrides.cca = function(s,index) {
+	var x = s.charCodeAt(index);
+	if(x != x) return undefined;
+	return x;
+};
+HxOverrides.substr = function(s,pos,len) {
+	if(pos != null && pos != 0 && len != null && len < 0) return "";
+	if(len == null) len = s.length;
+	if(pos < 0) {
+		pos = s.length + pos;
+		if(pos < 0) pos = 0;
+	} else if(len < 0) len = s.length + len - pos;
+	return s.substr(pos,len);
+};
+HxOverrides.indexOf = function(a,obj,i) {
+	var len = a.length;
+	if(i < 0) {
+		i += len;
+		if(i < 0) i = 0;
+	}
+	while(i < len) {
+		if(a[i] === obj) return i;
+		i++;
+	}
+	return -1;
+};
+HxOverrides.lastIndexOf = function(a,obj,i) {
+	var len = a.length;
+	if(i >= len) i = len - 1; else if(i < 0) i += len;
+	while(i >= 0) {
+		if(a[i] === obj) return i;
+		i--;
+	}
+	return -1;
+};
+HxOverrides.remove = function(a,obj) {
+	var i = HxOverrides.indexOf(a,obj,0);
+	if(i == -1) return false;
+	a.splice(i,1);
+	return true;
+};
+HxOverrides.iter = function(a) {
+	return { cur : 0, arr : a, hasNext : function() {
+		return this.cur < this.arr.length;
+	}, next : function() {
+		return this.arr[this.cur++];
+	}};
+};
+var IntIterator = function(min,max) {
+	this.min = min;
+	this.max = max;
+};
+$hxClasses["IntIterator"] = IntIterator;
+IntIterator.__name__ = ["IntIterator"];
+IntIterator.prototype = {
+	min: null
+	,max: null
+	,hasNext: function() {
+		return this.min < this.max;
+	}
+	,next: function() {
+		return this.min++;
+	}
+	,__class__: IntIterator
+};
+Math.__name__ = ["Math"];
+var Reflect = function() { };
+$hxClasses["Reflect"] = Reflect;
+Reflect.__name__ = ["Reflect"];
+Reflect.hasField = function(o,field) {
+	return Object.prototype.hasOwnProperty.call(o,field);
+};
+Reflect.field = function(o,field) {
+	try {
+		return o[field];
+	} catch( e ) {
+		haxe_CallStack.lastException = e;
+		if (e instanceof js__$Boot_HaxeError) e = e.val;
+		return null;
+	}
+};
+Reflect.setField = function(o,field,value) {
+	o[field] = value;
+};
+Reflect.getProperty = function(o,field) {
+	var tmp;
+	if(o == null) return null; else if(o.__properties__ && (tmp = o.__properties__["get_" + field])) return o[tmp](); else return o[field];
+};
+Reflect.setProperty = function(o,field,value) {
+	var tmp;
+	if(o.__properties__ && (tmp = o.__properties__["set_" + field])) o[tmp](value); else o[field] = value;
+};
+Reflect.callMethod = function(o,func,args) {
+	return func.apply(o,args);
+};
+Reflect.fields = function(o) {
+	var a = [];
+	if(o != null) {
+		var hasOwnProperty = Object.prototype.hasOwnProperty;
+		for( var f in o ) {
+		if(f != "__id__" && f != "hx__closures__" && hasOwnProperty.call(o,f)) a.push(f);
+		}
+	}
+	return a;
+};
+Reflect.isFunction = function(f) {
+	return typeof(f) == "function" && !(f.__name__ || f.__ename__);
+};
+Reflect.compare = function(a,b) {
+	if(a == b) return 0; else if(a > b) return 1; else return -1;
+};
+Reflect.compareMethods = function(f1,f2) {
+	if(f1 == f2) return true;
+	if(!Reflect.isFunction(f1) || !Reflect.isFunction(f2)) return false;
+	return f1.scope == f2.scope && f1.method == f2.method && f1.method != null;
+};
+Reflect.isObject = function(v) {
+	if(v == null) return false;
+	var t = typeof(v);
+	return t == "string" || t == "object" && v.__enum__ == null || t == "function" && (v.__name__ || v.__ename__) != null;
+};
+Reflect.isEnumValue = function(v) {
+	return v != null && v.__enum__ != null;
+};
+Reflect.deleteField = function(o,field) {
+	if(!Object.prototype.hasOwnProperty.call(o,field)) return false;
+	delete(o[field]);
+	return true;
+};
+Reflect.copy = function(o) {
+	var o2 = { };
+	var _g = 0;
+	var _g1 = Reflect.fields(o);
+	while(_g < _g1.length) {
+		var f = _g1[_g];
+		++_g;
+		Reflect.setField(o2,f,Reflect.field(o,f));
+	}
+	return o2;
+};
+Reflect.makeVarArgs = function(f) {
+	return function() {
+		var a = Array.prototype.slice.call(arguments);
+		return f(a);
+	};
+};
+var Spark = $hx_exports.Spark = function() { };
+$hxClasses["Spark"] = Spark;
+Spark.__name__ = ["Spark"];
+Spark.loadQueue = null;
+Spark.canvas = null;
+Spark.view = null;
+Spark.main = function() {
+	Spark.loadQueue = [];
+	Spark.canvas = window.document.getElementById("canvas");
+	Spark.view = Spark.canvas.getContext("2d",null);
+	spark_Input.init();
+	spark_Input.hideCursor();
+	Spark.canvas.oncontextmenu = function(event) {
+		event.preventDefault();
+	};
+};
+Spark.request = function(asset) {
+	Spark.loadQueue.push(asset);
+};
+Spark.loadProgress = function() {
+	var n = 0;
+	var i;
+	var _g1 = 0;
+	var _g = Spark.loadQueue.length - 1;
+	while(_g1 < _g) {
+		var i1 = _g1++;
+		if(Spark.loadQueue[i1].isLoaded()) n++;
+	}
+	if(n == Spark.loadQueue.length) return true; else return js_Boot.__cast(n , Float) / Spark.loadQueue.length;
+};
+var Std = function() { };
+$hxClasses["Std"] = Std;
+Std.__name__ = ["Std"];
+Std["is"] = function(v,t) {
+	return js_Boot.__instanceof(v,t);
+};
+Std.instance = function(value,c) {
+	if((value instanceof c)) return value; else return null;
+};
+Std.string = function(s) {
+	return js_Boot.__string_rec(s,"");
+};
+Std["int"] = function(x) {
+	return x | 0;
+};
+Std.parseInt = function(x) {
+	var v = parseInt(x,10);
+	if(v == 0 && (HxOverrides.cca(x,1) == 120 || HxOverrides.cca(x,1) == 88)) v = parseInt(x);
+	if(isNaN(v)) return null;
+	return v;
+};
+Std.parseFloat = function(x) {
+	return parseFloat(x);
+};
+Std.random = function(x) {
+	if(x <= 0) return 0; else return Math.floor(Math.random() * x);
+};
+var ValueType = $hxClasses["ValueType"] = { __ename__ : ["ValueType"], __constructs__ : ["TNull","TInt","TFloat","TBool","TObject","TFunction","TClass","TEnum","TUnknown"] };
+ValueType.TNull = ["TNull",0];
+ValueType.TNull.toString = $estr;
+ValueType.TNull.__enum__ = ValueType;
+ValueType.TInt = ["TInt",1];
+ValueType.TInt.toString = $estr;
+ValueType.TInt.__enum__ = ValueType;
+ValueType.TFloat = ["TFloat",2];
+ValueType.TFloat.toString = $estr;
+ValueType.TFloat.__enum__ = ValueType;
+ValueType.TBool = ["TBool",3];
+ValueType.TBool.toString = $estr;
+ValueType.TBool.__enum__ = ValueType;
+ValueType.TObject = ["TObject",4];
+ValueType.TObject.toString = $estr;
+ValueType.TObject.__enum__ = ValueType;
+ValueType.TFunction = ["TFunction",5];
+ValueType.TFunction.toString = $estr;
+ValueType.TFunction.__enum__ = ValueType;
+ValueType.TClass = function(c) { var $x = ["TClass",6,c]; $x.__enum__ = ValueType; $x.toString = $estr; return $x; };
+ValueType.TEnum = function(e) { var $x = ["TEnum",7,e]; $x.__enum__ = ValueType; $x.toString = $estr; return $x; };
+ValueType.TUnknown = ["TUnknown",8];
+ValueType.TUnknown.toString = $estr;
+ValueType.TUnknown.__enum__ = ValueType;
+ValueType.__empty_constructs__ = [ValueType.TNull,ValueType.TInt,ValueType.TFloat,ValueType.TBool,ValueType.TObject,ValueType.TFunction,ValueType.TUnknown];
+var Type = function() { };
+$hxClasses["Type"] = Type;
+Type.__name__ = ["Type"];
+Type.getClass = function(o) {
+	if(o == null) return null; else return js_Boot.getClass(o);
+};
+Type.getEnum = function(o) {
+	if(o == null) return null;
+	return o.__enum__;
+};
+Type.getSuperClass = function(c) {
+	return c.__super__;
+};
+Type.getClassName = function(c) {
+	var a = c.__name__;
+	if(a == null) return null;
+	return a.join(".");
+};
+Type.getEnumName = function(e) {
+	var a = e.__ename__;
+	return a.join(".");
+};
+Type.resolveClass = function(name) {
+	var cl = $hxClasses[name];
+	if(cl == null || !cl.__name__) return null;
+	return cl;
+};
+Type.resolveEnum = function(name) {
+	var e = $hxClasses[name];
+	if(e == null || !e.__ename__) return null;
+	return e;
+};
+Type.createInstance = function(cl,args) {
+	var _g = args.length;
+	switch(_g) {
+	case 0:
+		return new cl();
+	case 1:
+		return new cl(args[0]);
+	case 2:
+		return new cl(args[0],args[1]);
+	case 3:
+		return new cl(args[0],args[1],args[2]);
+	case 4:
+		return new cl(args[0],args[1],args[2],args[3]);
+	case 5:
+		return new cl(args[0],args[1],args[2],args[3],args[4]);
+	case 6:
+		return new cl(args[0],args[1],args[2],args[3],args[4],args[5]);
+	case 7:
+		return new cl(args[0],args[1],args[2],args[3],args[4],args[5],args[6]);
+	case 8:
+		return new cl(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7]);
+	default:
+		throw new js__$Boot_HaxeError("Too many arguments");
+	}
+	return null;
+};
+Type.createEmptyInstance = function(cl) {
+	function empty() {}; empty.prototype = cl.prototype;
+	return new empty();
+};
+Type.createEnum = function(e,constr,params) {
+	var f = Reflect.field(e,constr);
+	if(f == null) throw new js__$Boot_HaxeError("No such constructor " + constr);
+	if(Reflect.isFunction(f)) {
+		if(params == null) throw new js__$Boot_HaxeError("Constructor " + constr + " need parameters");
+		return Reflect.callMethod(e,f,params);
+	}
+	if(params != null && params.length != 0) throw new js__$Boot_HaxeError("Constructor " + constr + " does not need parameters");
+	return f;
+};
+Type.createEnumIndex = function(e,index,params) {
+	var c = e.__constructs__[index];
+	if(c == null) throw new js__$Boot_HaxeError(index + " is not a valid enum constructor index");
+	return Type.createEnum(e,c,params);
+};
+Type.getInstanceFields = function(c) {
+	var a = [];
+	for(var i in c.prototype) a.push(i);
+	HxOverrides.remove(a,"__class__");
+	HxOverrides.remove(a,"__properties__");
+	return a;
+};
+Type.getClassFields = function(c) {
+	var a = Reflect.fields(c);
+	HxOverrides.remove(a,"__name__");
+	HxOverrides.remove(a,"__interfaces__");
+	HxOverrides.remove(a,"__properties__");
+	HxOverrides.remove(a,"__super__");
+	HxOverrides.remove(a,"__meta__");
+	HxOverrides.remove(a,"prototype");
+	return a;
+};
+Type.getEnumConstructs = function(e) {
+	var a = e.__constructs__;
+	return a.slice();
+};
+Type["typeof"] = function(v) {
+	var _g = typeof(v);
+	switch(_g) {
+	case "boolean":
+		return ValueType.TBool;
+	case "string":
+		return ValueType.TClass(String);
+	case "number":
+		if(Math.ceil(v) == v % 2147483648.0) return ValueType.TInt;
+		return ValueType.TFloat;
+	case "object":
+		if(v == null) return ValueType.TNull;
+		var e = v.__enum__;
+		if(e != null) return ValueType.TEnum(e);
+		var c = js_Boot.getClass(v);
+		if(c != null) return ValueType.TClass(c);
+		return ValueType.TObject;
+	case "function":
+		if(v.__name__ || v.__ename__) return ValueType.TObject;
+		return ValueType.TFunction;
+	case "undefined":
+		return ValueType.TNull;
+	default:
+		return ValueType.TUnknown;
+	}
+};
+Type.enumEq = function(a,b) {
+	if(a == b) return true;
+	try {
+		if(a[0] != b[0]) return false;
+		var _g1 = 2;
+		var _g = a.length;
+		while(_g1 < _g) {
+			var i = _g1++;
+			if(!Type.enumEq(a[i],b[i])) return false;
+		}
+		var e = a.__enum__;
+		if(e != b.__enum__ || e == null) return false;
+	} catch( e1 ) {
+		haxe_CallStack.lastException = e1;
+		if (e1 instanceof js__$Boot_HaxeError) e1 = e1.val;
+		return false;
+	}
+	return true;
+};
+Type.enumConstructor = function(e) {
+	return e[0];
+};
+Type.enumParameters = function(e) {
+	return e.slice(2);
+};
+Type.enumIndex = function(e) {
+	return e[1];
+};
+Type.allEnums = function(e) {
+	return e.__empty_constructs__;
+};
+var haxe_IMap = function() { };
+$hxClasses["haxe.IMap"] = haxe_IMap;
+haxe_IMap.__name__ = ["haxe","IMap"];
+haxe_IMap.prototype = {
+	get: null
+	,set: null
+	,exists: null
+	,remove: null
+	,keys: null
+	,iterator: null
+	,toString: null
+	,__class__: haxe_IMap
+};
+var js__$Boot_HaxeError = function(val) {
+	Error.call(this);
+	this.val = val;
+	this.message = String(val);
+	if(Error.captureStackTrace) Error.captureStackTrace(this,js__$Boot_HaxeError);
+};
+$hxClasses["js._Boot.HaxeError"] = js__$Boot_HaxeError;
+js__$Boot_HaxeError.__name__ = ["js","_Boot","HaxeError"];
+js__$Boot_HaxeError.__super__ = Error;
+js__$Boot_HaxeError.prototype = $extend(Error.prototype,{
+	val: null
+	,__class__: js__$Boot_HaxeError
+});
+var js_Boot = function() { };
+$hxClasses["js.Boot"] = js_Boot;
+js_Boot.__name__ = ["js","Boot"];
+js_Boot.__unhtml = function(s) {
+	return s.split("&").join("&amp;").split("<").join("&lt;").split(">").join("&gt;");
+};
+js_Boot.__trace = function(v,i) {
+	var msg;
+	if(i != null) msg = i.fileName + ":" + i.lineNumber + ": "; else msg = "";
+	msg += js_Boot.__string_rec(v,"");
+	if(i != null && i.customParams != null) {
+		var _g = 0;
+		var _g1 = i.customParams;
+		while(_g < _g1.length) {
+			var v1 = _g1[_g];
+			++_g;
+			msg += "," + js_Boot.__string_rec(v1,"");
+		}
+	}
+	var d;
+	if(typeof(document) != "undefined" && (d = document.getElementById("haxe:trace")) != null) d.innerHTML += js_Boot.__unhtml(msg) + "<br/>"; else if(typeof console != "undefined" && console.log != null) console.log(msg);
+};
+js_Boot.__clear_trace = function() {
+	var d = document.getElementById("haxe:trace");
+	if(d != null) d.innerHTML = "";
+};
+js_Boot.isClass = function(o) {
+	return o.__name__;
+};
+js_Boot.isEnum = function(e) {
+	return e.__ename__;
+};
+js_Boot.getClass = function(o) {
+	if((o instanceof Array) && o.__enum__ == null) return Array; else {
+		var cl = o.__class__;
+		if(cl != null) return cl;
+		var name = js_Boot.__nativeClassName(o);
+		if(name != null) return js_Boot.__resolveNativeClass(name);
+		return null;
+	}
+};
+js_Boot.__string_rec = function(o,s) {
+	if(o == null) return "null";
+	if(s.length >= 5) return "<...>";
+	var t = typeof(o);
+	if(t == "function" && (o.__name__ || o.__ename__)) t = "object";
+	switch(t) {
+	case "object":
+		if(o instanceof Array) {
+			if(o.__enum__) {
+				if(o.length == 2) return o[0];
+				var str2 = o[0] + "(";
+				s += "\t";
+				var _g1 = 2;
+				var _g = o.length;
+				while(_g1 < _g) {
+					var i1 = _g1++;
+					if(i1 != 2) str2 += "," + js_Boot.__string_rec(o[i1],s); else str2 += js_Boot.__string_rec(o[i1],s);
+				}
+				return str2 + ")";
+			}
+			var l = o.length;
+			var i;
+			var str1 = "[";
+			s += "\t";
+			var _g2 = 0;
+			while(_g2 < l) {
+				var i2 = _g2++;
+				str1 += (i2 > 0?",":"") + js_Boot.__string_rec(o[i2],s);
+			}
+			str1 += "]";
+			return str1;
+		}
+		var tostr;
+		try {
+			tostr = o.toString;
+		} catch( e ) {
+			haxe_CallStack.lastException = e;
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
+			return "???";
+		}
+		if(tostr != null && tostr != Object.toString && typeof(tostr) == "function") {
+			var s2 = o.toString();
+			if(s2 != "[object Object]") return s2;
+		}
+		var k = null;
+		var str = "{\n";
+		s += "\t";
+		var hasp = o.hasOwnProperty != null;
+		for( var k in o ) {
+		if(hasp && !o.hasOwnProperty(k)) {
+			continue;
+		}
+		if(k == "prototype" || k == "__class__" || k == "__super__" || k == "__interfaces__" || k == "__properties__") {
+			continue;
+		}
+		if(str.length != 2) str += ", \n";
+		str += s + k + " : " + js_Boot.__string_rec(o[k],s);
+		}
+		s = s.substring(1);
+		str += "\n" + s + "}";
+		return str;
+	case "function":
+		return "<function>";
+	case "string":
+		return o;
+	default:
+		return String(o);
+	}
+};
+js_Boot.__interfLoop = function(cc,cl) {
+	if(cc == null) return false;
+	if(cc == cl) return true;
+	var intf = cc.__interfaces__;
+	if(intf != null) {
+		var _g1 = 0;
+		var _g = intf.length;
+		while(_g1 < _g) {
+			var i = _g1++;
+			var i1 = intf[i];
+			if(i1 == cl || js_Boot.__interfLoop(i1,cl)) return true;
+		}
+	}
+	return js_Boot.__interfLoop(cc.__super__,cl);
+};
+js_Boot.__instanceof = function(o,cl) {
+	if(cl == null) return false;
+	switch(cl) {
+	case Int:
+		return (o|0) === o;
+	case Float:
+		return typeof(o) == "number";
+	case Bool:
+		return typeof(o) == "boolean";
+	case String:
+		return typeof(o) == "string";
+	case Array:
+		return (o instanceof Array) && o.__enum__ == null;
+	case Dynamic:
+		return true;
+	default:
+		if(o != null) {
+			if(typeof(cl) == "function") {
+				if(o instanceof cl) return true;
+				if(js_Boot.__interfLoop(js_Boot.getClass(o),cl)) return true;
+			} else if(typeof(cl) == "object" && js_Boot.__isNativeObj(cl)) {
+				if(o instanceof cl) return true;
+			}
+		} else return false;
+		if(cl == Class && o.__name__ != null) return true;
+		if(cl == Enum && o.__ename__ != null) return true;
+		return o.__enum__ == cl;
+	}
+};
+js_Boot.__cast = function(o,t) {
+	if(js_Boot.__instanceof(o,t)) return o; else throw new js__$Boot_HaxeError("Cannot cast " + Std.string(o) + " to " + Std.string(t));
+};
+js_Boot.__nativeClassName = function(o) {
+	var name = js_Boot.__toStr.call(o).slice(8,-1);
+	if(name == "Object" || name == "Function" || name == "Math" || name == "JSON") return null;
+	return name;
+};
+js_Boot.__isNativeObj = function(o) {
+	return js_Boot.__nativeClassName(o) != null;
+};
+js_Boot.__resolveNativeClass = function(name) {
+	return $global[name];
+};
+var js_Browser = function() { };
+$hxClasses["js.Browser"] = js_Browser;
+js_Browser.__name__ = ["js","Browser"];
+js_Browser.__properties__ = {get_supported:"get_supported",get_console:"get_console",get_navigator:"get_navigator",get_location:"get_location",get_document:"get_document",get_window:"get_window"}
+js_Browser.get_window = function() {
+	return window;
+};
+js_Browser.get_document = function() {
+	return window.document;
+};
+js_Browser.get_location = function() {
+	return window.location;
+};
+js_Browser.get_navigator = function() {
+	return window.navigator;
+};
+js_Browser.get_console = function() {
+	return window.console;
+};
+js_Browser.get_supported = function() {
+	return typeof(window) != "undefined";
+};
+js_Browser.getLocalStorage = function() {
+	try {
+		var s = window.localStorage;
+		s.getItem("");
+		return s;
+	} catch( e ) {
+		haxe_CallStack.lastException = e;
+		if (e instanceof js__$Boot_HaxeError) e = e.val;
+		return null;
+	}
+};
+js_Browser.getSessionStorage = function() {
+	try {
+		var s = window.sessionStorage;
+		s.getItem("");
+		return s;
+	} catch( e ) {
+		haxe_CallStack.lastException = e;
+		if (e instanceof js__$Boot_HaxeError) e = e.val;
+		return null;
+	}
+};
+js_Browser.createXMLHttpRequest = function() {
+	if(typeof XMLHttpRequest != "undefined") return new XMLHttpRequest();
+	if(typeof ActiveXObject != "undefined") return new ActiveXObject("Microsoft.XMLHTTP");
+	throw new js__$Boot_HaxeError("Unable to create XMLHttpRequest object.");
+};
+js_Browser.alert = function(v) {
+	window.alert(js_Boot.__string_rec(v,""));
+};
+var js_Lib = function() { };
+$hxClasses["js.Lib"] = js_Lib;
+js_Lib.__name__ = ["js","Lib"];
+js_Lib.__properties__ = {get_undefined:"get_undefined"}
+js_Lib.debug = function() {
+	debugger;
+};
+js_Lib.alert = function(v) {
+	alert(js_Boot.__string_rec(v,""));
+};
+js_Lib["eval"] = function(code) {
+	return eval(code);
+};
+js_Lib.require = function(module) {
+	return require(module);
+};
+js_Lib.get_undefined = function() {
+	return undefined;
+};
+var js_html__$CanvasElement_CanvasUtil = function() { };
+$hxClasses["js.html._CanvasElement.CanvasUtil"] = js_html__$CanvasElement_CanvasUtil;
+js_html__$CanvasElement_CanvasUtil.__name__ = ["js","html","_CanvasElement","CanvasUtil"];
+js_html__$CanvasElement_CanvasUtil.getContextWebGL = function(canvas,attribs) {
+	var _g = 0;
+	var _g1 = ["webgl","experimental-webgl"];
+	while(_g < _g1.length) {
+		var name = _g1[_g];
+		++_g;
+		var ctx = canvas.getContext(name,attribs);
+		if(ctx != null) return ctx;
+	}
+	return null;
+};
+var spark_Asset = function(src) {
+	this.source = src;
+	this.loaded = false;
+	Spark.request(this);
+};
+$hxClasses["spark.Asset"] = spark_Asset;
+spark_Asset.__name__ = ["spark","Asset"];
+spark_Asset.prototype = {
+	source: null
+	,loaded: null
+	,isLoaded: function() {
+		return this.loaded;
+	}
+	,__class__: spark_Asset
+};
+var spark_XHRAsset = function(src,respType,onload) {
+	var _g = this;
+	spark_Asset.call(this,src);
+	this.req = new XMLHttpRequest();
+	this.req.onloadend = function() {
+		if(_g.req.status >= 200 && _g.req.status <= 299) onload(_g.req);
+		_g.loaded = true;
+	};
+};
+$hxClasses["spark.XHRAsset"] = spark_XHRAsset;
+spark_XHRAsset.__name__ = ["spark","XHRAsset"];
+spark_XHRAsset.__super__ = spark_Asset;
+spark_XHRAsset.prototype = $extend(spark_Asset.prototype,{
+	req: null
+	,__class__: spark_XHRAsset
+});
+var spark_XMLAsset = function(src,onload) {
+	var _g = this;
+	spark_XHRAsset.call(this,src,"document",function(req) {
+		onload(_g.doc = req.response);
+	});
+};
+$hxClasses["spark.XMLAsset"] = spark_XMLAsset;
+spark_XMLAsset.__name__ = ["spark","XMLAsset"];
+spark_XMLAsset.__super__ = spark_XHRAsset;
+spark_XMLAsset.prototype = $extend(spark_XHRAsset.prototype,{
+	doc: null
+	,__class__: spark_XMLAsset
+});
+var spark_JSONAsset = function(src,onload) {
+	var _g = this;
+	spark_XHRAsset.call(this,src,"json",function(req) {
+		onload(_g.json = req.response);
+	});
+};
+$hxClasses["spark.JSONAsset"] = spark_JSONAsset;
+spark_JSONAsset.__name__ = ["spark","JSONAsset"];
+spark_JSONAsset.__super__ = spark_XHRAsset;
+spark_JSONAsset.prototype = $extend(spark_XHRAsset.prototype,{
+	json: null
+	,__class__: spark_JSONAsset
+});
+var spark_Input = $hx_exports.spark.Input = function() { };
+$hxClasses["spark.Input"] = spark_Input;
+spark_Input.__name__ = ["spark","Input"];
+spark_Input.keys = null;
+spark_Input.buttons = null;
+spark_Input.x = null;
+spark_Input.y = null;
+spark_Input.relX = null;
+spark_Input.relY = null;
+spark_Input.init = function() {
+	var i;
+	spark_Input.keys = [];
+	spark_Input.buttons = [];
+	var _g = 0;
+	while(_g < 255) {
+		var i1 = _g++;
+		spark_Input.keys.push({ down : false, hits : 0});
+	}
+	var _g1 = 0;
+	while(_g1 < 31) {
+		var i2 = _g1++;
+		spark_Input.buttons.push({ down : false, hits : 0});
+	}
+	spark_Input.relX = 0;
+	spark_Input.relY = 0;
+};
+spark_Input.enableKeyboard = function() {
+	window.addEventListener("keydown",spark_Input.onKeyDown,false);
+	window.addEventListener("keyup",spark_Input.onKeyUp,false);
+};
+spark_Input.enableMouse = function() {
+	window.addEventListener("mousedown",spark_Input.onMouseDown,false);
+	window.addEventListener("mouseup",spark_Input.onMouseUp,false);
+	window.addEventListener("mousemove",spark_Input.onMouseMove,false);
+};
+spark_Input.flush = function() {
+	var _g1 = 0;
+	var _g = spark_Input.keys.length - 1;
+	while(_g1 < _g) {
+		var i = _g1++;
+		spark_Input.keys[i].hits = 0;
+	}
+	var _g11 = 0;
+	var _g2 = spark_Input.buttons.length - 1;
+	while(_g11 < _g2) {
+		var i1 = _g11++;
+		spark_Input.buttons[i1].hits = 0;
+	}
+	spark_Input.relX = 0;
+	spark_Input.relY = 0;
+};
+spark_Input.hideCursor = function() {
+	Spark.canvas.style.cursor = "none";
+};
+spark_Input.showCursor = function(image) {
+	if(image == null) Spark.canvas.style.cursor = "pointer"; else Spark.canvas.style.cursor = image;
+};
+spark_Input.keyDown = function(key) {
+	if(key >= 0 && key < spark_Input.keys.length) return spark_Input.keys[key].down; else return false;
+};
+spark_Input.keyHit = function(key) {
+	return spark_Input.keyHits(key) > 0;
+};
+spark_Input.keyHits = function(key) {
+	if(key >= 0 && key < spark_Input.keys.length) return spark_Input.keys[key].hits; else return 0;
+};
+spark_Input.mouseDown = function(button) {
+	if(button == null) button = 0;
+	if(button >= 0 && button < spark_Input.buttons.length) return spark_Input.buttons[button].down; else return false;
+};
+spark_Input.buttonHit = function(button) {
+	if(button == null) button = 0;
+	return spark_Input.buttonHits(button) > 0;
+};
+spark_Input.buttonHits = function(button) {
+	if(button == null) button = 0;
+	if(button >= 0 && button < spark_Input.buttons.length) return spark_Input.buttons[button].hits; else return 0;
+};
+spark_Input.onKeyDown = function(event) {
+	if(event.keyCode < spark_Input.keys.length) {
+		spark_Input.keys[event.keyCode].down = true;
+		spark_Input.keys[event.keyCode].hits++;
+	}
+};
+spark_Input.onKeyUp = function(event) {
+	if(event.keyCode < spark_Input.keys.length) spark_Input.keys[event.keyCode].down = false;
+};
+spark_Input.onMouseDown = function(event) {
+	if(event.button < spark_Input.buttons.length) {
+		spark_Input.buttons[event.button].down = true;
+		spark_Input.buttons[event.button].hits++;
+	}
+};
+spark_Input.onMouseUp = function(event) {
+	if(event.button < spark_Input.buttons.length) spark_Input.buttons[event.button].down = false;
+};
+spark_Input.onMouseMove = function(event) {
+	var eventX = event.clientX - Spark.canvas.offsetLeft;
+	var eventY = event.clientY - Spark.canvas.offsetTop;
+	spark_Input.relX += eventX - spark_Input.x;
+	spark_Input.relY += eventY - spark_Input.y;
+	spark_Input.x = eventX;
+	spark_Input.y = eventY;
+};
+var spark_Mat = $hx_exports.spark.Mat = function(x,y,rx,ry,sx,sy) {
+	this.p = new spark_Vec(x,y);
+	this.r = new spark_Vec(rx,ry);
+	this.s = new spark_Vec(sx,sy);
+};
+$hxClasses["spark.Mat"] = spark_Mat;
+spark_Mat.__name__ = ["spark","Mat"];
+spark_Mat.prototype = {
+	p: null
+	,r: null
+	,s: null
+	,inverse: function() {
+		return new spark_Mat(-this.p.x,-this.p.y,this.r.x,-this.r.y,1 / this.s.x,1 / this.s.y);
+	}
+	,translate: function(x,y,local) {
+		if(local == null) local = false;
+		var dx = x;
+		var dy = y;
+		if(local) {
+			dx = x * this.r.x + y * this.r.y;
+			dy = y * this.r.x - x * this.r.y;
+		}
+		this.p.x += dx;
+		this.p.y += dy;
+	}
+	,rotate: function(r) {
+		var x = Math.cos(spark_Util.degToRad(r));
+		var y = Math.sin(spark_Util.degToRad(r));
+		this.r.set(this.r.x * x + this.r.y * y,this.r.y * x - this.r.x * y);
+	}
+	,scale: function(x,y) {
+		this.s.x *= x;
+		if(y == null) this.s.y *= x; else this.s.y *= y;
+	}
+	,transform: function(v) {
+		var x = v.x * this.s.x * this.r.x + v.y * this.s.y * this.r.y;
+		var y = v.y * this.s.y * this.r.x - v.x * this.s.x * this.r.y;
+		return new spark_Vec(x,y);
+	}
+	,mult: function(m) {
+		var p = this.transform(m.p);
+		var r = this.r.rotate(m.r);
+		var s = this.s.mult(m.s);
+		return new spark_Mat(p.x,p.y,r.x,r.y,s.x,s.y);
+	}
+	,apply: function() {
+		var a = this.r.x * this.s.x;
+		var b = this.r.y * this.s.y;
+		var c = this.r.y * this.s.x;
+		var d = this.r.x * this.s.y;
+		var e = this.p.x;
+		var f = this.p.y;
+		Spark.view.transform(a,-b,c,d,e,f);
+	}
+	,__class__: spark_Mat
+};
+var spark_Rect = $hx_exports.spark.Rect = function(x,y,w,h) {
+	this.x = x;
+	this.y = y;
+	this.width = w;
+	this.height = h;
+};
+$hxClasses["spark.Rect"] = spark_Rect;
+spark_Rect.__name__ = ["spark","Rect"];
+spark_Rect.prototype = {
+	x: null
+	,y: null
+	,width: null
+	,height: null
+	,contains: function(x,y) {
+		return x >= this.x && x <= this.x + this.width && (y >= this.y && y <= this.y + this.height);
+	}
+	,getLeft: function() {
+		return this.x;
+	}
+	,getTop: function() {
+		return this.y;
+	}
+	,getRight: function() {
+		return this.x + this.width;
+	}
+	,getBottom: function() {
+		return this.y + this.height;
+	}
+	,__class__: spark_Rect
+};
+var spark_Scene = $hx_exports.spark.Scene = function(origin,width,height) {
+	var i;
+	var vw = Spark.canvas.width;
+	var vh = Spark.canvas.height;
+	var w;
+	if(width == null) w = vw; else w = width;
+	var h;
+	if(height == null) h = vh; else h = height;
+	var x = 0;
+	var y = 0;
+	var _g;
+	if(origin == null) _g = spark_Origin.TOP_LEFT; else _g = origin;
+	switch(_g[1]) {
+	case 0:
+		x = 0;
+		y = 0;
+		break;
+	case 1:
+		x = w / 2;
+		y = 0;
+		break;
+	case 2:
+		x = w;
+		y = 0;
+		break;
+	case 3:
+		x = 0;
+		y = h;
+		break;
+	case 4:
+		x = w / 2;
+		y = h;
+		break;
+	case 5:
+		x = w;
+		y = h;
+		break;
+	case 6:
+		x = 0;
+		y = h / 2;
+		break;
+	case 7:
+		x = w;
+		y = h / 2;
+		break;
+	case 8:
+		x = w / 2;
+		y = h / 2;
+		break;
+	}
+	this.rect = new spark_Rect(-x,-y,w,h);
+	this.camera = new spark_Mat(0,0,1,0,Spark.canvas.width / 2,Spark.canvas.height / 2);
+};
+$hxClasses["spark.Scene"] = spark_Scene;
+spark_Scene.__name__ = ["spark","Scene"];
+spark_Scene.prototype = {
+	frametime: null
+	,framecount: null
+	,runloop: null
+	,sp: null
+	,count: null
+	,pending: null
+	,rect: null
+	,camera: null
+	,setViewport: function(w,h) {
+		if(w == null) w = Spark.canvas.width; else w = w;
+		if(h == null) h = w * Spark.canvas.height / Spark.canvas.width;
+		this.camera.s.x = w / 2;
+		this.camera.s.y = h / 2;
+	}
+	,run: function() {
+		this.framecount = 0;
+		this.frametime = window.performance.now();
+		this.runloop = window.requestAnimationFrame($bind(this,this.stepFrame));
+	}
+	,quit: function() {
+		window.cancelAnimationFrame(this.runloop);
+	}
+	,stepFrame: function(now) {
+		var step = (now - this.frametime) / 1000;
+		this.frametime = now;
+		this.framecount++;
+		this.update(step);
+		this.draw();
+		spark_Input.flush();
+		this.runloop = window.requestAnimationFrame($bind(this,this.stepFrame));
+	}
+	,update: function(step) {
+	}
+	,draw: function() {
+		var i;
+		Spark.view.save();
+		Spark.view.globalAlpha = 1.0;
+		Spark.view.globalCompositeOperation = "source-over";
+		Spark.view.shadowBlur = 0.0;
+		Spark.view.lineWidth = 1;
+		Spark.view.fillStyle = "#000";
+		Spark.view.strokeStyle = "#fff";
+		Spark.view.clearRect(0,0,Spark.canvas.width,Spark.canvas.height);
+		var w2 = Spark.canvas.width / 2;
+		var h2 = Spark.canvas.height / 2;
+		var mx = this.rect.x + this.rect.width / 2;
+		var my = this.rect.y + this.rect.height / 2;
+		Spark.view.setTransform(1,0,0,1,0,0);
+		Spark.view.translate(w2,h2);
+		Spark.view.scale(w2 / this.camera.s.x,h2 / this.camera.s.y);
+		Spark.view.transform(this.camera.r.x,this.camera.r.y,-this.camera.r.y,this.camera.r.x,0,0);
+		Spark.view.translate(-this.camera.p.x - mx,-this.camera.p.y - my);
+		Spark.view.restore();
+	}
+	,worldToScreen: function(x,y) {
+		var mx = this.rect.x + this.rect.width / 2;
+		var my = this.rect.y + this.rect.height / 2;
+		var cx = x - (this.camera.p.x + mx);
+		var cy = y - (this.camera.p.y + my);
+		var rx = cx * this.camera.r.x - cy * this.camera.r.y;
+		var ry = cy * this.camera.r.x + cx * this.camera.r.y;
+		var sx = rx * Spark.canvas.height / (2 * this.camera.s.x);
+		var sy = ry * Spark.canvas.width / (2 * this.camera.s.y);
+		return new spark_Vec(sx + Spark.canvas.width / 2,sy + Spark.canvas.height / 2);
+	}
+	,screenToWorld: function(x,y) {
+		var cx = (x - Spark.canvas.width / 2) * this.camera.s.x * 2 / Spark.canvas.width;
+		var cy = (y - Spark.canvas.height / 2) * this.camera.s.y * 2 / Spark.canvas.height;
+		var vx = cx * this.camera.r.x + cy * this.camera.r.y;
+		var vy = cy * this.camera.r.x - cx * this.camera.r.y;
+		var mx = this.rect.x + this.rect.width / 2;
+		var my = this.rect.y + this.rect.height / 2;
+		return new spark_Vec(vx + this.camera.p.x + mx,vy + this.camera.p.y + my);
+	}
+	,__class__: spark_Scene
+};
+var spark_Origin = $hxClasses["spark.Origin"] = { __ename__ : ["spark","Origin"], __constructs__ : ["TOP_LEFT","TOP_MIDDLE","TOP_RIGHT","BOTTOM_LEFT","BOTTOM_MIDDLE","BOTTOM_RIGHT","MIDDLE_LEFT","MIDDLE_RIGHT","MIDDLE"] };
+spark_Origin.TOP_LEFT = ["TOP_LEFT",0];
+spark_Origin.TOP_LEFT.toString = $estr;
+spark_Origin.TOP_LEFT.__enum__ = spark_Origin;
+spark_Origin.TOP_MIDDLE = ["TOP_MIDDLE",1];
+spark_Origin.TOP_MIDDLE.toString = $estr;
+spark_Origin.TOP_MIDDLE.__enum__ = spark_Origin;
+spark_Origin.TOP_RIGHT = ["TOP_RIGHT",2];
+spark_Origin.TOP_RIGHT.toString = $estr;
+spark_Origin.TOP_RIGHT.__enum__ = spark_Origin;
+spark_Origin.BOTTOM_LEFT = ["BOTTOM_LEFT",3];
+spark_Origin.BOTTOM_LEFT.toString = $estr;
+spark_Origin.BOTTOM_LEFT.__enum__ = spark_Origin;
+spark_Origin.BOTTOM_MIDDLE = ["BOTTOM_MIDDLE",4];
+spark_Origin.BOTTOM_MIDDLE.toString = $estr;
+spark_Origin.BOTTOM_MIDDLE.__enum__ = spark_Origin;
+spark_Origin.BOTTOM_RIGHT = ["BOTTOM_RIGHT",5];
+spark_Origin.BOTTOM_RIGHT.toString = $estr;
+spark_Origin.BOTTOM_RIGHT.__enum__ = spark_Origin;
+spark_Origin.MIDDLE_LEFT = ["MIDDLE_LEFT",6];
+spark_Origin.MIDDLE_LEFT.toString = $estr;
+spark_Origin.MIDDLE_LEFT.__enum__ = spark_Origin;
+spark_Origin.MIDDLE_RIGHT = ["MIDDLE_RIGHT",7];
+spark_Origin.MIDDLE_RIGHT.toString = $estr;
+spark_Origin.MIDDLE_RIGHT.__enum__ = spark_Origin;
+spark_Origin.MIDDLE = ["MIDDLE",8];
+spark_Origin.MIDDLE.toString = $estr;
+spark_Origin.MIDDLE.__enum__ = spark_Origin;
+spark_Origin.__empty_constructs__ = [spark_Origin.TOP_LEFT,spark_Origin.TOP_MIDDLE,spark_Origin.TOP_RIGHT,spark_Origin.BOTTOM_LEFT,spark_Origin.BOTTOM_MIDDLE,spark_Origin.BOTTOM_RIGHT,spark_Origin.MIDDLE_LEFT,spark_Origin.MIDDLE_RIGHT,spark_Origin.MIDDLE];
+var spark_Util = $hx_exports.spark.Util = function() { };
+$hxClasses["spark.Util"] = spark_Util;
+spark_Util.__name__ = ["spark","Util"];
+spark_Util.degToRad = function(r) {
+	return r * Math.PI / 180.0;
+};
+spark_Util.radToDeg = function(r) {
+	return r * 180.0 / Math.PI;
+};
+spark_Util.signum = function(n) {
+	if(Math.abs(n) < 0.00001) return 0;
+	if(n > 0) return 1; else return -1;
+};
+spark_Util.nextPow2 = function(n) {
+	return Math.pow(2,Math.ceil(Math.log(n) / Math.log(2)));
+};
+spark_Util.clamp = function(n,min,max) {
+	return Math.max(min,Math.min(n,max));
+};
+spark_Util.rand = function(min,max) {
+	return Math.random() * (max - min) + min;
+};
+spark_Util.irand = function(min,max) {
+	return Math.floor(spark_Util.rand(min,max));
+};
+spark_Util.arand = function(array) {
+	return array[spark_Util.irand(0,array.length)];
+};
+spark_Util.lerp = function(p,q,k,max) {
+	if(max == null) max = 1;
+	return p + (q - p) * k / max;
+};
+var spark_Vec = $hx_exports.spark.Vec = function(x,y) {
+	this.x = x;
+	this.y = y;
+};
+$hxClasses["spark.Vec"] = spark_Vec;
+spark_Vec.__name__ = ["spark","Vec"];
+spark_Vec.prototype = {
+	x: null
+	,y: null
+	,set: function(x,y) {
+		this.x = x;
+		this.y = y;
+	}
+	,add: function(v) {
+		return new spark_Vec(this.x + v.x,this.y + v.y);
+	}
+	,sub: function(v) {
+		return new spark_Vec(this.x - v.x,this.y - v.y);
+	}
+	,mult: function(v) {
+		return new spark_Vec(this.x * v.x,this.y * v.y);
+	}
+	,imult: function(v) {
+		return new spark_Vec(this.x / v.x,this.y / v.y);
+	}
+	,scale: function(s) {
+		return new spark_Vec(this.x * s,this.y * s);
+	}
+	,neg: function() {
+		return new spark_Vec(-this.x,-this.y);
+	}
+	,inv: function() {
+		return new spark_Vec(1 / this.x,1 / this.y);
+	}
+	,dot: function(v) {
+		return this.x * v.x + this.y * v.y;
+	}
+	,cross: function(v) {
+		return this.x * v.y - this.y * v.x;
+	}
+	,magsq: function() {
+		return this.x * this.x + this.y * this.y;
+	}
+	,mag: function() {
+		return Math.sqrt(this.x * this.x + this.y * this.y);
+	}
+	,distsq: function(v) {
+		var dx = this.x - v.x;
+		var dy = this.y - v.y;
+		return dx * dx + dy * dy;
+	}
+	,dist: function(v) {
+		return Math.sqrt(this.magsq());
+	}
+	,norm: function() {
+		return this.scale(1.0 / this.mag());
+	}
+	,lerp: function(v,k) {
+		return new spark_Vec(this.x + (v.x - this.x) * k,this.y + (v.y - this.y) * k);
+	}
+	,proj: function(p,q) {
+		var a = this.sub(p);
+		var b = q.sub(p);
+		var k = a.dot(b);
+		var d = b.magsq();
+		if(d < 0.00001) return b; else {
+			var s = k / d;
+			if(s < 0.0) return p;
+			if(s > 1.0) return q;
+			return p.lerp(q,s);
+		}
+	}
+	,perp: function() {
+		return new spark_Vec(this.y,-this.x);
+	}
+	,rperp: function() {
+		return new spark_Vec(-this.y,this.x);
+	}
+	,rotate: function(r) {
+		return new spark_Vec(this.x * r.x + this.y * r.y,this.y * r.x - this.x * r.y);
+	}
+	,unrotate: function(r) {
+		return new spark_Vec(this.x * r.x - this.y * r.y,this.y * r.x + this.x * r.y);
+	}
+	,__class__: spark_Vec
+};
+function $iterator(o) { if( o instanceof Array ) return function() { return HxOverrides.iter(o); }; return typeof(o.iterator) == 'function' ? $bind(o,o.iterator) : o.iterator; }
+var $_, $fid = 0;
+function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $fid++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = function(){ return f.method.apply(f.scope, arguments); }; f.scope = o; f.method = m; o.hx__closures__[m.__id__] = f; } return f; }
+function $arrayPushClosure(a) { return function(x) { a.push(x); }; }
+if(Array.prototype.indexOf) HxOverrides.indexOf = function(a,o,i) {
+	return Array.prototype.indexOf.call(a,o,i);
+};
+if(Array.prototype.lastIndexOf) HxOverrides.lastIndexOf = function(a1,o1,i1) {
+	return Array.prototype.lastIndexOf.call(a1,o1,i1);
+};
+$hxClasses.Math = Math;
+String.prototype.__class__ = $hxClasses.String = String;
+String.__name__ = ["String"];
+$hxClasses.Array = Array;
+Array.__name__ = ["Array"];
+Date.prototype.__class__ = $hxClasses.Date = Date;
+Date.__name__ = ["Date"];
+var Int = $hxClasses.Int = { __name__ : ["Int"]};
+var Dynamic = $hxClasses.Dynamic = { __name__ : ["Dynamic"]};
+var Float = $hxClasses.Float = Number;
+Float.__name__ = ["Float"];
+var Bool = $hxClasses.Bool = Boolean;
+Bool.__ename__ = ["Bool"];
+var Class = $hxClasses.Class = { __name__ : ["Class"]};
+var Enum = { };
+var Void = $hxClasses.Void = { __ename__ : ["Void"]};
+if(Array.prototype.map == null) Array.prototype.map = function(f) {
+	var a = [];
+	var _g1 = 0;
+	var _g = this.length;
+	while(_g1 < _g) {
+		var i = _g1++;
+		a[i] = f(this[i]);
+	}
+	return a;
+};
+if(Array.prototype.filter == null) Array.prototype.filter = function(f1) {
+	var a1 = [];
+	var _g11 = 0;
+	var _g2 = this.length;
+	while(_g11 < _g2) {
+		var i1 = _g11++;
+		var e = this[i1];
+		if(f1(e)) a1.push(e);
+	}
+	return a1;
+};
+js_Boot.__toStr = {}.toString;
+spark_Input.Button = { 'LEFT' : 0, 'MIDDLE' : 1, 'RIGHT' : 2};
+spark_Input.Key = { 'BACKSPACE' : 8, 'TAB' : 9, 'ENTER' : 13, 'PAUSE' : 19, 'CAPS' : 20, 'ESC' : 27, 'SPACE' : 32, 'PAGE_UP' : 33, 'PAGE_DOWN' : 34, 'END' : 35, 'HOME' : 36, 'LEFT' : 37, 'UP' : 38, 'RIGHT' : 39, 'DOWN' : 40, 'INSERT' : 45, 'DELETE' : 46, '_0' : 48, '_1' : 49, '_2' : 50, '_3' : 51, '_4' : 52, '_5' : 53, '_6' : 54, '_7' : 55, '_8' : 56, '_9' : 57, 'A' : 65, 'B' : 66, 'C' : 67, 'D' : 68, 'E' : 69, 'F' : 70, 'G' : 71, 'H' : 72, 'I' : 73, 'J' : 74, 'K' : 75, 'L' : 76, 'M' : 77, 'N' : 78, 'O' : 79, 'P' : 80, 'Q' : 81, 'R' : 82, 'S' : 83, 'T' : 84, 'U' : 85, 'V' : 86, 'W' : 87, 'X' : 88, 'Y' : 89, 'Z' : 90, 'NUMPAD_0' : 96, 'NUMPAD_1' : 97, 'NUMPAD_2' : 98, 'NUMPAD_3' : 99, 'NUMPAD_4' : 100, 'NUMPAD_5' : 101, 'NUMPAD_6' : 102, 'NUMPAD_7' : 103, 'NUMPAD_8' : 104, 'NUMPAD_9' : 105, 'MULTIPLY' : 106, 'ADD' : 107, 'SUBSTRACT' : 109, 'DECIMAL' : 110, 'DIVIDE' : 111, 'F1' : 112, 'F2' : 113, 'F3' : 114, 'F4' : 115, 'F5' : 116, 'F6' : 117, 'F7' : 118, 'F8' : 119, 'F9' : 120, 'F10' : 121, 'F11' : 122, 'F12' : 123, 'SHIFT' : 16, 'CTRL' : 17, 'ALT' : 18, 'PLUS' : 187, 'COMMA' : 188, 'MINUS' : 189, 'PERIOD' : 190};
+spark_Vec.ZERO = new spark_Vec(0,0);
+spark_Vec.ONE = new spark_Vec(1,1);
+spark_Vec.RIGHT = new spark_Vec(1,0);
+spark_Vec.UP = new spark_Vec(0,1);
+Spark.main();
+})(typeof console != "undefined" ? console : {log:function(){}}, typeof window != "undefined" ? window : exports, typeof window != "undefined" ? window : typeof global != "undefined" ? global : typeof self != "undefined" ? self : this);
