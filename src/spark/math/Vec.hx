@@ -29,6 +29,19 @@ class Vec {
     this.y = y;
   }
 
+  // create a vector in a given direction (degrees) and scale
+  static public function axis(angle: Float, ?scale: Float = 1): Vec {
+    var x = Math.cos(Util.degToRad(angle));
+    var y = Math.sin(Util.degToRad(angle));
+
+    return new Vec(x * scale, y * scale);
+  }
+
+  // returns a copy of this vector
+  public function copy(): Vec {
+    return new Vec(this.x, this.y);
+  }
+
   // set the values of the vector
   public function set(x: Float, y: Float) {
     this.x = x;

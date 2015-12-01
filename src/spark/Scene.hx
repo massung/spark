@@ -80,6 +80,11 @@ class Scene {
     this.camera.s.y = h / 2;
   }
 
+  // add a new layer to the scene
+  public function addLayer(layer: Layer) {
+    this.layers.push(layer);
+  }
+
   // start the main game loop
   public function run() {
     this.framecount = 0;
@@ -118,7 +123,7 @@ class Scene {
     var i;
 
     // update all the layers
-    for(i in 0...this.layers.length - 1) {
+    for(i in 0...this.layers.length) {
       this.layers[i].update(step);
     }
 
@@ -165,7 +170,7 @@ class Scene {
     // TODO: z-ordering of sprites/layers
 
     // render all the layers
-    for(i in 0...this.layers.length - 1) {
+    for(i in 0...this.layers.length) {
       this.layers[i].draw();
     }
 

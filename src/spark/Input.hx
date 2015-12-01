@@ -55,8 +55,8 @@ class Input {
 
   // reset hit counts on all input devices
   static public function flush() {
-    for(i in 0...keys.length - 1) keys[i].hits = 0;
-    for(i in 0...buttons.length - 1) buttons[i].hits = 0;
+    for(i in 0...keys.length) keys[i].hits = 0;
+    for(i in 0...buttons.length) buttons[i].hits = 0;
 
     // clear relative motion
     relX = 0;
@@ -109,7 +109,7 @@ class Input {
 
   // keydown event handler
   static function onKeyDown(event: js.html.KeyboardEvent) {
-    if (event.keyCode < keys.length) {
+    if (!event.repeat && event.keyCode < keys.length) {
       keys[event.keyCode].down = true;
       keys[event.keyCode].hits++;
     }

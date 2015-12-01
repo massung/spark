@@ -76,4 +76,16 @@ class JSONAsset extends XHRAsset {
       onload(this.json = req.response);
     });
   }
+
+  // merge the loaded JSON document into a field
+  public function mergeInto(obj: String) {
+    var k: String;
+
+    // merge the document with the fields in this object
+    for(k in Reflect.fields(this.json)) {
+      if (Reflect.hasField(obj, k)) {
+        Reflect.setProperty(obj, k, Reflect.field(this.json, k));
+      }
+    }
+  }
 }

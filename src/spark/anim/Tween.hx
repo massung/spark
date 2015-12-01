@@ -37,7 +37,7 @@ class Tween {
     var tangent = new Vector(hks.length);
 
     // calculate tangents for hard keys that don't have any
-    for(i in 1...hks.length - 2) {
+    for(i in 1...hks.length - 1) {
       if (hks[i].tangent != null) {
         tangent[i] = hks[i].tangent;
       } else {
@@ -58,7 +58,7 @@ class Tween {
     var p = (hks[0].frame < 1) ? hks.shift() : hks[0];
 
     // loop and calculate the soft keys for the entire tween
-    for(i in 1...this.duration) {
+    for(i in 1...this.duration + 1) {
       var n = hks[0];
 
       // if this frame has reached the next key, set the value

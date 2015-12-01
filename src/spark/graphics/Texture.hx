@@ -4,7 +4,7 @@
 // All rights reserved.
 //
 
-package spark;
+package spark.graphics;
 
 import spark.math.*;
 

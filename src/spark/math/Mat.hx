@@ -12,6 +12,9 @@ class Mat {
   public var r: Vec;
   public var s: Vec;
 
+  // angle is a property for manipulating the rotation vector
+  public var angle(get,set): Float;
+
   // global matrix properties
   static public var IDENTITY(get,null): Mat;
 
@@ -31,8 +34,15 @@ class Mat {
   }
 
   // return the angle of rotation in degrees
-  public function angle(): Float {
+  public function get_angle(): Float {
     return Util.radToDeg(Math.atan2(this.r.y, this.r.x));
+  }
+
+  public function set_angle(a: Float): Float {
+    this.r.x = Math.cos(Util.degToRad(a));
+    this.r.y = Math.sin(Util.degToRad(a));
+
+    return a;
   }
 
   // add the position vector

@@ -6,48 +6,70 @@
 
 package spark.anim;
 
-import haxe.ds.Vector;
+import haxe.ds.StringMap;
 import spark.math.*;
 
-typedef Track = { property: String, tween: Tween };
-typedef Event = { frame: Int, event: String };
+typedef TimelineData = {
+  fps: Int,
+  duration: Int,
+  loop: Bool,
+
+  // timed event callbacks
+  events: Array<{
+    frame: Int,
+    event: String
+  }>,
+
+  // tweens to crunch
+  tracks: StringMap<{
+    method: String,
+    keys: Array<Tween.Key>
+  }>
+}
+
+typedef Track = { method: String, keys: Array<Tween.Key> };
 
 @:expose
 class Timeline extends Asset.JSONAsset {
-  private var tracks: Array<Track>;
-  private var events: Array<Event>;
+  private var data: TimelineData;
 
-  // global track data
-  private var fps: Int;
-  private var duration: Int;
-  private var loop: Bool;
+  // crunched tracks
+  private var tweens: StringMap<Tween>;
 
   // load a new timeline asset
   public function new(src: String) {
     super(src, function(json: Dynamic) {
-      var i;
+      this.data = cast json;
 
-      // assign default values
-      this.fps = json.fps == null ? 30 : json.fps;
-      this.duration = json.duration == null ? 30 : json.duration;
-      this.loop = json.loop == null ? false : true;
+      // set defaults if not found
+      if (this.data.fps == null) this.data.fps = 30;
+      if (this.data.duration == null) this.data.duration = 30;
+      if (this.data.loop == null) this.data.loop = false;
+      if (this.data.events == null) this.data.events = [];
 
-      // sort all the events by frame
-      this.events = json.events == null ? new Array<Event>() : json.events;
-      this.events.sort(function(a, b) return a.frame - b.frame);
+      // sort all the events by their frame #
+      this.data.events.sort(function(a, b) return a.frame - b.frame);
 
-      // add all the tracks, crunching them
-      this.tracks = new Array<Track>();
-      if (json.tracks != null) {
-        for(i in Reflect.fields(json.tracks)) {
-          var track = Reflect.field(json.tracks, i);
+      // map property to crunched track
+      this.tweens = new StringMap<Tween>();
 
-          if (track.keys != null) {
-            var tween = new Tween(track.keys, this.fps, this.duration, track.method);
+      // crunch all the tracks
+      if (this.data.tracks != null) {
+        for(prop in this.data.tracks.keys()) {
+          var track = this.data.tracks.get(prop);
+          var keys = track.keys;
+          var method = track.method;
 
-            // add the crunched tween as a new track
-            this.tracks.push({ property: i, tween: tween });
+          // skip any track that doesn't have at least 2 keys in it
+          if (keys == null || keys.length < 2) {
+            continue;
           }
+
+          // if the method isn't set, use cubic interpolation
+          if (method == null) method = 'cubic';
+
+          // crunch the track into a tween
+          this.tweens.set(prop, new Tween(keys, this.data.fps, this.data.duration, method));
         }
       }
 
@@ -59,11 +81,11 @@ class Timeline extends Asset.JSONAsset {
   // create an instance of the timeline for a given object
   public function playOn(obj: Rig.Rigging, ?onevent: String -> Void) {
     var rig = new Rig();
-    var i;
+    var prop;
 
     // spawn all the tracks on the same rigging
-    for (i in 0...this.tracks.length - 1) {
-      this.tracks[i].tween.playOn(obj, this.tracks[i].property, this.loop);
+    for (prop in this.tweens.keys()) {
+      this.tweens.get(prop).playOn(obj, prop, this.data.loop);
     }
 
     // lexical data for the animation
@@ -73,22 +95,23 @@ class Timeline extends Asset.JSONAsset {
 
     // create an animation
     var anim = function(step: Float): Bool {
-      var frame = Math.floor((time += step) * timeline.fps % timeline.duration);
+      var frame = Math.floor((time += step) * timeline.data.fps % timeline.data.duration);
 
       // signal events that have been passed
-      if (timeline.events.length > 0) {
-        while (timeline.events[eventIndex].frame <= frame + 1) {
-          onevent(timeline.events[eventIndex++].event);
+      if (timeline.data.events.length > 0) {
+        while (timeline.data.events[eventIndex].frame <= frame + 1) {
+          onevent(timeline.data.events[eventIndex++].event);
 
           // wrap if at the last event
-          if (eventIndex == timeline.events.length) {
+          if (eventIndex == timeline.data.events.length) {
             eventIndex = 0;
             break;
           }
         }
       }
 
-      return true;
+      // stop when not looping and past the end time
+      return (timeline.data.loop) ? false : time > timeline.data.fps * timeline.data.duration;
     }
 
     // play the animation

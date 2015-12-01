@@ -41,12 +41,12 @@ class SpriteLayer implements Layer {
     this.pool = new Array<Sprite>();
 
     // fill the free list
-    for(i in 1...n) {
-      this.pool.push(new Sprite());
+    for(i in 0...n) {
+      this.pool.push(new Sprite(this));
     }
 
     // reset counters
-    this.sp = 0;
+    this.sp = n;
     this.count = 0;
     this.pending = 0;
   }
@@ -62,14 +62,15 @@ class SpriteLayer implements Layer {
   public function spawn(): Sprite {
     var sprite: Sprite;
 
-    // create a new one from the heap if none are available
-    if (this.sp == 0) {
-      sprite = new Sprite();
-    } else {
+    if (this.sp > 0) {
       sprite = this.pool[--this.sp];
 
       // re-initialize the resource
       sprite.init();
+    } else {
+
+      // pool is empty, don't fail, just slower...
+      sprite = new Sprite(this);
     }
 
     // append the object to the pending side
@@ -93,12 +94,9 @@ class SpriteLayer implements Layer {
     this.count += this.pending;
     this.pending = 0;
 
-    // update and free dead sprites
+    // free dead sprites
     while(i < this.count) {
       var sprite = this.sprites[i];
-
-      // advance the sprite behaviors
-      sprite.update(step);
 
       if (sprite.dead) {
         this.sprites[i] = this.sprites[--this.count];
@@ -116,6 +114,11 @@ class SpriteLayer implements Layer {
         i++;
       }
     }
+
+    // update all the sprites
+    for(i in 0...this.count) {
+      this.sprites[i].update(step);
+    }
   }
 
   // render the layer
@@ -123,7 +126,7 @@ class SpriteLayer implements Layer {
     var i;
 
     // render all the sprites
-    for (i in 0...this.sprites.length - 1) {
+    for (i in 0...this.count) {
       this.sprites[i].draw();
     }
   }

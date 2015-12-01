@@ -8,9 +8,10 @@ package spark;
 
 import spark.anim.*;
 import spark.collision.*;
+import spark.graphics.*;
 import spark.math.*;
 
-typedef BehaviorCallback = Sprite -> Dynamic -> Float -> Void;
+typedef BehaviorCallback = Sprite -> Float -> Dynamic -> Void;
 typedef Behavior = {
   callback: BehaviorCallback,
   data: Dynamic,
@@ -20,6 +21,9 @@ typedef Behavior = {
 class Sprite {
   public var m: Mat;
   public var pivot: Vec;
+
+  // the layer this sprite was spawned onto
+  public var layer: Layer;
 
   // dead is a get/set property for resource ref count
   public var dead: Bool;
@@ -39,8 +43,11 @@ class Sprite {
   private var behaviors: Array<Behavior>;
 
   // create a new sprite
-  public function new() {
+  public function new(layer: Layer) {
     this.init();
+
+    // this property never changes!
+    this.layer = layer;
   }
 
   // initialize the sprite resource
@@ -48,6 +55,7 @@ class Sprite {
     this.m = Mat.IDENTITY;
     this.pivot = new Vec(0.5, 0.5);
     this.behaviors = new Array<Behavior>();
+    this.rig = new Rig();
     this.dead = false;
     this.body = null;
     //this.contextSettings = {};
@@ -64,6 +72,17 @@ class Sprite {
       callback: callback,
       data: data,
     });
+  }
+
+  // set the texture image to render with
+  public function setTexture(texture: Texture, ?quad: Rect) {
+    this.texture = texture;
+    this.quad = quad;
+  }
+
+  // set the quad to render
+  public function setQuad(quad: Rect) {
+    this.quad = quad;
   }
 
   // return the width of the sprite in pixels
@@ -88,12 +107,12 @@ class Sprite {
 
   // convert angle from world to local space
   public function worldToLocalAngle(angle: Float): Float {
-    return this.m.angle() - angle;
+    return this.m.angle - angle;
   }
 
   // convert angle from local to world space
   public function localToWorldAngle(angle: Float): Float {
-    return this.m.angle() + angle;
+    return this.m.angle + angle;
   }
 
   // called once a frame to update the sprite
@@ -101,11 +120,11 @@ class Sprite {
     var i: Int;
 
     // continue all the animations
-    //this.rig.update(step);
+    this.rig.update(step);
 
     // execute all the behaviors
-    for(i in 0...this.behaviors.length - 1) {
-      this.behaviors[i].callback(this, this.behaviors[i].data, step);
+    for(i in 0...this.behaviors.length) {
+      this.behaviors[i].callback(this, step, this.behaviors[i].data);
     }
 
     // update all the collision shapes

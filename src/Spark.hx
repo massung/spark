@@ -10,7 +10,6 @@ import js.Browser;
 // get all of spark
 import spark.*;
 
-@:expose
 class Spark {
   static private var loadQueue: Array<Asset>;
 
@@ -50,7 +49,7 @@ class Spark {
     var i: Int;
 
     // count all the loaded assets
-    for (i in 0...loadQueue.length - 1) {
+    for (i in 0...loadQueue.length) {
       if (loadQueue[i].isLoaded()) n++;
     }
 
