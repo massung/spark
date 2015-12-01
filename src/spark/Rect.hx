@@ -4,7 +4,7 @@
 // All rights reserved.
 //
 
-package spark.math;
+package spark;
 
 @:expose
 class Rect {

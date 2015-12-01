@@ -7,53 +7,40 @@
 import js.Lib;
 import js.Browser;
 
-// get all of spark
 import spark.*;
 
 class Spark {
-  static private var loadQueue: Array<Asset>;
 
-  // the global canvas DOM element to render to and its view context
+  // the global audio context used to play sound sources
+  static public var audio: js.html.audio.AudioContext;
+
+  // the global canvas element being drawn to
   static public var canvas: js.html.CanvasElement;
+
+  // the global render context
   static public var view: js.html.CanvasRenderingContext2D;
 
-  // entry point
+  // entry point of the spark library
   static function main() {
-    loadQueue = [];
+    canvas = cast js.Browser.document.getElementById('spark');
 
-    // find the view
-    canvas = cast js.Browser.document.getElementById('canvas');
+    // retrieve the render context from the canvas
     view = canvas.getContext2d();
 
     // initialize audio
-    spark.Audio.init();
+    audio = new js.html.audio.AudioContext();
 
     // initialize input devices
     spark.Input.init();
     spark.Input.hideCursor();
 
+    // enable all input devices
+    spark.Input.enableMouse();
+    spark.Input.enableKeyboard();
+
     // disable the context menu
     canvas.oncontextmenu = function(event) {
       event.preventDefault();
     };
-  }
-
-  // request a new asset to be loaded
-  static public function request(asset: Asset) {
-    loadQueue.push(asset);
-  }
-
-  // true if all assets are loaded, otherwise the percent
-  static public function loadProgress(): Dynamic {
-    var n: Int = 0;
-    var i: Int;
-
-    // count all the loaded assets
-    for (i in 0...loadQueue.length) {
-      if (loadQueue[i].isLoaded()) n++;
-    }
-
-    // if all are loaded, true, otherwise the percent loaded [0,1]
-    return (n == loadQueue.length) ? true : cast(n, Float) / loadQueue.length;
   }
 }

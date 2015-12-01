@@ -6,8 +6,7 @@
 
 package spark;
 
-import spark.anim.*;
-import spark.graphics.*;
+import haxe.ds.StringMap;
 
 typedef GameCallback = Game -> Void;
 typedef LoadCallback = Void -> Void;
@@ -20,12 +19,16 @@ typedef Project = {
 }
 
 @:expose
-class Game extends Asset.JSONAsset {
+class Game {
   private var project: Project;
+  private var loadQueue: Array<Asset>;
 
   // game objects can only be constructed with the main() function
   private function new(projectFile: String, init: GameCallback) {
-    super(projectFile, function(json: Dynamic) {
+    this.loadQueue = new Array<Asset>();
+
+    // request the project file
+    Asset.loadJSON(projectFile, function(json: Dynamic) {
       this.project = json;
 
       // use the path the project is located in if none set
@@ -33,16 +36,13 @@ class Game extends Asset.JSONAsset {
         this.project.path = projectFile.split('/').slice(0, -1).join('/') + '/';
       }
 
-      // set defaults
+      // set project defaults
       if (this.project.assetPath == null) this.project.assetPath = '/';
       if (this.project.title == null) this.project.title = 'Spark Game';
       if (this.project.version == null) this.project.version = 1.0;
 
       // execute the callback, which may load more assets
       init(this);
-
-      // project file is now loaded
-      this.loaded = true;
     });
   }
 
@@ -53,7 +53,16 @@ class Game extends Asset.JSONAsset {
 
   // waits until all loading is complete
   public function launch(onload: LoadCallback) {
-    if (Spark.loadProgress() == true) {
+    var n: Int = 0;
+    var i: Int;
+
+    // count all the loaded assets
+    for (i in 0...loadQueue.length) {
+      if (loadQueue[i].isLoaded()) n++;
+    }
+
+    // are all the assets in the load queue done loading?
+    if (n == loadQueue.length) {
       onload();
     } else {
       js.Browser.window.requestAnimationFrame(function(now: Float) {
@@ -81,7 +90,7 @@ class Game extends Asset.JSONAsset {
         // Render the progress as a simple load bar.
         Spark.view.beginPath();
         Spark.view.moveTo(x - w, y);
-        Spark.view.lineTo(x - w + w * 2 * Spark.loadProgress(), y);
+        Spark.view.lineTo(x - w + w * 2 * cast(n, Float) / loadQueue.length, y);
         Spark.view.stroke();
         Spark.view.restore();
 
@@ -91,23 +100,33 @@ class Game extends Asset.JSONAsset {
     }
   }
 
-  // return the full server path to an asset
-  public function asset(src: String): String {
-    return this.project.path + this.project.assetPath + src;
+  // create a new asset instance and add it to the load queue
+  private function load(classRef: Class<Asset>, src: String): Asset {
+    var asset: Asset = Type.createInstance(classRef, [this.project.path + this.project.assetPath + src]);
+
+    // track this asset being loaded
+    this.loadQueue.push(asset);
+
+    return asset;
+  }
+
+  // load a new font
+  public function newFont(src: String): spark.graphics.Font {
+    return cast this.load(spark.graphics.Font, src);
+  }
+
+  // load a new audio sound clip
+  public function newSound(src: String): spark.audio.Sound {
+    return cast this.load(spark.audio.Sound, src);
   }
 
   // load a new texture
-  public function newTexture(src: String): Texture {
-    return new Texture(this.asset(src));
-  }
-
-  // load a new audio clip
-  public function newAudio(src: String): Audio {
-    return new Audio(this.asset(src));
+  public function newTexture(src: String): spark.graphics.Texture {
+    return cast this.load(spark.graphics.Texture, src);
   }
 
   // load a new timeline animation
-  public function newTimeline(src: String): Timeline {
-    return new Timeline(this.asset(src));
+  public function newTimeline(src: String): spark.anim.Timeline {
+    return cast this.load(spark.anim.Timeline, src);
   }
 }

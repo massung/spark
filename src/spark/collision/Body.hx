@@ -6,8 +6,6 @@
 
 package spark.collision;
 
-import spark.math.*;
-
 typedef CollisionCallback = Body -> Void;
 
 class Body {

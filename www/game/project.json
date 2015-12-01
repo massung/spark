@@ -1,5 +1,8 @@
 {
   "title": "Untitled",
   "version": 1.0,
-  "assetPath": "assets/"
+  "assetPath": "assets/",
+  "assets": {
+    
+  }
 }

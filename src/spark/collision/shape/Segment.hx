@@ -6,9 +6,6 @@
 
 package spark.collision.shape;
 
-import spark.collision.*;
-import spark.math.*;
-
 class Segment implements Shape {
   private var body: Body;
 
@@ -21,7 +18,7 @@ class Segment implements Shape {
   private var tp2: Vec;
 
   // create a new line segment collision shape
-  public function new(body: Body, x1: Float, y1: Float, x2: Float, y2: Float) {
+  public function new(body: spark.collision.Body, x1: Float, y1: Float, x2: Float, y2: Float) {
     this.body = body;
 
     // create the end points
@@ -30,7 +27,7 @@ class Segment implements Shape {
   }
 
   // the rigid body this shape is attached to
-  public function getBody(): Body return this.body;
+  public function getBody(): spark.collision.Body return this.body;
 
   // returns the world-space, end points
   public function getStart(): Vec return this.tp1;

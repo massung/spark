@@ -4,27 +4,22 @@
 // All rights reserved.
 //
 
-package spark;
+package spark.audio;
 
-@:expose
-class Audio extends Asset.XHRAsset {
-  static private var context: js.html.audio.AudioContext;
-
-  // the loaded buffer for sources to use
+class Sound extends Asset {
   private var buffer: js.html.audio.AudioBuffer;
 
   // load an audio asset
   public function new(src: String) {
-    super(src, js.html.XMLHttpRequestResponseType.ARRAYBUFFER, function(req) {
-      context.decodeAudioData(req.response, function(buffer) {
+    super(src);
+
+    Asset.loadXHR(src, js.html.XMLHttpRequestResponseType.ARRAYBUFFER, function(req) {
+      Spark.audio.decodeAudioData(req.response, function(buffer) {
         this.buffer = buffer;
         this.loaded = true;
       });
     });
   }
-
-  // initialize the global audio context
-  static public function init() context = new js.html.audio.AudioContext();
 
   // create a source buffer for this sound
   public function createSource(): js.html.audio.AudioBufferSourceNode {
@@ -32,11 +27,11 @@ class Audio extends Asset.XHRAsset {
       return null;
     }
 
-    var source = context.createBufferSource();
+    var source = Spark.audio.createBufferSource();
 
     // link to the buffer and global context
     source.buffer = this.buffer;
-    source.connect(context.destination);
+    source.connect(Spark.audio.destination);
 
     return source;
   }

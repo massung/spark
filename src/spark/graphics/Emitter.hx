@@ -6,9 +6,6 @@
 
 package spark.graphics;
 
-import spark.layer.*;
-import spark.math.*;
-
 typedef ParticleData = {
   age: Float,
   life: Float,
@@ -33,8 +30,7 @@ typedef EmitterData = {
   forwardAngle: Float,
 }
 
-@:expose
-class Emitter extends Asset.JSONAsset {
+class Emitter extends Asset {
   private var data: EmitterData;
 
   // how each particle sprite will render
@@ -46,11 +42,14 @@ class Emitter extends Asset.JSONAsset {
 
   // load a new particle emitter asset
   public function new(src: String) {
+    super(src);
+
+    // default values
     this.texture = null;
     this.quad = null;
 
     // issue the load
-    super(src, function(json) {
+    Asset.loadJSON(src, function(json) {
       this.data = json;
 
       // create a custom behavior for all particles this emitter spawns
@@ -80,15 +79,14 @@ class Emitter extends Asset.JSONAsset {
   }
 
   // spawn particle sprites into the scene
-  public function emit(layer: SpriteLayer, x: Float, y: Float, angle: Float, ?n: Int = 1) {
+  public function emit(layer: spark.layer.SpriteLayer, x: Float, y: Float, angle: Float, ?n: Int = 1) {
     var i;
 
     for (i in 0...n) {
-      var sprite: Sprite = layer.spawn();
+      var sprite: Sprite = layer.newSprite();
 
       // set the texture to use
-      //sprite.texture = this.texture && project.assets[this.texture];
-      //sprite.quad = this.quad && project.assets[this.quad];
+      sprite.setTexture(this.texture, this.quad);
 
       // random linear and angular velocity
       var s = Util.rand(this.data.minSpeed, this.data.maxSpeed);

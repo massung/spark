@@ -9,7 +9,6 @@ package spark;
 import spark.anim.*;
 import spark.collision.*;
 import spark.graphics.*;
-import spark.math.*;
 
 typedef BehaviorCallback = Sprite -> Float -> Dynamic -> Void;
 typedef Behavior = {
@@ -52,7 +51,7 @@ class Sprite {
 
   // initialize the sprite resource
   public function init() {
-    this.m = Mat.IDENTITY;
+    this.m = Mat.identity();
     this.pivot = new Vec(0.5, 0.5);
     this.behaviors = new Array<Behavior>();
     this.rig = new Rig();

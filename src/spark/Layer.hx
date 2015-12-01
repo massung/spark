@@ -7,9 +7,7 @@
 package spark;
 
 import spark.collision.*;
-import spark.math.*;
 
-@:allow(Scene)
 interface Layer {
   public var z: Float;
   public var m: Mat;

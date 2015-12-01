@@ -6,8 +6,6 @@
 
 package spark.collision;
 
-import spark.math.*;
-
 typedef Contact = { body: Body, manifold: Array<Body> }
 
 class Quadtree {

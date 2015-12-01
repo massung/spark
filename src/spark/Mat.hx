@@ -4,7 +4,7 @@
 // All rights reserved.
 //
 
-package spark.math;
+package spark;
 
 @:expose
 class Mat {
@@ -12,14 +12,11 @@ class Mat {
   public var r: Vec;
   public var s: Vec;
 
-  // angle is a property for manipulating the rotation vector
+  // angle is a property for manipulating the rotation vector in degrees
   public var angle(get,set): Float;
 
-  // global matrix properties
-  static public var IDENTITY(get,null): Mat;
-
-  // create constant matrices
-  static public function get_IDENTITY(): Mat return new Mat(0, 0, 1, 0, 1, 1);
+  // returns a copy of the identity matrix
+  static public function identity(): Mat return new Mat(0, 0, 1, 0, 1, 1);
 
   // create a new 3x3 matrix
   public function new(x: Float, y: Float, rx: Float, ry: Float, sx: Float, sy: Float) {

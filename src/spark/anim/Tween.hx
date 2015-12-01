@@ -7,11 +7,9 @@
 package spark.anim;
 
 import haxe.ds.Vector;
-import spark.math.*;
 
 typedef Key = { frame: Int, value: Float, ?tangent: Float };
 
-@:expose
 class Tween {
   private var fps: Int;
   private var duration: Int;

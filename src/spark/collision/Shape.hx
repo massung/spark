@@ -6,8 +6,6 @@
 
 package spark.collision;
 
-import spark.math.*;
-
 interface Shape {
 
   // the rigid body this shape is attached to

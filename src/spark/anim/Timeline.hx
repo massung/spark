@@ -7,7 +7,6 @@
 package spark.anim;
 
 import haxe.ds.StringMap;
-import spark.math.*;
 
 typedef TimelineData = {
   fps: Int,
@@ -26,8 +25,7 @@ typedef TimelineData = {
 
 typedef Track = { method: String, keys: Array<Tween.Key> };
 
-@:expose
-class Timeline extends Asset.JSONAsset {
+class Timeline extends Asset {
   private var data: TimelineData;
 
   // crunched tracks
@@ -35,7 +33,9 @@ class Timeline extends Asset.JSONAsset {
 
   // load a new timeline asset
   public function new(src: String) {
-    super(src, function(json: Dynamic) {
+    super(src);
+
+    Asset.loadJSON(src, function(json: Dynamic) {
       this.data = cast json;
 
       // set defaults if not found

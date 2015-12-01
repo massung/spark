@@ -12,16 +12,16 @@ typedef State = { down: Bool, hits: Int }
 class Input {
 
   // track the current state of all keys and buttons
-  static var keys: Array<State>;
-  static var buttons: Array<State>;
+  static private var keys: Array<State>;
+  static private var buttons: Array<State>;
 
   // current mouse position
-  static var x: Float;
-  static var y: Float;
+  static private var x: Float;
+  static private var y: Float;
 
   // relative mouse position since last flush
-  static var relX: Float;
-  static var relY: Float;
+  static private var relX: Float;
+  static private var relY: Float;
 
   // initialize the input module
   static public function init() {
@@ -77,6 +77,16 @@ class Input {
     }
   }
 
+  // returns the mouse position as a vector
+  static public function mousePos(): Vec {
+    return new Vec(x, y);
+  }
+
+  // returns the relative mouse position as a vector
+  static public function mouseRel(): Vec {
+    return new Vec(relX, relY);
+  }
+
   // true if the key is currently pressed
   static public function keyDown(key: Int): Bool {
     return (key >= 0 && key < keys.length) ? keys[key].down : false;
@@ -93,7 +103,7 @@ class Input {
   }
 
   // true if the mouse button is currently pressed
-  static public function mouseDown(?button: Int = 0): Bool {
+  static public function buttonDown(?button: Int = 0): Bool {
     return (button >= 0 && button < buttons.length) ? buttons[button].down : false;
   }
 

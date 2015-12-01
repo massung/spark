@@ -6,9 +6,6 @@
 
 package spark.graphics;
 
-import spark.math.*;
-
-@:expose
 class Texture extends Asset {
   private var img: js.html.Image;
 

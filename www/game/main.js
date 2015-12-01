@@ -12,8 +12,8 @@ var laserSound;
 spark.Game.main('game/project.json', game => {
   spaceship = game.newTexture('player.png');
   laser = game.newTexture('laser.png');
-  laserSound = game.newAudio('laser.mp3');
-  explosionSound = game.newAudio('explosion.mp3');
+  laserSound = game.newSound('laser.mp3');
+  explosionSound = game.newSound('explosion.mp3');
   spawn = game.newTimeline('spawn.json');
 
   // wait until all loading is complete
@@ -21,13 +21,9 @@ spark.Game.main('game/project.json', game => {
     scene = new spark.Scene('middle', 1400, 1400);
     scene.setViewport(1400, 1400);
 
-    spark.Input.enableKeyboard();
-    spark.Input.enableMouse();
+    sprites = scene.newSpriteLayer();
 
-    sprites = new spark.layer.SpriteLayer();
-    scene.addLayer(sprites);
-
-    player = sprites.spawn();
+    player = sprites.newSprite();
     player.setTexture(spaceship);
     player.addBehavior(playerControls);
 
@@ -51,9 +47,9 @@ function playerControls(sprite, step) {
 }
 
 function fire(layer, m) {
-  var bullet = layer.spawn();
+  var bullet = layer.newSprite();
 
-  bullet.m.p = m.transform(new spark.math.Vec(0, -60));
+  bullet.m.p = m.transform(new spark.Vec(0, -60));
   bullet.m.r = m.r.copy();
 
   // texture

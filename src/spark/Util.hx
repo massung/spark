@@ -4,7 +4,7 @@
 // All rights reserved.
 //
 
-package spark.math;
+package spark;
 
 @:expose
 class Util {
@@ -21,11 +21,7 @@ class Util {
 
   // the signum function
   static public function sign(n: Float): Int {
-    if (Math.abs(n) < 0.00001) {
-      return 0;
-    }
-
-    return (n > 0) ? 1 : -1;
+    return (Math.abs(n) < 0.00001) ? 0 : ((n > 0) ? 1 : -1);
   }
 
   // returns the next power of two from a give number

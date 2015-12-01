@@ -6,9 +6,6 @@
 
 package spark.collision.shape;
 
-import spark.collision.*;
-import spark.math.*;
-
 class Circle implements Shape {
   private var body: Body;
 

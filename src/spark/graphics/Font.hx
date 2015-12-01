@@ -6,7 +6,6 @@
 
 package spark.graphics;
 
-@:expose
 class Font extends Asset {
   private var style: js.html.StyleElement;
 

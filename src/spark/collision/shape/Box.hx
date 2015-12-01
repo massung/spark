@@ -6,9 +6,6 @@
 
 package spark.collision.shape;
 
-import spark.collision.*;
-import spark.math.*;
-
 class Box implements Shape {
   private var body: Body;
 

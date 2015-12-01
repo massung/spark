@@ -9,7 +9,6 @@ package spark;
 import spark.collision.*;
 import spark.collision.shape.*;
 import spark.layer.*;
-import spark.math.*;
 
 @:expose
 class Scene {
@@ -81,8 +80,13 @@ class Scene {
   }
 
   // add a new layer to the scene
-  public function addLayer(layer: Layer) {
+  public function newSpriteLayer(?n: Int = 100): SpriteLayer {
+    var layer = new SpriteLayer(n);
+
+    // add the layer to the list
     this.layers.push(layer);
+
+    return layer;
   }
 
   // start the main game loop
@@ -236,7 +240,7 @@ class Scene {
     var shape = new Circle(null, c.x, c.y, radius);
 
     // update the shape cache to get world space coordinates
-    shape.updateShapeCache(Mat.IDENTITY);
+    shape.updateShapeCache(Mat.identity());
 
     return this.space.collect(shape);
   }

@@ -6,17 +6,14 @@
 
 package spark.anim;
 
-import spark.math.*;
-
 // an animation is just a function that is called with a step and returns
 // true once the animation has played to completion
 //
 typedef Anim = Float -> Bool;
 
-// an object with a rig is considered to be a rigging
+// any object with a rig is considered to be a rigging
 typedef Rigging = { private var rig: Rig; }
 
-@:expose
 class Rig {
   private var anims: Array<Anim>;
 
@@ -26,13 +23,13 @@ class Rig {
   }
 
   // add an animation instance to the rig
-  public function play(instance: Anim) {
-    this.anims.push(instance);
+  public function play(anim: Anim) {
+    this.anims.push(anim);
   }
 
   // remove an animation instance from the rig
-  public function stop(instance: Anim) {
-    var i = this.anims.indexOf(instance);
+  public function stop(anim: Anim) {
+    var i = this.anims.indexOf(anim);
 
     if (i >= 0) {
       var last = this.anims.pop();

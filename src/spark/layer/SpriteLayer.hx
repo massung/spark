@@ -9,7 +9,6 @@ package spark.layer;
 import spark.collision.*;
 import spark.math.*;
 
-@:expose
 class SpriteLayer implements Layer {
   public var z: Float;
   public var m: Mat;
@@ -34,7 +33,7 @@ class SpriteLayer implements Layer {
     this.z = 0;
 
     // identity transform
-    this.m = Mat.IDENTITY;
+    this.m = Mat.identity();
 
     // allocate the lists
     this.sprites = new Array<Sprite>();
@@ -59,7 +58,7 @@ class SpriteLayer implements Layer {
   public inline function get(i: Int): Sprite return this.sprites[i];
 
   // allocate a new sprite from the pool
-  public function spawn(): Sprite {
+  public function newSprite(): Sprite {
     var sprite: Sprite;
 
     if (this.sp > 0) {
