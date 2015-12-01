@@ -1452,15 +1452,19 @@ var spark_anim_Timeline = $hx_exports.spark.anim.Timeline = function(src) {
 		});
 		_g.tweens = new haxe_ds_StringMap();
 		if(_g.data.tracks != null) {
-			var $it0 = _g.data.tracks.keys();
-			while( $it0.hasNext() ) {
-				var prop = $it0.next();
-				var track = _g.data.tracks.get(prop);
+			var i;
+			var fields = Reflect.fields(_g.data.tracks);
+			var _g2 = 0;
+			var _g1 = fields.length;
+			while(_g2 < _g1) {
+				var i1 = _g2++;
+				var field = fields[i1];
+				var track = Reflect.field(_g.data.tracks,field);
 				var keys = track.keys;
 				var method = track.method;
 				if(keys == null || keys.length < 2) continue;
 				if(method == null) method = "cubic";
-				_g.tweens.set(prop,new spark_anim_Tween(keys,_g.data.fps,_g.data.duration,method));
+				_g.tweens.set(field,new spark_anim_Tween(keys,_g.data.fps,_g.data.duration,method));
 			}
 		}
 		_g.loaded = true;
@@ -1572,6 +1576,7 @@ spark_anim_Tween.prototype = {
 		if(loop == null) loop = false;
 		var path = property.split(".");
 		var key = path.pop();
+		var rig = obj.rig;
 		while(path.length > 0) {
 			obj = Reflect.field(obj,path.shift());
 			if(obj == null) throw new js__$Boot_HaxeError("Cannot find property \"" + property + "\" on object");
@@ -1591,7 +1596,7 @@ spark_anim_Tween.prototype = {
 			Reflect.setProperty(obj,key,tween.keys[frame]);
 			return shouldStop;
 		};
-		obj.rig.play(anim);
+		rig.play(anim);
 	}
 	,__class__: spark_anim_Tween
 };

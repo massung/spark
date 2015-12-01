@@ -21,10 +21,7 @@ typedef TimelineData = {
   }>,
 
   // tweens to crunch
-  tracks: StringMap<{
-    method: String,
-    keys: Array<Tween.Key>
-  }>
+  tracks: Dynamic,
 }
 
 typedef Track = { method: String, keys: Array<Tween.Key> };
@@ -55,8 +52,11 @@ class Timeline extends Asset.JSONAsset {
 
       // crunch all the tracks
       if (this.data.tracks != null) {
-        for(prop in this.data.tracks.keys()) {
-          var track = this.data.tracks.get(prop);
+        var i, fields = Reflect.fields(this.data.tracks);
+
+        for(i in 0...fields.length) {
+          var field = fields[i];
+          var track: Track = Reflect.field(this.data.tracks, field);
           var keys = track.keys;
           var method = track.method;
 
@@ -69,7 +69,7 @@ class Timeline extends Asset.JSONAsset {
           if (method == null) method = 'cubic';
 
           // crunch the track into a tween
-          this.tweens.set(prop, new Tween(keys, this.data.fps, this.data.duration, method));
+          this.tweens.set(field, new Tween(keys, this.data.fps, this.data.duration, method));
         }
       }
 

@@ -44,6 +44,10 @@ function playerControls(sprite, step) {
   for(var i = 0;i < spark.Input.keyHits(spark.Input.Key.SPACE);i++) {
     fire(sprite.layer, sprite.m);
   }
+
+  if (spark.Input.keyHit(spark.Input.Key.T)) {
+    spawn.playOn(sprite);
+  }
 }
 
 function fire(layer, m) {

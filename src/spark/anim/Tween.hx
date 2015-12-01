@@ -108,9 +108,8 @@ class Tween {
   // create an animation instance for a specific property
   public function playOn(obj: Rig.Rigging, property: String, ?loop: Bool = false) {
     var path = property.split('.');
-
-    // the last element of the path is the actual property to set
     var key = path.pop();
+    var rig = obj.rig;
 
     // traverse the rest of the path to get the final object
     while (path.length > 0) {
@@ -152,6 +151,6 @@ class Tween {
     };
 
     // play it on the rigging
-    obj.rig.play(anim);
+    rig.play(anim);
   }
 }
