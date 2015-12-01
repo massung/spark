@@ -2412,10 +2412,12 @@ spark_object_Sprite.prototype = $extend(spark_object_Actor.prototype,{
 		this.quad = quad;
 	}
 	,getWidth: function() {
-		return 0;
+		if(this.texture == null) return 0;
+		if(this.quad != null) return this.quad.getWidth(); else return this.texture.getWidth();
 	}
 	,getHeight: function() {
-		return 0;
+		if(this.texture == null) return 0;
+		if(this.quad != null) return this.quad.getHeight(); else return this.texture.getHeight();
 	}
 	,update: function(step) {
 		spark_object_Actor.prototype.update.call(this,step);

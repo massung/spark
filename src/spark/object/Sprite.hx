@@ -69,12 +69,20 @@ class Sprite extends Actor {
 
   // return the width of the sprite in pixels
   public function getWidth(): Float {
-    return 0;
+    if (this.texture == null) {
+      return 0;
+    }
+
+    return (this.quad != null) ? this.quad.getWidth() : this.texture.getWidth();
   }
 
   // return the height of the sprite in pixels
   public function getHeight(): Float {
-    return 0;
+    if (this.texture == null) {
+      return 0;
+    }
+
+    return (this.quad != null) ? this.quad.getHeight() : this.texture.getHeight();
   }
 
   // called once a frame to update the sprite
