@@ -14,10 +14,7 @@ typedef TimelineData = {
   loop: Bool,
 
   // timed event callbacks
-  events: Array<{
-    frame: Int,
-    event: String
-  }>,
+  events: Array<{ frame: Int, event: String }>,
 
   // tweens to crunch
   tracks: Dynamic,
@@ -35,7 +32,7 @@ class Timeline extends Asset {
   public function new(src: String) {
     super(src);
 
-    Asset.loadJSON(src, function(json: Dynamic) {
+    Spark.loadJSON(src, function(json: Dynamic) {
       this.data = cast json;
 
       // set defaults if not found

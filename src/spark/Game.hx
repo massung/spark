@@ -28,7 +28,7 @@ class Game {
     this.loadQueue = new Array<Asset>();
 
     // request the project file
-    Asset.loadJSON(projectFile, function(json: Dynamic) {
+    Spark.loadJSON(projectFile, function(json: Dynamic) {
       this.project = json;
 
       // use the path the project is located in if none set

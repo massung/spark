@@ -5,29 +5,29 @@
   "tracks": {
     "m.p.x": {
       "keys": [
-        { "frame": 0, "value":  0.0 },
-        { "frame": 1, "value": -5.0 },
-        { "frame": 2, "value":  5.0 },
-        { "frame": 3, "value": -5.0 },
-        { "frame": 4, "value":  0.0 }
+        { "frame": 1, "value":  0.0 },
+        { "frame": 2, "value": -5.0 },
+        { "frame": 3, "value":  5.0 },
+        { "frame": 4, "value": -5.0 },
+        { "frame": 5, "value":  0.0 }
       ]
     },
     "m.p.y": {
       "keys": [
-        { "frame": 0, "value":  0.0 },
-        { "frame": 1, "value": -5.0 },
-        { "frame": 2, "value":  5.0 },
-        { "frame": 3, "value": -5.0 },
-        { "frame": 4, "value":  0.0 }
+        { "frame": 1, "value":  0.0 },
+        { "frame": 2, "value": -5.0 },
+        { "frame": 3, "value":  5.0 },
+        { "frame": 4, "value": -5.0 },
+        { "frame": 5, "value":  0.0 }
       ]
     },
     "m.angle": {
       "keys": [
-        { "frame": 0, "value":  0.0 },
-        { "frame": 1, "value": -0.5 },
-        { "frame": 2, "value":  0.5 },
-        { "frame": 3, "value": -0.5 },
-        { "frame": 4, "value":  0.0 }
+        { "frame": 1, "value":  0.0 },
+        { "frame": 2, "value": -0.5 },
+        { "frame": 3, "value":  0.5 },
+        { "frame": 4, "value": -0.5 },
+        { "frame": 5, "value":  0.0 }
       ]
     }
   }

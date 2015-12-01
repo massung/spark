@@ -7,7 +7,7 @@
 package spark.layer;
 
 import spark.collision.*;
-import spark.math.*;
+import spark.object.*;
 
 class SpriteLayer implements Layer {
   public var z: Float;

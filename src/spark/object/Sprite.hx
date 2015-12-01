@@ -4,73 +4,56 @@
 // All rights reserved.
 //
 
-package spark;
+package spark.object;
 
 import spark.anim.*;
 import spark.collision.*;
 import spark.graphics.*;
 
-typedef BehaviorCallback = Sprite -> Float -> Dynamic -> Void;
-typedef Behavior = {
-  callback: BehaviorCallback,
-  data: Dynamic,
-}
-
-@:expose
-class Sprite {
-  public var m: Mat;
+class Sprite extends Actor {
   public var pivot: Vec;
+
+  // dead is a get/set property for resource ref count
+  public var dead: Bool;
 
   // the layer this sprite was spawned onto
   public var layer: Layer;
 
-  // dead is a get/set property for resource ref count
-  public var dead: Bool;
+  // a rigid body for collision
+  private var body: Body;
 
   // how this sprite renders
   private var texture: Texture;
   private var quad: Rect;
   //private var contextSettings: Dynamic;
 
-  // a rigid body for collision
-  private var body: Body;
-
-  // animations
-  private var rig: Rig;
-
-  // update functions
-  private var behaviors: Array<Behavior>;
-
   // create a new sprite
   public function new(layer: Layer) {
-    this.init();
+    super();
 
-    // this property never changes!
+    // allocate variables
+    this.pivot = new Vec(0.5, 0.5);
     this.layer = layer;
+
+    // reset everything
+    this.init();
   }
 
   // initialize the sprite resource
   public function init() {
     this.m = Mat.identity();
-    this.pivot = new Vec(0.5, 0.5);
-    this.behaviors = new Array<Behavior>();
-    this.rig = new Rig();
+    this.behaviors = [];
+    this.pivot.set(0.5, 0.5);
     this.dead = false;
     this.body = null;
+    this.texture = null;
+    this.quad = null;
     //this.contextSettings = {};
   }
 
   // add a rigid body for collision detection to the sprite
   public function addBody(filter: String, ?oncollision: Body.CollisionCallback): Body {
     return this.body = new spark.collision.Body(this, filter, oncollision);
-  }
-
-  // add a behavior callback and optional data to the sprite
-  public function addBehavior(callback: BehaviorCallback, ?data: Dynamic) {
-    this.behaviors.push({
-      callback: callback,
-      data: data,
-    });
   }
 
   // set the texture image to render with
@@ -94,37 +77,9 @@ class Sprite {
     return 0;
   }
 
-  // convert point from world to local space
-  public function worldToLocal(p: Vec): Vec {
-    return this.m.inverse().transform(p);
-  }
-
-  // convert point from local to world space
-  public function localToWorld(p: Vec): Vec {
-    return this.m.transform(p);
-  }
-
-  // convert angle from world to local space
-  public function worldToLocalAngle(angle: Float): Float {
-    return this.m.angle - angle;
-  }
-
-  // convert angle from local to world space
-  public function localToWorldAngle(angle: Float): Float {
-    return this.m.angle + angle;
-  }
-
   // called once a frame to update the sprite
-  public function update(step: Float) {
-    var i: Int;
-
-    // continue all the animations
-    this.rig.update(step);
-
-    // execute all the behaviors
-    for(i in 0...this.behaviors.length) {
-      this.behaviors[i].callback(this, step, this.behaviors[i].data);
-    }
+  public override function update(step: Float) {
+    super.update(step);
 
     // update all the collision shapes
     if (this.body != null) {

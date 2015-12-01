@@ -9,6 +9,7 @@ package spark;
 import spark.collision.*;
 import spark.collision.shape.*;
 import spark.layer.*;
+import spark.object.*;
 
 @:expose
 class Scene {
@@ -26,7 +27,7 @@ class Scene {
 
   // playfield area and camera view
   public var rect: Rect;
-  public var camera: Mat;
+  public var camera: Camera;
 
   // create a new scene object
   public function new(?origin: String, ?width: Float, ?height: Float) {
@@ -59,7 +60,7 @@ class Scene {
 
     // initialize the playfield and camera
     this.rect = new Rect(-x, -y, w, h);
-    this.camera = new Mat(0, 0, 1, 0, Spark.canvas.width / 2, Spark.canvas.height / 2);
+    this.camera = new Camera(Spark.canvas.width, Spark.canvas.height);
 
     // initialize the layer list
     this.layers = new Array<Layer>();
@@ -75,8 +76,7 @@ class Scene {
     }
 
     // set the scale of the camera (zoom)
-    this.camera.s.x = w / 2;
-    this.camera.s.y = h / 2;
+    this.camera.m.s.set(w / 2, h / 2);
   }
 
   // add a new layer to the scene
@@ -126,6 +126,9 @@ class Scene {
   private function update(step: Float) {
     var i;
 
+    // update the camera behaviors and animations
+    this.camera.update(step);
+
     // update all the layers
     for(i in 0...this.layers.length) {
       this.layers[i].update(step);
@@ -165,11 +168,11 @@ class Scene {
 
     // camera -> viewport
     Spark.view.translate(w2, h2);
-    Spark.view.scale(w2 / this.camera.s.x, h2 / this.camera.s.y);
+    Spark.view.scale(w2 / this.camera.m.s.x, h2 / this.camera.m.s.y);
 
     // playfield -> camera
-    Spark.view.transform(this.camera.r.x, this.camera.r.y, -this.camera.r.y, this.camera.r.x, 0, 0);
-    Spark.view.translate(-this.camera.p.x - mx, -this.camera.p.y - my);
+    Spark.view.transform(this.camera.m.r.x, this.camera.m.r.y, -this.camera.m.r.y, this.camera.m.r.x, 0, 0);
+    Spark.view.translate(-this.camera.m.p.x - mx, -this.camera.m.p.y - my);
 
     // TODO: z-ordering of sprites/layers
 
@@ -190,16 +193,16 @@ class Scene {
     var my = this.rect.getTop() + (this.rect.getHeight() / 2);
 
     // untranslate
-    var cx = x - (this.camera.p.x + mx);
-    var cy = y - (this.camera.p.y + my);
+    var cx = x - (this.camera.m.p.x + mx);
+    var cy = y - (this.camera.m.p.y + my);
 
     // unrotate
-    var rx = (cx * this.camera.r.x) - (cy * this.camera.r.y);
-    var ry = (cy * this.camera.r.x) + (cx * this.camera.r.y);
+    var rx = (cx * this.camera.m.r.x) - (cy * this.camera.m.r.y);
+    var ry = (cy * this.camera.m.r.x) + (cx * this.camera.m.r.y);
 
     // unscale
-    var sx = rx * Spark.canvas.height / (2 * this.camera.s.x);
-    var sy = ry * Spark.canvas.width / (2 * this.camera.s.y);
+    var sx = rx * Spark.canvas.height / (2 * this.camera.m.s.x);
+    var sy = ry * Spark.canvas.width / (2 * this.camera.m.s.y);
 
     // project onto the screen
     return new Vec(sx + Spark.canvas.width / 2, sy + Spark.canvas.height / 2);
@@ -207,19 +210,19 @@ class Scene {
 
   // transform a point from screen space to world space
   public function screenToWorld(x: Float, y: Float): Vec {
-    var cx = (x - Spark.canvas.width / 2) * this.camera.s.x * 2 / Spark.canvas.width;
-    var cy = (y - Spark.canvas.height / 2) * this.camera.s.y * 2 / Spark.canvas.height;
+    var cx = (x - Spark.canvas.width / 2) * this.camera.m.s.x * 2 / Spark.canvas.width;
+    var cy = (y - Spark.canvas.height / 2) * this.camera.m.s.y * 2 / Spark.canvas.height;
 
     // rotate
-    var vx = (cx * this.camera.r.x) + (cy * this.camera.r.y);
-    var vy = (cy * this.camera.r.x) - (cx * this.camera.r.y);
+    var vx = (cx * this.camera.m.r.x) + (cy * this.camera.m.r.y);
+    var vy = (cy * this.camera.m.r.x) - (cx * this.camera.m.r.y);
 
     // find the middle of the playfield
     var mx = this.rect.getLeft() + (this.rect.getWidth() / 2);
     var my = this.rect.getTop() + (this.rect.getHeight() / 2);
 
     // translate
-    return new Vec(vx + this.camera.p.x + mx, vy + this.camera.p.y + my);
+    return new Vec(vx + this.camera.m.p.x + mx, vy + this.camera.m.p.y + my);
   }
 
   // perform a pick at a given point

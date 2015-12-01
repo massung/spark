@@ -13,7 +13,7 @@ class Sound extends Asset {
   public function new(src: String) {
     super(src);
 
-    Asset.loadXHR(src, js.html.XMLHttpRequestResponseType.ARRAYBUFFER, function(req) {
+    Spark.loadXHR(src, js.html.XMLHttpRequestResponseType.ARRAYBUFFER, function(req) {
       Spark.audio.decodeAudioData(req.response, function(buffer) {
         this.buffer = buffer;
         this.loaded = true;

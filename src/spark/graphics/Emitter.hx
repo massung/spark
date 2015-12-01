@@ -6,6 +6,8 @@
 
 package spark.graphics;
 
+import spark.object.*;
+
 typedef ParticleData = {
   age: Float,
   life: Float,
@@ -38,7 +40,7 @@ class Emitter extends Asset {
   private var quad: Rect;
 
   // created behavior function for this emitter
-  private var particleBehavior: Sprite.BehaviorCallback;
+  private var particleBehavior: Actor.BehaviorCallback;
 
   // load a new particle emitter asset
   public function new(src: String) {
@@ -49,11 +51,11 @@ class Emitter extends Asset {
     this.quad = null;
 
     // issue the load
-    Asset.loadJSON(src, function(json) {
+    Spark.loadJSON(src, function(json) {
       this.data = json;
 
       // create a custom behavior for all particles this emitter spawns
-      this.particleBehavior = function(sprite: Sprite, step: Float, data: Dynamic) {
+      this.particleBehavior = function(sprite: Actor, step: Float, data: Dynamic) {
         var p: ParticleData = data;
 
         // age the particle
@@ -61,7 +63,7 @@ class Emitter extends Asset {
           p.age = p.life;
 
           // remove the sprite from the scene
-          sprite.dead = true;
+          (cast sprite).dead = true;
         }
 
         // calculate the new scale

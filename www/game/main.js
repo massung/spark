@@ -7,6 +7,9 @@ var player;
 var spaceship;
 var explosionSound;
 var laserSound;
+var shake;
+var spawn;
+var asteroids;
 
 // launch the game and go!
 spark.Game.main('game/project.json', game => {
@@ -15,6 +18,13 @@ spark.Game.main('game/project.json', game => {
   laserSound = game.newSound('laser.mp3');
   explosionSound = game.newSound('explosion.mp3');
   spawn = game.newTimeline('spawn.json');
+  shake = game.newTimeline('shake.json');
+  asteroids = [
+    game.newTexture('asteroid_big_1'),
+    game.newTexture('asteroid_big_2'),
+    game.newTexture('asteroid_big_3'),
+    game.newTexture('asteroid_big_4'),
+  ];
 
   // wait until all loading is complete
   game.launch(() => {
@@ -23,9 +33,15 @@ spark.Game.main('game/project.json', game => {
 
     sprites = scene.newSpriteLayer();
 
+    // spawn the player
     player = sprites.newSprite();
     player.setTexture(spaceship);
     player.addBehavior(playerControls);
+
+    // spawn some asteroids
+    for(i = 0;i < 10;i++) {
+      spawnAsteroid();
+    }
 
     // go
     scene.run();
@@ -43,6 +59,7 @@ function playerControls(sprite, step) {
 
   if (spark.Input.keyHit(spark.Input.Key.T)) {
     spawn.playOn(sprite);
+    shake.playOn(scene.camera);
   }
 }
 
@@ -62,4 +79,14 @@ function fire(layer, m) {
   }, { age: 0.0 });
 
   laserSound.woof();
+}
+
+function spawnAsteroid() {
+  var asteroid = scene.newSprite();
+
+  asteroid.setTexture(spark.Util.arand(asteroids));
+  asteroid.m.p.set(spark.Util.rand(scene.getLeft(), scene.getRight()), spark.Util.rand(scene.getTop(), scene.getBottom()));
+
+  asteroid.addBehavior(wrap);
+  asteroid.addBehavior(function());
 }

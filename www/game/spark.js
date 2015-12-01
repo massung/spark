@@ -205,6 +205,75 @@ Spark.main = function() {
 		event.preventDefault();
 	};
 };
+Spark.loadXHR = function(src,respType,onload) {
+	var req = new XMLHttpRequest();
+	req.onloadend = function() {
+		if(req.status >= 200 && req.status <= 299) onload(req);
+	};
+	req.responseType = respType;
+	req.open("GET",src,true);
+	req.send();
+};
+Spark.loadXML = function(src,onload) {
+	Spark.loadXHR(src,"document",function(req) {
+		onload(req.response);
+	});
+};
+Spark.loadJSON = function(src,onload) {
+	Spark.loadXHR(src,"json",function(req) {
+		onload(req.response);
+	});
+};
+Spark.classOfFile = function(src) {
+	var ext = src.split("/").pop().split(".").pop().toLowerCase();
+	switch(ext) {
+	case "aiff":
+		return spark_audio_Sound;
+	case "au":
+		return spark_audio_Sound;
+	case "mid":
+		return spark_audio_Sound;
+	case "midi":
+		return spark_audio_Sound;
+	case "mp3":
+		return spark_audio_Sound;
+	case "ogg":
+		return spark_audio_Sound;
+	case "snd":
+		return spark_audio_Sound;
+	case "wav":
+		return spark_audio_Sound;
+	case "wave":
+		return spark_audio_Sound;
+	case "bmp":
+		return spark_graphics_Texture;
+	case "exif":
+		return spark_graphics_Texture;
+	case "gif":
+		return spark_graphics_Texture;
+	case "ico":
+		return spark_graphics_Texture;
+	case "jpeg":
+		return spark_graphics_Texture;
+	case "jpg":
+		return spark_graphics_Texture;
+	case "png":
+		return spark_graphics_Texture;
+	case "tga":
+		return spark_graphics_Texture;
+	case "tif":
+		return spark_graphics_Texture;
+	case "tiff":
+		return spark_graphics_Texture;
+	case "fnt":
+		return spark_graphics_Font;
+	case "otf":
+		return spark_graphics_Font;
+	case "ttf":
+		return spark_graphics_Font;
+	}
+	return null;
+};
 var Std = function() { };
 $hxClasses["Std"] = Std;
 Std.__name__ = ["Std"];
@@ -881,75 +950,6 @@ var spark_Asset = function(src) {
 };
 $hxClasses["spark.Asset"] = spark_Asset;
 spark_Asset.__name__ = ["spark","Asset"];
-spark_Asset.loadXHR = function(src,respType,onload) {
-	var req = new XMLHttpRequest();
-	req.onloadend = function() {
-		if(req.status >= 200 && req.status <= 299) onload(req);
-	};
-	req.responseType = respType;
-	req.open("GET",src,true);
-	req.send();
-};
-spark_Asset.loadXML = function(src,onload) {
-	spark_Asset.loadXHR(src,"document",function(req) {
-		onload(req.response);
-	});
-};
-spark_Asset.loadJSON = function(src,onload) {
-	spark_Asset.loadXHR(src,"json",function(req) {
-		onload(req.response);
-	});
-};
-spark_Asset.classOfFile = function(src) {
-	var ext = src.split("/").pop().split(".").pop().toLowerCase();
-	switch(ext) {
-	case "aiff":
-		return spark_audio_Sound;
-	case "au":
-		return spark_audio_Sound;
-	case "mid":
-		return spark_audio_Sound;
-	case "midi":
-		return spark_audio_Sound;
-	case "mp3":
-		return spark_audio_Sound;
-	case "ogg":
-		return spark_audio_Sound;
-	case "snd":
-		return spark_audio_Sound;
-	case "wav":
-		return spark_audio_Sound;
-	case "wave":
-		return spark_audio_Sound;
-	case "bmp":
-		return spark_graphics_Texture;
-	case "exif":
-		return spark_graphics_Texture;
-	case "gif":
-		return spark_graphics_Texture;
-	case "ico":
-		return spark_graphics_Texture;
-	case "jpeg":
-		return spark_graphics_Texture;
-	case "jpg":
-		return spark_graphics_Texture;
-	case "png":
-		return spark_graphics_Texture;
-	case "tga":
-		return spark_graphics_Texture;
-	case "tif":
-		return spark_graphics_Texture;
-	case "tiff":
-		return spark_graphics_Texture;
-	case "fnt":
-		return spark_graphics_Font;
-	case "otf":
-		return spark_graphics_Font;
-	case "ttf":
-		return spark_graphics_Font;
-	}
-	return null;
-};
 spark_Asset.prototype = {
 	source: null
 	,loaded: null
@@ -961,7 +961,7 @@ spark_Asset.prototype = {
 var spark_Game = $hx_exports.spark.Game = function(projectFile,init) {
 	var _g = this;
 	this.loadQueue = [];
-	spark_Asset.loadJSON(projectFile,function(json) {
+	Spark.loadJSON(projectFile,function(json) {
 		_g.project = json;
 		if(_g.project.path == null) _g.project.path = projectFile.split("/").slice(0,-1).join("/") + "/";
 		if(_g.project.assetPath == null) _g.project.assetPath = "/";
@@ -1305,7 +1305,7 @@ var spark_Scene = $hx_exports.spark.Scene = function(origin,width,height) {
 		break;
 	}
 	this.rect = new spark_Rect(-x,-y,w,h);
-	this.camera = new spark_Mat(0,0,1,0,Spark.canvas.width / 2,Spark.canvas.height / 2);
+	this.camera = new spark_object_Camera(Spark.canvas.width,Spark.canvas.height);
 	this.layers = [];
 };
 $hxClasses["spark.Scene"] = spark_Scene;
@@ -1321,8 +1321,7 @@ spark_Scene.prototype = {
 	,setViewport: function(w,h) {
 		if(w == null) w = Spark.canvas.width; else w = w;
 		if(h == null) h = w * Spark.canvas.height / Spark.canvas.width;
-		this.camera.s.x = w / 2;
-		this.camera.s.y = h / 2;
+		this.camera.m.s.set(w / 2,h / 2);
 	}
 	,newSpriteLayer: function(n) {
 		if(n == null) n = 100;
@@ -1349,6 +1348,7 @@ spark_Scene.prototype = {
 	}
 	,update: function(step) {
 		var i;
+		this.camera.update(step);
 		var _g1 = 0;
 		var _g = this.layers.length;
 		while(_g1 < _g) {
@@ -1373,9 +1373,9 @@ spark_Scene.prototype = {
 		var my = this.rect.getTop() + this.rect.getHeight() / 2;
 		Spark.view.setTransform(1,0,0,1,0,0);
 		Spark.view.translate(w2,h2);
-		Spark.view.scale(w2 / this.camera.s.x,h2 / this.camera.s.y);
-		Spark.view.transform(this.camera.r.x,this.camera.r.y,-this.camera.r.y,this.camera.r.x,0,0);
-		Spark.view.translate(-this.camera.p.x - mx,-this.camera.p.y - my);
+		Spark.view.scale(w2 / this.camera.m.s.x,h2 / this.camera.m.s.y);
+		Spark.view.transform(this.camera.m.r.x,this.camera.m.r.y,-this.camera.m.r.y,this.camera.m.r.x,0,0);
+		Spark.view.translate(-this.camera.m.p.x - mx,-this.camera.m.p.y - my);
 		var _g1 = 0;
 		var _g = this.layers.length;
 		while(_g1 < _g) {
@@ -1387,22 +1387,22 @@ spark_Scene.prototype = {
 	,worldToScreen: function(x,y) {
 		var mx = this.rect.getLeft() + this.rect.getWidth() / 2;
 		var my = this.rect.getTop() + this.rect.getHeight() / 2;
-		var cx = x - (this.camera.p.x + mx);
-		var cy = y - (this.camera.p.y + my);
-		var rx = cx * this.camera.r.x - cy * this.camera.r.y;
-		var ry = cy * this.camera.r.x + cx * this.camera.r.y;
-		var sx = rx * Spark.canvas.height / (2 * this.camera.s.x);
-		var sy = ry * Spark.canvas.width / (2 * this.camera.s.y);
+		var cx = x - (this.camera.m.p.x + mx);
+		var cy = y - (this.camera.m.p.y + my);
+		var rx = cx * this.camera.m.r.x - cy * this.camera.m.r.y;
+		var ry = cy * this.camera.m.r.x + cx * this.camera.m.r.y;
+		var sx = rx * Spark.canvas.height / (2 * this.camera.m.s.x);
+		var sy = ry * Spark.canvas.width / (2 * this.camera.m.s.y);
 		return new spark_Vec(sx + Spark.canvas.width / 2,sy + Spark.canvas.height / 2);
 	}
 	,screenToWorld: function(x,y) {
-		var cx = (x - Spark.canvas.width / 2) * this.camera.s.x * 2 / Spark.canvas.width;
-		var cy = (y - Spark.canvas.height / 2) * this.camera.s.y * 2 / Spark.canvas.height;
-		var vx = cx * this.camera.r.x + cy * this.camera.r.y;
-		var vy = cy * this.camera.r.x - cx * this.camera.r.y;
+		var cx = (x - Spark.canvas.width / 2) * this.camera.m.s.x * 2 / Spark.canvas.width;
+		var cy = (y - Spark.canvas.height / 2) * this.camera.m.s.y * 2 / Spark.canvas.height;
+		var vx = cx * this.camera.m.r.x + cy * this.camera.m.r.y;
+		var vy = cy * this.camera.m.r.x - cx * this.camera.m.r.y;
 		var mx = this.rect.getLeft() + this.rect.getWidth() / 2;
 		var my = this.rect.getTop() + this.rect.getHeight() / 2;
-		return new spark_Vec(vx + this.camera.p.x + mx,vy + this.camera.p.y + my);
+		return new spark_Vec(vx + this.camera.m.p.x + mx,vy + this.camera.m.p.y + my);
 	}
 	,pick: function(x,y,radius) {
 		if(radius == null) radius = 5;
@@ -1414,81 +1414,6 @@ spark_Scene.prototype = {
 		return this.space.collect(shape);
 	}
 	,__class__: spark_Scene
-};
-var spark_Sprite = $hx_exports.spark.Sprite = function(layer) {
-	this.init();
-	this.layer = layer;
-};
-$hxClasses["spark.Sprite"] = spark_Sprite;
-spark_Sprite.__name__ = ["spark","Sprite"];
-spark_Sprite.prototype = {
-	m: null
-	,pivot: null
-	,layer: null
-	,dead: null
-	,texture: null
-	,quad: null
-	,body: null
-	,rig: null
-	,behaviors: null
-	,init: function() {
-		this.m = spark_Mat.identity();
-		this.pivot = new spark_Vec(0.5,0.5);
-		this.behaviors = [];
-		this.rig = new spark_anim_Rig();
-		this.dead = false;
-		this.body = null;
-	}
-	,addBody: function(filter,oncollision) {
-		return this.body = new spark_collision_Body(this,filter,oncollision);
-	}
-	,addBehavior: function(callback,data) {
-		this.behaviors.push({ callback : callback, data : data});
-	}
-	,setTexture: function(texture,quad) {
-		this.texture = texture;
-		this.quad = quad;
-	}
-	,setQuad: function(quad) {
-		this.quad = quad;
-	}
-	,getWidth: function() {
-		return 0;
-	}
-	,getHeight: function() {
-		return 0;
-	}
-	,worldToLocal: function(p) {
-		return this.m.inverse().transform(p);
-	}
-	,localToWorld: function(p) {
-		return this.m.transform(p);
-	}
-	,worldToLocalAngle: function(angle) {
-		return this.m.get_angle() - angle;
-	}
-	,localToWorldAngle: function(angle) {
-		return this.m.get_angle() + angle;
-	}
-	,update: function(step) {
-		var i;
-		this.rig.update(step);
-		var _g1 = 0;
-		var _g = this.behaviors.length;
-		while(_g1 < _g) {
-			var i1 = _g1++;
-			this.behaviors[i1].callback(this,step,this.behaviors[i1].data);
-		}
-		if(this.body != null) this.body.updateShapeCache(this.m);
-	}
-	,draw: function() {
-		if(this.texture == null) return;
-		Spark.view.save();
-		this.m.apply();
-		if(this.quad == null) this.texture.draw(this.pivot); else this.texture.drawq(this.quad,this.pivot);
-		Spark.view.restore();
-	}
-	,__class__: spark_Sprite
 };
 var spark_Util = $hx_exports.spark.Util = function() { };
 $hxClasses["spark.Util"] = spark_Util;
@@ -1657,7 +1582,7 @@ spark_anim_Rig.prototype = {
 var spark_anim_Timeline = function(src) {
 	var _g = this;
 	spark_Asset.call(this,src);
-	spark_Asset.loadJSON(src,function(json) {
+	Spark.loadJSON(src,function(json) {
 		_g.data = json;
 		if(_g.data.fps == null) _g.data.fps = 30;
 		if(_g.data.duration == null) _g.data.duration = 30;
@@ -1819,7 +1744,7 @@ spark_anim_Tween.prototype = {
 var spark_audio_Sound = function(src) {
 	var _g = this;
 	spark_Asset.call(this,src);
-	spark_Asset.loadXHR(src,"arraybuffer",function(req) {
+	Spark.loadXHR(src,"arraybuffer",function(req) {
 		Spark.audio.decodeAudioData(req.response,function(buffer) {
 			_g.buffer = buffer;
 			_g.loaded = true;
@@ -2223,7 +2148,7 @@ var spark_graphics_Emitter = function(src) {
 	spark_Asset.call(this,src);
 	this.texture = null;
 	this.quad = null;
-	spark_Asset.loadJSON(src,function(json) {
+	Spark.loadJSON(src,function(json) {
 		_g.data = json;
 		_g.particleBehavior = function(sprite,step,data) {
 			var p = data;
@@ -2338,7 +2263,7 @@ var spark_layer_SpriteLayer = function(n) {
 	var _g = 0;
 	while(_g < n) {
 		var i1 = _g++;
-		this.pool.push(new spark_Sprite(this));
+		this.pool.push(new spark_object_Sprite(this));
 	}
 	this.sp = n;
 	this.count = 0;
@@ -2367,7 +2292,7 @@ spark_layer_SpriteLayer.prototype = {
 		if(this.sp > 0) {
 			sprite = this.pool[--this.sp];
 			sprite.init();
-		} else sprite = new spark_Sprite(this);
+		} else sprite = new spark_object_Sprite(this);
 		if(this.count + this.pending < this.sprites.length) this.sprites[this.count + this.pending] = sprite; else this.sprites.push(sprite);
 		this.pending++;
 		return sprite;
@@ -2403,6 +2328,108 @@ spark_layer_SpriteLayer.prototype = {
 	,__class__: spark_layer_SpriteLayer
 	,__properties__: {get_length:"get_length"}
 };
+var spark_object_Actor = function() {
+	this.rig = new spark_anim_Rig();
+	this.behaviors = [];
+	this.m = spark_Mat.identity();
+};
+$hxClasses["spark.object.Actor"] = spark_object_Actor;
+spark_object_Actor.__name__ = ["spark","object","Actor"];
+spark_object_Actor.prototype = {
+	m: null
+	,behaviors: null
+	,rig: null
+	,addBehavior: function(callback,data) {
+		this.behaviors.push({ callback : callback, data : data});
+	}
+	,worldToLocal: function(p) {
+		return this.m.inverse().transform(p);
+	}
+	,localToWorld: function(p) {
+		return this.m.transform(p);
+	}
+	,worldToLocalAngle: function(angle) {
+		return this.m.get_angle() - angle;
+	}
+	,localToWorldAngle: function(angle) {
+		return this.m.get_angle() + angle;
+	}
+	,update: function(step) {
+		var i;
+		this.rig.update(step);
+		var _g1 = 0;
+		var _g = this.behaviors.length;
+		while(_g1 < _g) {
+			var i1 = _g1++;
+			this.behaviors[i1].callback(this,step,this.behaviors[i1].data);
+		}
+	}
+	,__class__: spark_object_Actor
+};
+var spark_object_Camera = function(width,height) {
+	spark_object_Actor.call(this);
+	this.m.s.set(width / 2,height / 2);
+};
+$hxClasses["spark.object.Camera"] = spark_object_Camera;
+spark_object_Camera.__name__ = ["spark","object","Camera"];
+spark_object_Camera.__super__ = spark_object_Actor;
+spark_object_Camera.prototype = $extend(spark_object_Actor.prototype,{
+	__class__: spark_object_Camera
+});
+var spark_object_Sprite = function(layer) {
+	spark_object_Actor.call(this);
+	this.pivot = new spark_Vec(0.5,0.5);
+	this.layer = layer;
+	this.init();
+};
+$hxClasses["spark.object.Sprite"] = spark_object_Sprite;
+spark_object_Sprite.__name__ = ["spark","object","Sprite"];
+spark_object_Sprite.__super__ = spark_object_Actor;
+spark_object_Sprite.prototype = $extend(spark_object_Actor.prototype,{
+	pivot: null
+	,dead: null
+	,layer: null
+	,body: null
+	,texture: null
+	,quad: null
+	,init: function() {
+		this.m = spark_Mat.identity();
+		this.behaviors = [];
+		this.pivot.set(0.5,0.5);
+		this.dead = false;
+		this.body = null;
+		this.texture = null;
+		this.quad = null;
+	}
+	,addBody: function(filter,oncollision) {
+		return this.body = new spark_collision_Body(this,filter,oncollision);
+	}
+	,setTexture: function(texture,quad) {
+		this.texture = texture;
+		this.quad = quad;
+	}
+	,setQuad: function(quad) {
+		this.quad = quad;
+	}
+	,getWidth: function() {
+		return 0;
+	}
+	,getHeight: function() {
+		return 0;
+	}
+	,update: function(step) {
+		spark_object_Actor.prototype.update.call(this,step);
+		if(this.body != null) this.body.updateShapeCache(this.m);
+	}
+	,draw: function() {
+		if(this.texture == null) return;
+		Spark.view.save();
+		this.m.apply();
+		if(this.quad == null) this.texture.draw(this.pivot); else this.texture.drawq(this.quad,this.pivot);
+		Spark.view.restore();
+	}
+	,__class__: spark_object_Sprite
+});
 function $iterator(o) { if( o instanceof Array ) return function() { return HxOverrides.iter(o); }; return typeof(o.iterator) == 'function' ? $bind(o,o.iterator) : o.iterator; }
 var $_, $fid = 0;
 function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $fid++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = function(){ return f.method.apply(f.scope, arguments); }; f.scope = o; f.method = m; o.hx__closures__[m.__id__] = f; } return f; }
