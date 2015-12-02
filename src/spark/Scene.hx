@@ -124,15 +124,16 @@ class Scene {
     this.draw();
     Debug.endDraw();
 
-    // TODO: render gui
+    // render gui
     Debug.beginGui();
+    // TODO:
     Debug.endGui();
 
     // clear input states
     Input.flush();
 
     // show the performance trace
-    if (Debug.isEnabled()) {
+    if (Debug.isEnabled(Debug.PERF)) {
       var stats = {
         fps: 1 / step,
         layers: 0,
@@ -221,9 +222,9 @@ class Scene {
       this.layers[i].draw();
     }
 
-    // debug draw the spacial hash
-    if (Debug.isEnabled()) {
-      //this.space.draw();
+    // debug draw the spacial hash - must happen in world space!
+    if (Debug.isEnabled(Debug.COLLISION)) {
+      this.space.draw();
     }
 
     // done

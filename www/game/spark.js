@@ -197,6 +197,7 @@ Spark.main = function() {
 	Spark.canvas = window.document.getElementById("spark");
 	Spark.view = Spark.canvas.getContext("2d",null);
 	Spark.audio = new AudioContext();
+	spark_Debug.init();
 	spark_Input.init();
 	spark_Input.hideCursor();
 	spark_Input.enableMouse();
@@ -1033,7 +1034,7 @@ spark_Asset.prototype = {
 var spark_Debug = $hx_exports.spark.Debug = function() { };
 $hxClasses["spark.Debug"] = spark_Debug;
 spark_Debug.__name__ = ["spark","Debug"];
-spark_Debug.enable = function() {
+spark_Debug.init = function() {
 	var _this = window.document;
 	spark_Debug.traceCanvas = _this.createElement("canvas");
 	if(spark_Debug.traceCanvas != null) {
@@ -1041,13 +1042,17 @@ spark_Debug.enable = function() {
 		spark_Debug.traceCanvas.height = 200;
 		spark_Debug.traceView = spark_Debug.traceCanvas.getContext("2d",null);
 	}
-	return spark_Debug.enabled = spark_Debug.traceView != null;
 };
-spark_Debug.disable = function() {
-	spark_Debug.enabled = false;
+spark_Debug.enable = function(flag) {
+	if(flag == null) flag = 1;
+	spark_Debug.flags |= flag;
 };
-spark_Debug.isEnabled = function() {
-	return spark_Debug.enabled;
+spark_Debug.disable = function(flag) {
+	if(flag == null) flag = 65535;
+	spark_Debug.flags &= ~flag;
+};
+spark_Debug.isEnabled = function(flag) {
+	return (spark_Debug.flags & flag) != 0;
 };
 spark_Debug.beginUpdate = function() {
 	spark_Debug.updateTime = window.performance.now();
@@ -1074,7 +1079,7 @@ spark_Debug.endGui = function() {
 	spark_Debug.guiTime = window.performance.now() - spark_Debug.guiTime;
 };
 spark_Debug.drawPerf = function(frame,stats) {
-	if(spark_Debug.enabled == false || spark_Debug.traceView == null) return;
+	if(spark_Debug.traceView == null || !spark_Debug.isEnabled(spark_Debug.PERF)) return;
 	if(spark_Debug.traceCanvas.width != Spark.canvas.width) spark_Debug.traceCanvas.width = Spark.canvas.width;
 	var w = spark_Debug.traceCanvas.width;
 	var h = spark_Debug.traceCanvas.height;
@@ -1529,7 +1534,7 @@ spark_Scene.prototype = {
 		spark_Debug.beginGui();
 		spark_Debug.endGui();
 		spark_Input.flush();
-		if(spark_Debug.isEnabled()) {
+		if(spark_Debug.isEnabled(spark_Debug.PERF)) {
 			var stats = { fps : 1 / step, layers : 0, sprites : 0};
 			var _g1 = 0;
 			var _g = this.layers.length;
@@ -1586,8 +1591,7 @@ spark_Scene.prototype = {
 			var i1 = _g1++;
 			this.layers[i1].draw();
 		}
-		if(spark_Debug.isEnabled()) {
-		}
+		if(spark_Debug.isEnabled(spark_Debug.COLLISION)) this.space.draw();
 		Spark.view.restore();
 	}
 	,worldToScreen: function(x,y) {
@@ -2765,7 +2769,10 @@ if(Array.prototype.filter == null) Array.prototype.filter = function(f1) {
 };
 var __map_reserved = {}
 js_Boot.__toStr = {}.toString;
-spark_Debug.enabled = false;
+spark_Debug.flags = 0;
+spark_Debug.PERF = 1;
+spark_Debug.COLLISION = 2;
+spark_Debug.ALL = 65535;
 spark_Debug.updateTime = 0;
 spark_Debug.collisionTime = 0;
 spark_Debug.drawTime = 0;

@@ -30,6 +30,9 @@ class Spark {
     // initialize audio
     audio = new js.html.audio.AudioContext();
 
+    // initialize debugging
+    spark.Debug.init();
+
     // initialize input devices
     spark.Input.init();
     spark.Input.hideCursor();

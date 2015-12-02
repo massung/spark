@@ -14,7 +14,12 @@ typedef Stats = {
 
 @:expose
 class Debug {
-  static private var enabled: Bool = false;
+  static private var flags: Int = 0;
+
+  // various flags that can be enabled/disabled
+  static public var PERF: Int = 1 << 0;
+  static public var COLLISION: Int = 1 << 1;
+  static public var ALL: Int = 0xFFFF;
 
   // performance time sampling
   static private var updateTime: Float = 0;
@@ -26,9 +31,10 @@ class Debug {
   static private var traceCanvas: js.html.CanvasElement = null;
   static private var traceView: js.html.CanvasRenderingContext2D = null;
 
-  // start debugging
-  static public function enable(): Bool {
+  // initialize the debug module
+  static public function init() {
     traceCanvas = js.Browser.document.createCanvasElement();
+
     if (traceCanvas != null) {
       traceCanvas.width = Spark.canvas.width;
       traceCanvas.height = 200;
@@ -36,16 +42,14 @@ class Debug {
       // get the render context
       traceView = traceCanvas.getContext2d();
     }
-
-    // true only if the canvas was created and the view valid
-    return enabled = (traceView != null);
   }
 
-  // stop debugging - keep the canvas and view created
-  static public function disable() enabled = false;
+  // start/stop debugging of various systems
+  static public function enable(?flag: Int = 1) flags |= flag;
+  static public function disable(?flag: Int = 0xFFFF) flags &= ~flag;
 
   // true if debugging has been enabled
-  static public function isEnabled(): Bool return enabled;
+  static public function isEnabled(flag: Int): Bool return (flags & flag) != 0;
 
   // track how much time the update phase takes
   static public function beginUpdate() updateTime = js.Browser.window.performance.now();
@@ -65,7 +69,7 @@ class Debug {
 
   // render the performance trace
   static public function drawPerf(frame: Int, ?stats: Stats) {
-    if (enabled == false || traceView == null) {
+    if (traceView == null || !isEnabled(PERF)) {
       return;
     }
 
