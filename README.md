@@ -3,13 +3,12 @@
 Spark is a 2D, HTML5, game engine. It has the following features:
 
 * It's simple! 100% pure JavaScript.
-* Multi-platform: desktop, Android, iOS, webOS, FireOS.
-* Scene management: projection, camera, layers, scene graph, ...
-* Collision detection and 2D physics.
-* Sprites, behaviors, animation, and tweening.
-* GUI controls and GUI skinning.
-* Audio: clips and looping.
-* Networking: WebSocket connections for multiplayer games.
+* Multi-platform: desktop, mobile, anything with a browser
+* Scene management: projection, camera, layers, actors
+* Fast 2D collision detection
+* Sprites, behaviors, tweening, timelines
+* GUI controls and skinning
+* Audio sounds and looping
 
 Once you've gone over the Quickstart and Tutorial, head on over to the
 [documentation](https://github.com/massung/spark/doc/) section and learn how
@@ -65,21 +64,43 @@ That's it!
 proper SDK(s) installed. For example, to run the game on Android, you'll need
 the Android SDK and Java SE >= 7 installed.*
 
+## Compiling Spark from Source
+
+Spark is written in [Haxe](http://haxe.org/). Haxe is fantastic for making
+cross-targeted, modular, and fast code. If you'd like to compile the sources
+yourself, simply install Haxe and then build it from within the `src` folder:
+
+    $ haxe ./compile.hxml
+
+If you'd like a JavaScript map file created as well for debugging:
+
+    $ haxe ./compile.hxml -debug
+
+This will compile Spark and put the `spark.js` file in `www/game`.
+
 ## Tutorial (Your First Game)
 
-This tutorial will run you through the basic setup of Spark, how modules are
-initialized, loading a project, and creating a basic Asteroids game from
-scratch. It won't cover everything, but enough to get your feet wet and to
-start exploring further.
+This tutorial will run you through the basic structure of Spark and creating
+your first game step by step.
 
 *NOTE: This tutorial will be intended to run in a desktop browser and use the
 keyboard and mouse for controls.*
 
 ### Folder Structure
 
-Inside the `www` folder are two subfolders: `spark` and `game`. The `spark`
-folder contains the entire Spark framework, while `game` is yours to do with
-as you please.
+\+ www
+\|
+\| ---+ game
+\|    |
+\|    | ---+ assets
+\|    |    |
+\|    |    +--- // project assets
+\|    |
+\|    | ---+ main.js
+\|    | ---+ project.json
+\|    | ---+ spark.js
+\|    |
+\| ---+ index.html
 
 ### The INDEX.HTML File
 
