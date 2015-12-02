@@ -134,7 +134,7 @@ class Quadtree {
           var b = node.shapes[j];
 
           // shapes on the same body cannot collide
-          if (a.getBody() != b.getBody() && m.indexOf(b.getBody()) < 0 && shapeQuery(a, b)) {
+          if (a.canCollideWith(b) && m.indexOf(b.getBody()) < 0 && shapeQuery(a, b)) {
             m.push(b.getBody());
           }
         }
@@ -151,7 +151,7 @@ class Quadtree {
             var b = child.shapes[k];
 
             // if different colliders and intersecting there's a collision
-            if (a.canCollideWidth(b) && m.indexOf(b.getBody()) < 0 && shapeQuery(a, b)) {
+            if (a.canCollideWith(b) && m.indexOf(b.getBody()) < 0 && shapeQuery(a, b)) {
               m.push(b.getBody());
             }
           }
@@ -182,5 +182,30 @@ class Quadtree {
         manifold[j].collide(body);
       }
     }
+  }
+
+  // debug render the quadtree and all shapes within it
+  public function draw() {
+    var i;
+
+    // save the current styles
+    Spark.view.save();
+
+    // render the bounding area of this node
+    Spark.view.strokeStyle = '#f00';
+    Spark.view.strokeRect(this.rect.getLeft(), this.rect.getTop(), this.rect.getWidth(), this.rect.getHeight());
+
+    // render all the child nodes
+    for(i in 0...this.nodes.length) {
+      this.nodes[i].draw();
+    }
+
+    // render all the shapes
+    for(i in 0...this.shapes.length) {
+      this.shapes[i].draw();
+    }
+
+    // done
+    Spark.view.restore();
   }
 }

@@ -87,4 +87,16 @@ class Circle extends Shape {
     // below and to the right of the box
     return this.tc.distsq(tp2) <= this.r * this.r;
   }
+
+  // debug render the shape
+  override public function draw() {
+    Spark.view.strokeStyle = '#ff0';
+    Spark.view.beginPath();
+
+    // draw the circle
+    Spark.view.arc(this.tc.x, this.tc.y, this.r, 0, 360);
+
+    // done
+    Spark.view.stroke();
+  }
 }

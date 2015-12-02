@@ -81,4 +81,20 @@ class Box extends Shape {
 
     return true;
   }
+
+  // debug render the shape
+  override public function draw() {
+    Spark.view.strokeStyle = '#ff0';
+    Spark.view.beginPath();
+
+    // draw the axis-aligned quad
+    Spark.view.moveTo(this.tp1.x, this.tp1.y);
+    Spark.view.lineTo(this.tp2.x, this.tp1.y);
+    Spark.view.lineTo(this.tp2.x, this.tp2.y);
+    Spark.view.lineTo(this.tp1.x, this.tp2.y);
+
+    // done
+    Spark.view.closePath();
+    Spark.view.stroke();
+  }
 }

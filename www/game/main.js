@@ -39,7 +39,7 @@ spark.Game.main('game/project.json', game => {
     spawnPlayer();
 
     // spawn some asteroids
-    for(i = 0;i < 2;i++) {
+    for(i = 0;i < 20;i++) {
       spawnAsteroid();
     }
 
@@ -51,7 +51,7 @@ spark.Game.main('game/project.json', game => {
 function spawnPlayer() {
   var sprite = playerLayer.newSprite();
   var body = sprite.addBody('player', c => {
-    explosionSound.woof();
+    //explosionSound.woof();
   });
 
   sprite.setTexture(spaceship);
@@ -97,7 +97,7 @@ function fire(layer, m) {
 function spawnAsteroid() {
   var asteroid = asteroidsLayer.newSprite();
   var body = asteroid.addBody('asteroid', c => {
-    //console.log(c.filter);
+    console.log('asteroid collision!');
   });
 
   // pick a random image to use

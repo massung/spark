@@ -192,7 +192,8 @@ class Scene {
       this.layers[i].draw();
     }
 
-    // TODO: debug draw the spacial hash
+    // debug draw the spacial hash
+    this.space.draw();
 
     // done
     Spark.view.restore();

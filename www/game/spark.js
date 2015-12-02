@@ -1393,6 +1393,7 @@ spark_Scene.prototype = {
 			var i1 = _g1++;
 			this.layers[i1].draw();
 		}
+		this.space.draw();
 		Spark.view.restore();
 	}
 	,worldToScreen: function(x,y) {
@@ -1934,7 +1935,7 @@ spark_collision_Quadtree.prototype = {
 				while(_g3 < _g2) {
 					var j1 = _g3++;
 					var b = node.shapes[j1];
-					if(a.getBody() != b.getBody() && (function($this) {
+					if(a.canCollideWith(b) && (function($this) {
 						var $r;
 						var x = b.getBody();
 						$r = HxOverrides.indexOf(m,x,0);
@@ -1949,7 +1950,7 @@ spark_collision_Quadtree.prototype = {
 					while(_g31 < _g21) {
 						var k1 = _g31++;
 						var b1 = child.shapes[k1];
-						if(a.canCollideWidth(b1) && (function($this) {
+						if(a.canCollideWith(b1) && (function($this) {
 							var $r;
 							var x1 = b1.getBody();
 							$r = HxOverrides.indexOf(m,x1,0);
@@ -1977,6 +1978,25 @@ spark_collision_Quadtree.prototype = {
 			}
 		}
 	}
+	,draw: function() {
+		var i;
+		Spark.view.save();
+		Spark.view.strokeStyle = "#f00";
+		Spark.view.strokeRect(this.rect.getLeft(),this.rect.getTop(),this.rect.getWidth(),this.rect.getHeight());
+		var _g1 = 0;
+		var _g = this.nodes.length;
+		while(_g1 < _g) {
+			var i1 = _g1++;
+			this.nodes[i1].draw();
+		}
+		var _g11 = 0;
+		var _g2 = this.shapes.length;
+		while(_g11 < _g2) {
+			var i2 = _g11++;
+			this.shapes[i2].draw();
+		}
+		Spark.view.restore();
+	}
 	,__class__: spark_collision_Quadtree
 };
 var spark_collision_Shape = function(body) {
@@ -1989,8 +2009,8 @@ spark_collision_Shape.prototype = {
 	,getBody: function() {
 		return this.body;
 	}
-	,canCollideWidth: function(s) {
-		return this.body != s.body || this.body.getFilter() != s.body.getFilter();
+	,canCollideWith: function(s) {
+		return this.body != s.body && this.body.getFilter() != s.body.getFilter();
 	}
 	,within: function(rect) {
 		return false;
@@ -2005,6 +2025,8 @@ spark_collision_Shape.prototype = {
 	}
 	,boxQuery: function(s) {
 		return false;
+	}
+	,draw: function() {
 	}
 	,__class__: spark_collision_Shape
 };
@@ -2063,6 +2085,16 @@ spark_collision_shape_Box.prototype = $extend(spark_collision_Shape.prototype,{
 		if(this.tp2.y < tp1.y || this.tp1.y > tp2.y) return false;
 		return true;
 	}
+	,draw: function() {
+		Spark.view.strokeStyle = "#ff0";
+		Spark.view.beginPath();
+		Spark.view.moveTo(this.tp1.x,this.tp1.y);
+		Spark.view.lineTo(this.tp2.x,this.tp1.y);
+		Spark.view.lineTo(this.tp2.x,this.tp2.y);
+		Spark.view.lineTo(this.tp1.x,this.tp2.y);
+		Spark.view.closePath();
+		Spark.view.stroke();
+	}
 	,__class__: spark_collision_shape_Box
 });
 var spark_collision_shape_Circle = function(body,x,y,r) {
@@ -2109,6 +2141,12 @@ spark_collision_shape_Circle.prototype = $extend(spark_collision_Shape.prototype
 		if(this.tc.x > tp2.x && this.tc.y < tp1.y) return this.tc.distsq(new spark_Vec(tp2.x,tp1.y)) <= this.r * this.r;
 		if(this.tc.x < tp1.x && this.tc.y > tp2.y) return this.tc.distsq(new spark_Vec(tp1.x,tp2.y)) <= this.r * this.r;
 		return this.tc.distsq(tp2) <= this.r * this.r;
+	}
+	,draw: function() {
+		Spark.view.strokeStyle = "#ff0";
+		Spark.view.beginPath();
+		Spark.view.arc(this.tc.x,this.tc.y,this.r,0,360);
+		Spark.view.stroke();
 	}
 	,__class__: spark_collision_shape_Circle
 });
@@ -2161,6 +2199,13 @@ spark_collision_shape_Segment.prototype = $extend(spark_collision_Shape.prototyp
 		if(this.tp1.y < tp1.y && this.tp2.y < tp1.y) return false;
 		if(this.tp1.y > tp2.y && this.tp2.y > tp2.y) return false;
 		return true;
+	}
+	,draw: function() {
+		Spark.view.strokeStyle = "#ff0";
+		Spark.view.beginPath();
+		Spark.view.moveTo(this.tp1.x,this.tp1.y);
+		Spark.view.lineTo(this.tp2.x,this.tp2.y);
+		Spark.view.stroke();
 	}
 	,__class__: spark_collision_shape_Segment
 });
