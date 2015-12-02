@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<spark>
+  <project title="Spark Demo" version="1.0" assetPath="assets/" />
+  <assets>
+
+    <!-- player images -->
+    <asset src="player.png" ref="spark.graphics.Texture" />
+    <asset src="laser.png" ref="spark.graphics.Texture" />
+
+    <!-- asteroid images -->
+    <asset src="asteroid_big_1.png" ref="spark.graphics.Texture" />
+    <asset src="asteroid_big_2.png" ref="spark.graphics.Texture" />
+    <asset src="asteroid_big_3.png" ref="spark.graphics.Texture" />
+    <asset src="asteroid_big_4.png" ref="spark.graphics.Texture" />
+
+    <!-- sounds -->
+    <asset src="laser.mp3" ref="spark.audio.Sound" />
+    <asset src="explosion.mp3" ref="spark.audio.Sound" />
+    <asset src="reload.mp3" ref="spark.audio.Sound" />
+
+    <!-- timeline animations -->
+    <asset src="shake.json" ref="spark.anim.Timeline" />
+    <asset src="spawn.json" ref="spark.anim.Timeline" />
+  </assets>
+</spark>

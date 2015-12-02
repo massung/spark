@@ -225,56 +225,6 @@ Spark.loadJSON = function(src,onload) {
 		onload(req.response);
 	});
 };
-Spark.classOfFile = function(src) {
-	var ext = src.split("/").pop().split(".").pop().toLowerCase();
-	switch(ext) {
-	case "aiff":
-		return spark_audio_Sound;
-	case "au":
-		return spark_audio_Sound;
-	case "mid":
-		return spark_audio_Sound;
-	case "midi":
-		return spark_audio_Sound;
-	case "mp3":
-		return spark_audio_Sound;
-	case "ogg":
-		return spark_audio_Sound;
-	case "snd":
-		return spark_audio_Sound;
-	case "wav":
-		return spark_audio_Sound;
-	case "wave":
-		return spark_audio_Sound;
-	case "bmp":
-		return spark_graphics_Texture;
-	case "exif":
-		return spark_graphics_Texture;
-	case "gif":
-		return spark_graphics_Texture;
-	case "ico":
-		return spark_graphics_Texture;
-	case "jpeg":
-		return spark_graphics_Texture;
-	case "jpg":
-		return spark_graphics_Texture;
-	case "png":
-		return spark_graphics_Texture;
-	case "tga":
-		return spark_graphics_Texture;
-	case "tif":
-		return spark_graphics_Texture;
-	case "tiff":
-		return spark_graphics_Texture;
-	case "fnt":
-		return spark_graphics_Font;
-	case "otf":
-		return spark_graphics_Font;
-	case "ttf":
-		return spark_graphics_Font;
-	}
-	return null;
-};
 var Std = function() { };
 $hxClasses["Std"] = Std;
 Std.__name__ = ["Std"];
@@ -591,6 +541,15 @@ haxe_IMap.prototype = {
 	,iterator: null
 	,toString: null
 	,__class__: haxe_IMap
+};
+var haxe_Log = function() { };
+$hxClasses["haxe.Log"] = haxe_Log;
+haxe_Log.__name__ = ["haxe","Log"];
+haxe_Log.trace = function(v,infos) {
+	js_Boot.__trace(v,infos);
+};
+haxe_Log.clear = function() {
+	js_Boot.__clear_trace();
 };
 var haxe_ds__$StringMap_StringMapIterator = function(map,keys) {
 	this.map = map;
@@ -1023,6 +982,56 @@ var spark_Asset = function(src) {
 };
 $hxClasses["spark.Asset"] = spark_Asset;
 spark_Asset.__name__ = ["spark","Asset"];
+spark_Asset.classOfExt = function(ext) {
+	var _g = ext.toLowerCase();
+	switch(_g) {
+	case "aiff":
+		return spark_audio_Sound;
+	case "au":
+		return spark_audio_Sound;
+	case "mid":
+		return spark_audio_Sound;
+	case "midi":
+		return spark_audio_Sound;
+	case "mp3":
+		return spark_audio_Sound;
+	case "ogg":
+		return spark_audio_Sound;
+	case "snd":
+		return spark_audio_Sound;
+	case "wav":
+		return spark_audio_Sound;
+	case "wave":
+		return spark_audio_Sound;
+	case "bmp":
+		return spark_graphics_Texture;
+	case "exif":
+		return spark_graphics_Texture;
+	case "gif":
+		return spark_graphics_Texture;
+	case "ico":
+		return spark_graphics_Texture;
+	case "jpeg":
+		return spark_graphics_Texture;
+	case "jpg":
+		return spark_graphics_Texture;
+	case "png":
+		return spark_graphics_Texture;
+	case "tga":
+		return spark_graphics_Texture;
+	case "tif":
+		return spark_graphics_Texture;
+	case "tiff":
+		return spark_graphics_Texture;
+	case "fnt":
+		return spark_graphics_Font;
+	case "otf":
+		return spark_graphics_Font;
+	case "ttf":
+		return spark_graphics_Font;
+	}
+	return null;
+};
 spark_Asset.prototype = {
 	source: null
 	,loaded: null
@@ -1036,11 +1045,11 @@ $hxClasses["spark.Debug"] = spark_Debug;
 spark_Debug.__name__ = ["spark","Debug"];
 spark_Debug.init = function() {
 	var _this = window.document;
-	spark_Debug.traceCanvas = _this.createElement("canvas");
-	if(spark_Debug.traceCanvas != null) {
-		spark_Debug.traceCanvas.width = Spark.canvas.width;
-		spark_Debug.traceCanvas.height = 200;
-		spark_Debug.traceView = spark_Debug.traceCanvas.getContext("2d",null);
+	spark_Debug.perfCanvas = _this.createElement("canvas");
+	if(spark_Debug.perfCanvas != null) {
+		spark_Debug.perfCanvas.width = Spark.canvas.width;
+		spark_Debug.perfCanvas.height = 200;
+		spark_Debug.perfView = spark_Debug.perfCanvas.getContext("2d",null);
 	}
 };
 spark_Debug.enable = function(flag) {
@@ -1079,47 +1088,47 @@ spark_Debug.endGui = function() {
 	spark_Debug.guiTime = window.performance.now() - spark_Debug.guiTime;
 };
 spark_Debug.drawPerf = function(frame,stats) {
-	if(spark_Debug.traceView == null || !spark_Debug.isEnabled(spark_Debug.PERF)) return;
-	if(spark_Debug.traceCanvas.width != Spark.canvas.width) spark_Debug.traceCanvas.width = Spark.canvas.width;
-	var w = spark_Debug.traceCanvas.width;
-	var h = spark_Debug.traceCanvas.height;
+	if(spark_Debug.perfView == null || !spark_Debug.isEnabled(spark_Debug.PERF)) return;
+	if(spark_Debug.perfCanvas.width != Spark.canvas.width) spark_Debug.perfCanvas.width = Spark.canvas.width;
+	var w = spark_Debug.perfCanvas.width;
+	var h = spark_Debug.perfCanvas.height;
 	var x = frame % (w / 2) * 2;
 	var y = h / 2;
 	var updateY = Math.round(spark_Debug.updateTime * 60 * y / 1000);
 	var collisionY = Math.round(spark_Debug.collisionTime * 60 * y / 1000);
 	var drawY = Math.round(spark_Debug.drawTime * 60 * y / 1000);
 	var guiY = Math.round(spark_Debug.guiTime * 60 * y / 1000);
-	spark_Debug.traceView.clearRect(x,0,10,h);
-	spark_Debug.traceView.lineWidth = 2;
-	spark_Debug.traceView.fillStyle = "#000";
-	spark_Debug.traceView.strokeStyle = "#66b2ff";
-	spark_Debug.traceView.beginPath();
-	spark_Debug.traceView.moveTo(x,h);
-	spark_Debug.traceView.lineTo(x,h - updateY);
-	spark_Debug.traceView.stroke();
-	spark_Debug.traceView.strokeStyle = "#c354ff";
-	spark_Debug.traceView.beginPath();
-	spark_Debug.traceView.moveTo(x,h - updateY);
-	spark_Debug.traceView.lineTo(x,h - updateY - collisionY);
-	spark_Debug.traceView.stroke();
-	spark_Debug.traceView.strokeStyle = "#2dffb2";
-	spark_Debug.traceView.beginPath();
-	spark_Debug.traceView.moveTo(x,h - updateY - collisionY);
-	spark_Debug.traceView.lineTo(x,h - updateY - collisionY - drawY);
-	spark_Debug.traceView.stroke();
-	spark_Debug.traceView.strokeStyle = "#fa5882";
-	spark_Debug.traceView.beginPath();
-	spark_Debug.traceView.moveTo(x,h - updateY - collisionY - drawY);
-	spark_Debug.traceView.lineTo(x,h - updateY - collisionY - drawY - guiY);
-	spark_Debug.traceView.stroke();
-	spark_Debug.traceView.strokeStyle = "#333";
-	spark_Debug.traceView.beginPath();
-	spark_Debug.traceView.moveTo(0,y);
-	spark_Debug.traceView.lineTo(w,y);
-	spark_Debug.traceView.stroke();
+	spark_Debug.perfView.clearRect(x,0,10,h);
+	spark_Debug.perfView.lineWidth = 2;
+	spark_Debug.perfView.fillStyle = "#000";
+	spark_Debug.perfView.strokeStyle = "#66b2ff";
+	spark_Debug.perfView.beginPath();
+	spark_Debug.perfView.moveTo(x,h);
+	spark_Debug.perfView.lineTo(x,h - updateY);
+	spark_Debug.perfView.stroke();
+	spark_Debug.perfView.strokeStyle = "#c354ff";
+	spark_Debug.perfView.beginPath();
+	spark_Debug.perfView.moveTo(x,h - updateY);
+	spark_Debug.perfView.lineTo(x,h - updateY - collisionY);
+	spark_Debug.perfView.stroke();
+	spark_Debug.perfView.strokeStyle = "#2dffb2";
+	spark_Debug.perfView.beginPath();
+	spark_Debug.perfView.moveTo(x,h - updateY - collisionY);
+	spark_Debug.perfView.lineTo(x,h - updateY - collisionY - drawY);
+	spark_Debug.perfView.stroke();
+	spark_Debug.perfView.strokeStyle = "#fa5882";
+	spark_Debug.perfView.beginPath();
+	spark_Debug.perfView.moveTo(x,h - updateY - collisionY - drawY);
+	spark_Debug.perfView.lineTo(x,h - updateY - collisionY - drawY - guiY);
+	spark_Debug.perfView.stroke();
+	spark_Debug.perfView.strokeStyle = "#333";
+	spark_Debug.perfView.beginPath();
+	spark_Debug.perfView.moveTo(0,y);
+	spark_Debug.perfView.lineTo(w,y);
+	spark_Debug.perfView.stroke();
 	Spark.view.save();
 	Spark.view.setTransform(1,0,0,1,0,0);
-	Spark.view.drawImage(spark_Debug.traceCanvas,0,Spark.canvas.height - h);
+	Spark.view.drawImage(spark_Debug.perfCanvas,0,Spark.canvas.height - h);
 	Spark.view.font = "bold 10px \"Courier New\", sans-serif";
 	Spark.view.fillStyle = "#66b2ff";
 	Spark.view.fillText("Update    : " + spark_Util.flToStr(spark_Debug.updateTime,3) + "ms",10,Spark.canvas.height - y - 24);
@@ -1137,77 +1146,30 @@ spark_Debug.drawPerf = function(frame,stats) {
 		Spark.view.fillText("Sprites   : " + stats.sprites,10,Spark.canvas.height - y - 84);
 	}
 };
-var spark_Game = $hx_exports.spark.Game = function(projectFile,init) {
-	var _g = this;
-	this.loadQueue = [];
-	Spark.loadJSON(projectFile,function(json) {
-		_g.project = json;
-		if(_g.project.path == null) _g.project.path = projectFile.split("/").slice(0,-1).join("/") + "/";
-		if(_g.project.assetPath == null) _g.project.assetPath = "/";
-		if(_g.project.title == null) _g.project.title = "Spark Game";
-		if(_g.project.version == null) _g.project.version = 1.0;
-		init(_g);
-	});
-};
+var spark_Game = $hx_exports.spark.Game = function() { };
 $hxClasses["spark.Game"] = spark_Game;
 spark_Game.__name__ = ["spark","Game"];
-spark_Game.main = function(projectFile,init) {
-	return new spark_Game(projectFile,init);
+spark_Game.project = null;
+spark_Game.main = function(projectFile,onload) {
+	spark_Game.project = new spark_Project(projectFile,onload);
 };
-spark_Game.prototype = {
-	project: null
-	,loadQueue: null
-	,launch: function(onload) {
-		var _g = this;
-		var n = 0;
-		var i;
-		var _g1 = 0;
-		var _g2 = this.loadQueue.length;
-		while(_g1 < _g2) {
-			var i1 = _g1++;
-			if(this.loadQueue[i1].isLoaded()) n++;
-		}
-		if(n == this.loadQueue.length) onload(); else window.requestAnimationFrame(function(now) {
-			var x = Spark.canvas.width / 2;
-			var y = Spark.canvas.height / 2;
-			var w = x * 3 / 5;
-			Spark.view.save();
-			Spark.view.setTransform(1,0,0,1,0,0);
-			Spark.view.clearRect(0,0,Spark.canvas.width,Spark.canvas.height);
-			Spark.view.strokeStyle = "#fff";
-			Spark.view.shadowBlur = 10;
-			Spark.view.shadowOffsetX = 0;
-			Spark.view.shadowOffsetY = 0;
-			Spark.view.shadowColor = "#fff";
-			Spark.view.font = "bold 10px \"Courier\", sans-serif";
-			Spark.view.fillStyle = "#fff";
-			Spark.view.fillText("Loading...",10,Spark.canvas.height - 10);
-			Spark.view.beginPath();
-			Spark.view.moveTo(x - w,y);
-			Spark.view.lineTo(x - w + w * 2 * js_Boot.__cast(n , Float) / _g.loadQueue.length,y);
-			Spark.view.stroke();
-			Spark.view.restore();
-			_g.launch(onload);
-		});
-	}
-	,load: function(classRef,src) {
-		var asset = Type.createInstance(classRef,[this.project.path + this.project.assetPath + src]);
-		this.loadQueue.push(asset);
-		return asset;
-	}
-	,newFont: function(src) {
-		return this.load(spark_graphics_Font,src);
-	}
-	,newSound: function(src) {
-		return this.load(spark_audio_Sound,src);
-	}
-	,newTexture: function(src) {
-		return this.load(spark_graphics_Texture,src);
-	}
-	,newTimeline: function(src) {
-		return this.load(spark_anim_Timeline,src);
-	}
-	,__class__: spark_Game
+spark_Game.getProject = function() {
+	return spark_Game.project;
+};
+spark_Game.getEmitter = function(src) {
+	return spark_Game.project.get(src);
+};
+spark_Game.getFont = function(src) {
+	return spark_Game.project.get(src);
+};
+spark_Game.getSound = function(src) {
+	return spark_Game.project.get(src);
+};
+spark_Game.getTexture = function(src) {
+	return spark_Game.project.get(src);
+};
+spark_Game.getTimeline = function(src) {
+	return spark_Game.project.get(src);
 };
 var spark_Input = $hx_exports.spark.Input = function() { };
 $hxClasses["spark.Input"] = spark_Input;
@@ -1398,6 +1360,100 @@ spark_Mat.prototype = {
 	}
 	,__class__: spark_Mat
 	,__properties__: {set_angle:"set_angle",get_angle:"get_angle"}
+};
+var spark_Project = function(projectFile,onload) {
+	var _g = this;
+	this.assets = new haxe_ds_StringMap();
+	this.loadQueue = [];
+	this.info = { path : projectFile.split("/").slice(0,-1).join("/") + "/", assetPath : "", title : "Spark Game", version : 1.0, assets : []};
+	Spark.loadJSON(projectFile,function(json) {
+		var i;
+		spark_Util.merge(_g.info,json);
+		var _g2 = 0;
+		var _g1 = _g.info.assets.length;
+		while(_g2 < _g1) {
+			var i1 = _g2++;
+			var asset = _g.info.assets[i1];
+			if(asset.ref != null) _g.load(asset.src,Type.resolveClass(asset.ref)); else _g.load(asset.src);
+		}
+		onload(_g);
+	});
+};
+$hxClasses["spark.Project"] = spark_Project;
+spark_Project.__name__ = ["spark","Project"];
+spark_Project.prototype = {
+	info: null
+	,loadQueue: null
+	,assets: null
+	,load: function(src,classRef) {
+		if(classRef == null) {
+			classRef = spark_Asset.classOfExt(src.split("/").pop().split(".").pop());
+			if(classRef == null) {
+				haxe_Log.trace("Unknown asset type \"" + src + "\"; skipping...",{ fileName : "Project.hx", lineNumber : 74, className : "spark.Project", methodName : "load"});
+				return null;
+			}
+		}
+		if(this.assets.exists(src)) {
+			haxe_Log.trace("Asset \"" + src + "\" already loaded; skipping...",{ fileName : "Project.hx", lineNumber : 81, className : "spark.Project", methodName : "load"});
+			return null;
+		}
+		var asset = Type.createInstance(classRef,[this.info.path + this.info.assetPath + src]);
+		this.assets.set(src,asset);
+		this.loadQueue.push(asset);
+		return asset;
+	}
+	,launch: function(onload) {
+		var _g = this;
+		var n = 0;
+		var i;
+		var _g1 = 0;
+		var _g2 = this.loadQueue.length;
+		while(_g1 < _g2) {
+			var i1 = _g1++;
+			if(this.loadQueue[i1].isLoaded()) n++;
+		}
+		if(n == this.loadQueue.length) onload(); else window.requestAnimationFrame(function(now) {
+			var x = Spark.canvas.width / 2;
+			var y = Spark.canvas.height / 2;
+			var w = x * 3 / 5;
+			Spark.view.save();
+			Spark.view.setTransform(1,0,0,1,0,0);
+			Spark.view.clearRect(0,0,Spark.canvas.width,Spark.canvas.height);
+			Spark.view.strokeStyle = "#fff";
+			Spark.view.shadowBlur = 10;
+			Spark.view.shadowOffsetX = 0;
+			Spark.view.shadowOffsetY = 0;
+			Spark.view.shadowColor = "#fff";
+			Spark.view.font = "bold 10px \"Courier\", sans-serif";
+			Spark.view.fillStyle = "#fff";
+			Spark.view.fillText("Loading...",10,Spark.canvas.height - 10);
+			Spark.view.beginPath();
+			Spark.view.moveTo(x - w,y);
+			Spark.view.lineTo(x - w + w * 2 * js_Boot.__cast(n , Float) / _g.loadQueue.length,y);
+			Spark.view.stroke();
+			Spark.view.restore();
+			_g.launch(onload);
+		});
+	}
+	,newEmitter: function(src) {
+		return this.load(src,spark_graphics_Emitter);
+	}
+	,newFont: function(src) {
+		return this.load(src,spark_graphics_Font);
+	}
+	,newSound: function(src) {
+		return this.load(src,spark_audio_Sound);
+	}
+	,newTexture: function(src) {
+		return this.load(src,spark_graphics_Texture);
+	}
+	,newTimeline: function(src) {
+		return this.load(src,spark_anim_Timeline);
+	}
+	,get: function(src) {
+		return this.assets.get(src);
+	}
+	,__class__: spark_Project
 };
 var spark_Rect = $hx_exports.spark.Rect = function(x,y,w,h) {
 	this.x = x;
@@ -1628,6 +1684,16 @@ spark_Scene.prototype = {
 var spark_Util = $hx_exports.spark.Util = function() { };
 $hxClasses["spark.Util"] = spark_Util;
 spark_Util.__name__ = ["spark","Util"];
+spark_Util.merge = function(a,b) {
+	var i;
+	var fields = Reflect.fields(b);
+	var _g1 = 0;
+	var _g = fields.length;
+	while(_g1 < _g) {
+		var i1 = _g1++;
+		Reflect.setField(a,fields[i1],Reflect.field(b,fields[i1]));
+	}
+};
 spark_Util.flToStr = function(f,prec) {
 	if(prec == null) prec = 2;
 	var s = "" + f * Math.pow(10,prec) / Math.pow(10,prec);
@@ -1800,19 +1866,17 @@ spark_anim_Rig.prototype = {
 var spark_anim_Timeline = function(src) {
 	var _g = this;
 	spark_Asset.call(this,src);
+	this.tweens = null;
+	this.data = { fps : 30, duration : 30, loop : false, tracks : null, events : []};
 	Spark.loadJSON(src,function(json) {
-		_g.data = json;
-		if(_g.data.fps == null) _g.data.fps = 30;
-		if(_g.data.duration == null) _g.data.duration = 30;
-		if(_g.data.loop == null) _g.data.loop = false;
-		if(_g.data.events == null) _g.data.events = [];
+		spark_Util.merge(_g.data,json);
 		_g.data.events.sort(function(a,b) {
 			return a.frame - b.frame;
 		});
-		_g.tweens = new haxe_ds_StringMap();
 		if(_g.data.tracks != null) {
 			var i;
 			var fields = Reflect.fields(_g.data.tracks);
+			_g.tweens = new haxe_ds_StringMap();
 			var _g2 = 0;
 			var _g1 = fields.length;
 			while(_g2 < _g1) {
@@ -1838,10 +1902,12 @@ spark_anim_Timeline.prototype = $extend(spark_Asset.prototype,{
 	,playOn: function(obj,onevent) {
 		var rig = new spark_anim_Rig();
 		var prop;
-		var $it0 = this.tweens.keys();
-		while( $it0.hasNext() ) {
-			var prop1 = $it0.next();
-			this.tweens.get(prop1).playOn(obj,prop1,this.data.loop);
+		if(this.tweens != null) {
+			var $it0 = this.tweens.keys();
+			while( $it0.hasNext() ) {
+				var prop1 = $it0.next();
+				this.tweens.get(prop1).playOn(obj,prop1,this.data.loop);
+			}
 		}
 		var timeline = this;
 		var eventIndex = 0;
@@ -2420,8 +2486,9 @@ var spark_graphics_Emitter = function(src) {
 	spark_Asset.call(this,src);
 	this.texture = null;
 	this.quad = null;
+	this.data = { texture : null, quad : null, compositeOperation : "source-over", startAlpha : 1.0, endAlpha : 1.0, minLife : 1.0, maxLife : 1.5, startScale : 1.0, endScale : 1.0, spread : 180.0, minSpeed : 50.0, maxSpeed : 100.0, minAngularVelocity : -90.0, maxAngularVelocity : 90.0, forwardAngle : 0.0};
 	Spark.loadJSON(src,function(json) {
-		_g.data = json;
+		spark_Util.merge(_g.data,json);
 		_g.particleBehavior = function(sprite,step,data) {
 			var p = data;
 			if((p.age += step) > p.life) {
@@ -2686,6 +2753,9 @@ spark_object_Sprite.prototype = $extend(spark_object_Actor.prototype,{
 		this.texture = null;
 		this.quad = null;
 	}
+	,getLayer: function() {
+		return this.layer;
+	}
 	,addBody: function(filter,oncollision) {
 		return this.body = new spark_collision_Body(this,filter,oncollision);
 	}
@@ -2777,8 +2847,8 @@ spark_Debug.updateTime = 0;
 spark_Debug.collisionTime = 0;
 spark_Debug.drawTime = 0;
 spark_Debug.guiTime = 0;
-spark_Debug.traceCanvas = null;
-spark_Debug.traceView = null;
+spark_Debug.perfCanvas = null;
+spark_Debug.perfView = null;
 spark_Input.Button = { 'LEFT' : 0, 'MIDDLE' : 1, 'RIGHT' : 2};
 spark_Input.Key = { 'BACKSPACE' : 8, 'TAB' : 9, 'ENTER' : 13, 'PAUSE' : 19, 'CAPS' : 20, 'ESC' : 27, 'SPACE' : 32, 'PAGE_UP' : 33, 'PAGE_DOWN' : 34, 'END' : 35, 'HOME' : 36, 'LEFT' : 37, 'UP' : 38, 'RIGHT' : 39, 'DOWN' : 40, 'INSERT' : 45, 'DELETE' : 46, '_0' : 48, '_1' : 49, '_2' : 50, '_3' : 51, '_4' : 52, '_5' : 53, '_6' : 54, '_7' : 55, '_8' : 56, '_9' : 57, 'A' : 65, 'B' : 66, 'C' : 67, 'D' : 68, 'E' : 69, 'F' : 70, 'G' : 71, 'H' : 72, 'I' : 73, 'J' : 74, 'K' : 75, 'L' : 76, 'M' : 77, 'N' : 78, 'O' : 79, 'P' : 80, 'Q' : 81, 'R' : 82, 'S' : 83, 'T' : 84, 'U' : 85, 'V' : 86, 'W' : 87, 'X' : 88, 'Y' : 89, 'Z' : 90, 'NUMPAD_0' : 96, 'NUMPAD_1' : 97, 'NUMPAD_2' : 98, 'NUMPAD_3' : 99, 'NUMPAD_4' : 100, 'NUMPAD_5' : 101, 'NUMPAD_6' : 102, 'NUMPAD_7' : 103, 'NUMPAD_8' : 104, 'NUMPAD_9' : 105, 'MULTIPLY' : 106, 'ADD' : 107, 'SUBSTRACT' : 109, 'DECIMAL' : 110, 'DIVIDE' : 111, 'F1' : 112, 'F2' : 113, 'F3' : 114, 'F4' : 115, 'F5' : 116, 'F6' : 117, 'F7' : 118, 'F8' : 119, 'F9' : 120, 'F10' : 121, 'F11' : 122, 'F12' : 123, 'SHIFT' : 16, 'CTRL' : 17, 'ALT' : 18, 'PLUS' : 187, 'COMMA' : 188, 'MINUS' : 189, 'PERIOD' : 190};
 spark_collision_Quadtree.DEPTH_LIMIT = 3;

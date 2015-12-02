@@ -28,19 +28,19 @@ class Debug {
   static private var guiTime: Float = 0;
 
   // performance trace is rendered to an offscreen canvas
-  static private var traceCanvas: js.html.CanvasElement = null;
-  static private var traceView: js.html.CanvasRenderingContext2D = null;
+  static private var perfCanvas: js.html.CanvasElement = null;
+  static private var perfView: js.html.CanvasRenderingContext2D = null;
 
   // initialize the debug module
   static public function init() {
-    traceCanvas = js.Browser.document.createCanvasElement();
+    perfCanvas = js.Browser.document.createCanvasElement();
 
-    if (traceCanvas != null) {
-      traceCanvas.width = Spark.canvas.width;
-      traceCanvas.height = 200;
+    if (perfCanvas != null) {
+      perfCanvas.width = Spark.canvas.width;
+      perfCanvas.height = 200;
 
       // get the render context
-      traceView = traceCanvas.getContext2d();
+      perfView = perfCanvas.getContext2d();
     }
   }
 
@@ -69,18 +69,18 @@ class Debug {
 
   // render the performance trace
   static public function drawPerf(frame: Int, ?stats: Stats) {
-    if (traceView == null || !isEnabled(PERF)) {
+    if (perfView == null || !isEnabled(PERF)) {
       return;
     }
 
     // resize the offscreen canvas if necessary
-    if (traceCanvas.width != Spark.canvas.width) {
-      traceCanvas.width = Spark.canvas.width;
+    if (perfCanvas.width != Spark.canvas.width) {
+      perfCanvas.width = Spark.canvas.width;
     }
 
     // get the size of the trace
-    var w = traceCanvas.width;
-    var h = traceCanvas.height;
+    var w = perfCanvas.width;
+    var h = perfCanvas.height;
 
     // scroll and wrap the performance trace
     var x = (frame % (w / 2)) * 2;
@@ -93,49 +93,49 @@ class Debug {
     var guiY = Math.round(guiTime * 60 * y / 1000);
 
     // clear an area around and ahead of this slice
-    traceView.clearRect(x, 0, 10, h);
+    perfView.clearRect(x, 0, 10, h);
 
     // a nice blue for update time
-    traceView.lineWidth = 2;
-    traceView.fillStyle = '#000';
-    traceView.strokeStyle = '#66b2ff';
-    traceView.beginPath();
-    traceView.moveTo(x, h);
-    traceView.lineTo(x, h - updateY);
-    traceView.stroke();
+    perfView.lineWidth = 2;
+    perfView.fillStyle = '#000';
+    perfView.strokeStyle = '#66b2ff';
+    perfView.beginPath();
+    perfView.moveTo(x, h);
+    perfView.lineTo(x, h - updateY);
+    perfView.stroke();
 
     // Purple for collision time.
-    traceView.strokeStyle = '#c354ff';
-    traceView.beginPath();
-    traceView.moveTo(x, h - updateY);
-    traceView.lineTo(x, h - updateY - collisionY);
-    traceView.stroke();
+    perfView.strokeStyle = '#c354ff';
+    perfView.beginPath();
+    perfView.moveTo(x, h - updateY);
+    perfView.lineTo(x, h - updateY - collisionY);
+    perfView.stroke();
 
     // Green for draw time.
-    traceView.strokeStyle = '#2dffb2';
-    traceView.beginPath();
-    traceView.moveTo(x, h - updateY - collisionY);
-    traceView.lineTo(x, h - updateY - collisionY - drawY);
-    traceView.stroke();
+    perfView.strokeStyle = '#2dffb2';
+    perfView.beginPath();
+    perfView.moveTo(x, h - updateY - collisionY);
+    perfView.lineTo(x, h - updateY - collisionY - drawY);
+    perfView.stroke();
 
     // Pink for gui time.
-    traceView.strokeStyle = '#fa5882';
-    traceView.beginPath();
-    traceView.moveTo(x, h - updateY - collisionY - drawY);
-    traceView.lineTo(x, h - updateY - collisionY - drawY - guiY);
-    traceView.stroke();
+    perfView.strokeStyle = '#fa5882';
+    perfView.beginPath();
+    perfView.moveTo(x, h - updateY - collisionY - drawY);
+    perfView.lineTo(x, h - updateY - collisionY - drawY - guiY);
+    perfView.stroke();
 
     // Draw a gray line at the 60 FPS mark.
-    traceView.strokeStyle = '#333';
-    traceView.beginPath();
-    traceView.moveTo(0, y);
-    traceView.lineTo(w, y);
-    traceView.stroke();
+    perfView.strokeStyle = '#333';
+    perfView.beginPath();
+    perfView.moveTo(0, y);
+    perfView.lineTo(w, y);
+    perfView.stroke();
 
     // Blit the performance canvas onto the spark canvas.
     Spark.view.save();
     Spark.view.setTransform(1, 0, 0, 1, 0, 0);
-    Spark.view.drawImage(traceCanvas, 0, Spark.canvas.height - h);
+    Spark.view.drawImage(perfCanvas, 0, Spark.canvas.height - h);
 
     // show the legend
     Spark.view.font = 'bold 10px "Courier New", sans-serif';

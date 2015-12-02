@@ -14,7 +14,10 @@ typedef TimelineData = {
   loop: Bool,
 
   // timed event callbacks
-  events: Array<{ frame: Int, event: String }>,
+  events: Array<{
+    frame: Int,
+    event: String,
+  }>,
 
   // tweens to crunch
   tracks: Dynamic,
@@ -32,24 +35,31 @@ class Timeline extends Asset {
   public function new(src: String) {
     super(src);
 
-    Spark.loadJSON(src, function(json: Dynamic) {
-      this.data = cast json;
+    // no tweens by default (tracks must exist)
+    this.tweens = null;
 
-      // set defaults if not found
-      if (this.data.fps == null) this.data.fps = 30;
-      if (this.data.duration == null) this.data.duration = 30;
-      if (this.data.loop == null) this.data.loop = false;
-      if (this.data.events == null) this.data.events = [];
+    // default settings
+    this.data = {
+      fps: 30,
+      duration: 30,
+      loop: false,
+      tracks: null,
+      events: [],
+    }
+
+    // load the JSON document with all the settings and tracks
+    Spark.loadJSON(src, function(json: Dynamic) {
+      Util.merge(this.data, json);
 
       // sort all the events by their frame #
       this.data.events.sort(function(a, b) return a.frame - b.frame);
 
-      // map property to crunched track
-      this.tweens = new StringMap<Tween>();
-
       // crunch all the tracks
       if (this.data.tracks != null) {
         var i, fields = Reflect.fields(this.data.tracks);
+
+        // map property to crunched track
+        this.tweens = new StringMap<Tween>();
 
         for(i in 0...fields.length) {
           var field = fields[i];
@@ -81,8 +91,10 @@ class Timeline extends Asset {
     var prop;
 
     // spawn all the tracks on the same rigging
-    for (prop in this.tweens.keys()) {
-      this.tweens.get(prop).playOn(obj, prop, this.data.loop);
+    if (this.tweens != null) {
+      for (prop in this.tweens.keys()) {
+        this.tweens.get(prop).playOn(obj, prop, this.data.loop);
+      }
     }
 
     // lexical data for the animation

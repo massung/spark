@@ -17,7 +17,7 @@ class Sprite extends Actor {
   public var dead: Bool;
 
   // the layer this sprite was spawned onto
-  public var layer: Layer;
+  private var layer: Layer;
 
   // a rigid body for collision
   private var body: Body;
@@ -50,6 +50,9 @@ class Sprite extends Actor {
     this.quad = null;
     //this.contextSettings = {};
   }
+
+  // get the layer this sprite is on
+  public function getLayer(): Layer return layer;
 
   // add a rigid body for collision detection to the sprite
   public function addBody(filter: String, ?oncollision: Body.CollisionCallback): Body {

@@ -9,6 +9,16 @@ package spark;
 @:expose
 class Util {
 
+  // merge one anonymous structure (b) into another (a), overwrite
+  static public function merge(a: Dynamic, b: Dynamic) {
+    var i, fields = Reflect.fields(b);
+
+    // any fields in a not in b will be unchanged
+    for(i in 0...fields.length) {
+      Reflect.setField(a, fields[i], Reflect.field(b, fields[i]));
+    }
+  }
+
   // float to string conversion with precision
   static public function flToStr(f: Float, ?prec: Int = 2): String {
     var s: String = '' + (f * Math.pow(10, prec) / Math.pow(10, prec));

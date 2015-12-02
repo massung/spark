@@ -1,34 +1,15 @@
 // Game entry point...
 //
 
+var scene;
 var playerLayer;
 var asteroidLayer;
-var scene;
-var player;
-var spaceship;
-var explosionSound;
-var laserSound;
-var shake;
-var spawn;
-var asteroids;
 
-// launch the game and go!
-spark.Game.main('game/project.json', game => {
-  spaceship = game.newTexture('player.png');
-  laser = game.newTexture('laser.png');
-  laserSound = game.newSound('laser.mp3');
-  explosionSound = game.newSound('explosion.mp3');
-  spawn = game.newTimeline('spawn.json');
-  shake = game.newTimeline('shake.json');
-  asteroids = [
-    game.newTexture('asteroid_big_1.png'),
-    game.newTexture('asteroid_big_2.png'),
-    game.newTexture('asteroid_big_3.png'),
-    game.newTexture('asteroid_big_4.png'),
-  ];
+// create a new game instance
+spark.Game.main('game/project.json', proj => {
+  proj.newTexture('player.png');
 
-  // wait until all loading is complete
-  game.launch(() => {
+  proj.launch(() => {
     scene = new spark.Scene('middle', 1400, 1400);
     scene.setViewport(1400, 1400);
 
@@ -50,11 +31,9 @@ spark.Game.main('game/project.json', game => {
 
 function spawnPlayer() {
   var sprite = playerLayer.newSprite();
-  var body = sprite.addBody(null, c => {
-    //explosionSound.woof();
-  });
+  var body = sprite.addBody('player', c => { });
 
-  sprite.setTexture(spaceship);
+  sprite.setTexture(spark.Game.getTexture('player.png'));
 
   sprite.addBehavior(playerControls);
   sprite.addBehavior(wrap);
@@ -68,12 +47,12 @@ function playerControls(sprite, step) {
 
   // spawn bullets
   for(var i = 0;i < spark.Input.keyHits(spark.Input.Key.SPACE);i++) {
-    shoot(sprite.layer, sprite.m);
+    shoot(sprite.getLayer(), sprite.m);
   }
 
   if (spark.Input.keyHit(spark.Input.Key.T)) {
-    shake.playOn(scene.camera);
-    explosionSound.woof();
+    spark.Game.getTimeline('shake.json').playOn(scene.camera);
+    spark.Game.getSound('explosion.mp3').woof();
   }
 }
 
@@ -85,7 +64,7 @@ function shoot(layer, m) {
   bullet.m.r = m.r.copy();
 
   // texture
-  bullet.setTexture(laser);
+  bullet.setTexture(spark.Game.getTexture('laser.png'));
   body.addSegmentShape(0, -10, 0, 10);
 
   // create movement behavior
@@ -94,7 +73,7 @@ function shoot(layer, m) {
     sprite.dead = (data.age += step) > 1;
   }, { age: 0.0 });
 
-  laserSound.woof();
+  spark.Game.getSound('laser.mp3').woof();
 }
 
 function spawnAsteroid() {
@@ -104,7 +83,12 @@ function spawnAsteroid() {
   });
 
   // pick a random image to use
-  asteroid.setTexture(spark.Util.arand(asteroids));
+  asteroid.setTexture(spark.Util.arand([
+    spark.Game.getTexture('asteroid_big_1.png'),
+    spark.Game.getTexture('asteroid_big_2.png'),
+    spark.Game.getTexture('asteroid_big_3.png'),
+    spark.Game.getTexture('asteroid_big_4.png'),
+  ]));
 
   var w = asteroid.getWidth();
   var h = asteroid.getHeight();
@@ -130,7 +114,7 @@ function spawnAsteroid() {
     sprite.m.rotate(w * step);
   });
 
-  spawn.playOn(asteroid);
+  spark.Game.getTimeline('spawn.json').playOn(asteroid);
 }
 
 function wrap(sprite) {

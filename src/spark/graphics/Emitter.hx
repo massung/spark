@@ -18,6 +18,7 @@ typedef ParticleData = {
 typedef EmitterData = {
   texture: String,
   quad: String,
+  compositeOperation: String,
   startAlpha: Float,
   endAlpha: Float,
   minLife: Float,
@@ -49,10 +50,27 @@ class Emitter extends Asset {
     // default values
     this.texture = null;
     this.quad = null;
+    this.data = {
+      texture: null,
+      quad: null,
+      compositeOperation: 'source-over',
+      startAlpha: 1.0,
+      endAlpha: 1.0,
+      minLife: 1.0,
+      maxLife: 1.5,
+      startScale: 1.0,
+      endScale: 1.0,
+      spread: 180.0,
+      minSpeed: 50.0,
+      maxSpeed: 100.0,
+      minAngularVelocity: -90.0,
+      maxAngularVelocity: 90.0,
+      forwardAngle: 0.0,
+    };
 
     // issue the load
     Spark.loadJSON(src, function(json) {
-      this.data = json;
+      Util.merge(this.data, json);
 
       // create a custom behavior for all particles this emitter spawns
       this.particleBehavior = function(sprite: Actor, step: Float, data: Dynamic) {

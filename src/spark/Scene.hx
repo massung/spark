@@ -111,22 +111,30 @@ class Scene {
 
     // update the scene
     Debug.beginUpdate();
-    this.update(step);
+    {
+      this.update(step);
+    }
     Debug.endUpdate();
 
     // process collsions
     Debug.beginCollision();
-    this.processCollisions();
+    {
+      this.processCollisions();
+    }
     Debug.endCollision();
 
     // render all layers
     Debug.beginDraw();
-    this.draw();
+    {
+      this.draw();
+    }
     Debug.endDraw();
 
     // render gui
     Debug.beginGui();
-    // TODO:
+    {
+      // TODO:
+    }
     Debug.endGui();
 
     // clear input states
