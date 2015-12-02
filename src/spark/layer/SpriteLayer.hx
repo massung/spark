@@ -138,4 +138,10 @@ class SpriteLayer implements Layer {
       this.sprites[i].draw();
     }
   }
+
+  // add to any debug stats when debugging
+  public function accumDebugStats(stats: Debug.Stats) {
+    stats.layers++;
+    stats.sprites += this.count;
+  }
 }

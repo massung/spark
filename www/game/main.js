@@ -50,7 +50,7 @@ spark.Game.main('game/project.json', game => {
 
 function spawnPlayer() {
   var sprite = playerLayer.newSprite();
-  var body = sprite.addBody('player', c => {
+  var body = sprite.addBody(null, c => {
     //explosionSound.woof();
   });
 
@@ -68,7 +68,7 @@ function playerControls(sprite, step) {
 
   // spawn bullets
   for(var i = 0;i < spark.Input.keyHits(spark.Input.Key.SPACE);i++) {
-    fire(sprite.layer, sprite.m);
+    shoot(sprite.layer, sprite.m);
   }
 
   if (spark.Input.keyHit(spark.Input.Key.T)) {
@@ -76,14 +76,16 @@ function playerControls(sprite, step) {
   }
 }
 
-function fire(layer, m) {
+function shoot(layer, m) {
   var bullet = layer.newSprite();
+  var body = bullet.addBody('bullet');
 
   bullet.m.p = m.transform(new spark.Vec(0, -60));
   bullet.m.r = m.r.copy();
 
   // texture
   bullet.setTexture(laser);
+  body.addSegmentShape(0, -10, 0, 10);
 
   // create movement behavior
   bullet.addBehavior((sprite, step, data) => {
@@ -97,7 +99,7 @@ function fire(layer, m) {
 function spawnAsteroid() {
   var asteroid = asteroidsLayer.newSprite();
   var body = asteroid.addBody('asteroid', c => {
-    console.log('asteroid collision!');
+    //console.log('boom');
   });
 
   // pick a random image to use
@@ -107,7 +109,7 @@ function spawnAsteroid() {
   var h = asteroid.getHeight();
 
   // add a box shape to the asteroid
-  body.addBoxShape(-w / 2, - h / 2, w, h);
+  body.addBoxShape(-w / 4, - h / 4, w / 2, h / 2);
 
   // spawn at a random position
   asteroid.m.p.set(

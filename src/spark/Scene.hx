@@ -14,7 +14,7 @@ import spark.object.*;
 @:expose
 class Scene {
   private var frametime: Float;
-  private var framecount: Float;
+  private var framecount: Int;
 
   // id of the next requested animation frame
   private var runloop: Int;
@@ -109,15 +109,44 @@ class Scene {
     this.frametime = now;
     this.framecount++;
 
-    // update the scene and render it
+    // update the scene
+    Debug.beginUpdate();
     this.update(step);
+    Debug.endUpdate();
+
+    // process collsions
+    Debug.beginCollision();
     this.processCollisions();
+    Debug.endCollision();
+
+    // render all layers
+    Debug.beginDraw();
     this.draw();
+    Debug.endDraw();
+
+    // TODO: render gui
+    Debug.beginGui();
+    Debug.endGui();
 
     // clear input states
     Input.flush();
 
-    // TODO: show the performance trace
+    // show the performance trace
+    if (Debug.isEnabled()) {
+      var stats = {
+        fps: 1 / step,
+        layers: 0,
+        sprites: 0,
+      }
+
+      // count all the active sprites on all layers
+      for(i in 0...this.layers.length) {
+        this.layers[i].accumDebugStats(stats);
+      }
+
+      // draw the performance trace with stats
+      Debug.drawPerf(this.framecount, stats);
+    }
 
     // continue
     this.runloop = js.Browser.window.requestAnimationFrame(this.stepFrame);
@@ -193,7 +222,9 @@ class Scene {
     }
 
     // debug draw the spacial hash
-    this.space.draw();
+    if (Debug.isEnabled()) {
+      //this.space.draw();
+    }
 
     // done
     Spark.view.restore();

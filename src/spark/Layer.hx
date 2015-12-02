@@ -16,4 +16,7 @@ interface Layer {
   public function update(step: Float): Void;
   public function updateCollision(space: Quadtree): Void;
   public function draw(): Void;
+
+  // for debugging, accumulate stats
+  public function accumDebugStats(stats: Debug.Stats): Void;
 }

@@ -958,6 +958,108 @@ spark_Asset.prototype = {
 	}
 	,__class__: spark_Asset
 };
+var spark_Debug = $hx_exports.spark.Debug = function() { };
+$hxClasses["spark.Debug"] = spark_Debug;
+spark_Debug.__name__ = ["spark","Debug"];
+spark_Debug.enable = function() {
+	var _this = window.document;
+	spark_Debug.traceCanvas = _this.createElement("canvas");
+	if(spark_Debug.traceCanvas != null) {
+		spark_Debug.traceCanvas.width = Spark.canvas.width;
+		spark_Debug.traceCanvas.height = 200;
+		spark_Debug.traceView = spark_Debug.traceCanvas.getContext("2d",null);
+	}
+	return spark_Debug.enabled = spark_Debug.traceView != null;
+};
+spark_Debug.disable = function() {
+	spark_Debug.enabled = false;
+};
+spark_Debug.isEnabled = function() {
+	return spark_Debug.enabled;
+};
+spark_Debug.beginUpdate = function() {
+	spark_Debug.updateTime = window.performance.now();
+};
+spark_Debug.endUpdate = function() {
+	spark_Debug.updateTime = window.performance.now() - spark_Debug.updateTime;
+};
+spark_Debug.beginCollision = function() {
+	spark_Debug.collisionTime = window.performance.now();
+};
+spark_Debug.endCollision = function() {
+	spark_Debug.collisionTime = window.performance.now() - spark_Debug.collisionTime;
+};
+spark_Debug.beginDraw = function() {
+	spark_Debug.drawTime = window.performance.now();
+};
+spark_Debug.endDraw = function() {
+	spark_Debug.drawTime = window.performance.now() - spark_Debug.drawTime;
+};
+spark_Debug.beginGui = function() {
+	spark_Debug.guiTime = window.performance.now();
+};
+spark_Debug.endGui = function() {
+	spark_Debug.guiTime = window.performance.now() - spark_Debug.guiTime;
+};
+spark_Debug.drawPerf = function(frame,stats) {
+	if(spark_Debug.enabled == false || spark_Debug.traceView == null) return;
+	if(spark_Debug.traceCanvas.width != Spark.canvas.width) spark_Debug.traceCanvas.width = Spark.canvas.width;
+	var w = spark_Debug.traceCanvas.width;
+	var h = spark_Debug.traceCanvas.height;
+	var x = frame % (w / 2) * 2;
+	var y = h / 2;
+	var updateY = Math.round(spark_Debug.updateTime * 60 * y / 1000);
+	var collisionY = Math.round(spark_Debug.collisionTime * 60 * y / 1000);
+	var drawY = Math.round(spark_Debug.drawTime * 60 * y / 1000);
+	var guiY = Math.round(spark_Debug.guiTime * 60 * y / 1000);
+	spark_Debug.traceView.clearRect(x,0,10,h);
+	spark_Debug.traceView.lineWidth = 2;
+	spark_Debug.traceView.fillStyle = "#000";
+	spark_Debug.traceView.strokeStyle = "#66b2ff";
+	spark_Debug.traceView.beginPath();
+	spark_Debug.traceView.moveTo(x,h);
+	spark_Debug.traceView.lineTo(x,h - updateY);
+	spark_Debug.traceView.stroke();
+	spark_Debug.traceView.strokeStyle = "#c354ff";
+	spark_Debug.traceView.beginPath();
+	spark_Debug.traceView.moveTo(x,h - updateY);
+	spark_Debug.traceView.lineTo(x,h - updateY - collisionY);
+	spark_Debug.traceView.stroke();
+	spark_Debug.traceView.strokeStyle = "#2dffb2";
+	spark_Debug.traceView.beginPath();
+	spark_Debug.traceView.moveTo(x,h - updateY - collisionY);
+	spark_Debug.traceView.lineTo(x,h - updateY - collisionY - drawY);
+	spark_Debug.traceView.stroke();
+	spark_Debug.traceView.strokeStyle = "#fa5882";
+	spark_Debug.traceView.beginPath();
+	spark_Debug.traceView.moveTo(x,h - updateY - collisionY - drawY);
+	spark_Debug.traceView.lineTo(x,h - updateY - collisionY - drawY - guiY);
+	spark_Debug.traceView.stroke();
+	spark_Debug.traceView.strokeStyle = "#333";
+	spark_Debug.traceView.beginPath();
+	spark_Debug.traceView.moveTo(0,y);
+	spark_Debug.traceView.lineTo(w,y);
+	spark_Debug.traceView.stroke();
+	Spark.view.save();
+	Spark.view.setTransform(1,0,0,1,0,0);
+	Spark.view.drawImage(spark_Debug.traceCanvas,0,Spark.canvas.height - h);
+	Spark.view.font = "bold 10px \"Courier New\", sans-serif";
+	Spark.view.fillStyle = "#66b2ff";
+	Spark.view.fillText("Update    : " + spark_Util.flToStr(spark_Debug.updateTime,1) + "ms",10,Spark.canvas.height - y - 24);
+	Spark.view.fillStyle = "#c354ff";
+	Spark.view.fillText("Collision : " + spark_Util.flToStr(spark_Debug.collisionTime,1) + "ms",10,Spark.canvas.height - y - 36);
+	Spark.view.fillStyle = "#2dffb2";
+	Spark.view.fillText("Draw      : " + spark_Util.flToStr(spark_Debug.drawTime,1) + "ms",10,Spark.canvas.height - y - 48);
+	Spark.view.fillStyle = "#fa5882";
+	Spark.view.fillText("GUI       : " + spark_Util.flToStr(spark_Debug.guiTime,1) + "ms",10,Spark.canvas.height - y - 60);
+	if(stats != null) {
+		Spark.view.fillStyle = "#ccc";
+		Spark.view.fillText("FPS       : " + spark_Util.flToStr(stats.fps,1),10,Spark.canvas.height - y - 2);
+		Spark.view.fillStyle = "#ff8000";
+		Spark.view.fillText("Layers    : " + stats.layers,10,Spark.canvas.height - y - 96);
+		Spark.view.fillText("Sprites   : " + stats.sprites,10,Spark.canvas.height - y - 84);
+	}
+};
 var spark_Game = $hx_exports.spark.Game = function(projectFile,init) {
 	var _g = this;
 	this.loadQueue = [];
@@ -1149,6 +1251,7 @@ spark_Layer.prototype = {
 	,update: null
 	,updateCollision: null
 	,draw: null
+	,accumDebugStats: null
 	,__class__: spark_Layer
 };
 var spark_Mat = $hx_exports.spark.Mat = function(x,y,rx,ry,sx,sy) {
@@ -1342,10 +1445,28 @@ spark_Scene.prototype = {
 		var step = (now - this.frametime) / 1000;
 		this.frametime = now;
 		this.framecount++;
+		spark_Debug.beginUpdate();
 		this.update(step);
+		spark_Debug.endUpdate();
+		spark_Debug.beginCollision();
 		this.processCollisions();
+		spark_Debug.endCollision();
+		spark_Debug.beginDraw();
 		this.draw();
+		spark_Debug.endDraw();
+		spark_Debug.beginGui();
+		spark_Debug.endGui();
 		spark_Input.flush();
+		if(spark_Debug.isEnabled()) {
+			var stats = { fps : 1 / step, layers : 0, sprites : 0};
+			var _g1 = 0;
+			var _g = this.layers.length;
+			while(_g1 < _g) {
+				var i = _g1++;
+				this.layers[i].accumDebugStats(stats);
+			}
+			spark_Debug.drawPerf(this.framecount,stats);
+		}
 		this.runloop = window.requestAnimationFrame($bind(this,this.stepFrame));
 	}
 	,update: function(step) {
@@ -1393,7 +1514,8 @@ spark_Scene.prototype = {
 			var i1 = _g1++;
 			this.layers[i1].draw();
 		}
-		this.space.draw();
+		if(spark_Debug.isEnabled()) {
+		}
 		Spark.view.restore();
 	}
 	,worldToScreen: function(x,y) {
@@ -1430,6 +1552,10 @@ spark_Scene.prototype = {
 var spark_Util = $hx_exports.spark.Util = function() { };
 $hxClasses["spark.Util"] = spark_Util;
 spark_Util.__name__ = ["spark","Util"];
+spark_Util.flToStr = function(f,p) {
+	if(p == null) p = 2;
+	return Math.round(f * Math.pow(10,p)) / Math.pow(10,p);
+};
 spark_Util.degToRad = function(r) {
 	return r * Math.PI / 180.0;
 };
@@ -1837,7 +1963,7 @@ spark_collision_Body.prototype = {
 		this.shapes.push(new spark_collision_shape_Box(this,x,y,width,height));
 	}
 	,collide: function(body) {
-		if(this.oncollision != null) this.oncollision(body);
+		if(this.oncollision != null && body.filter != null) this.oncollision(body);
 	}
 	,__class__: spark_collision_Body
 };
@@ -2400,6 +2526,10 @@ spark_layer_SpriteLayer.prototype = {
 			this.sprites[i1].draw();
 		}
 	}
+	,accumDebugStats: function(stats) {
+		stats.layers++;
+		stats.sprites += this.count;
+	}
 	,__class__: spark_layer_SpriteLayer
 	,__properties__: {get_length:"get_length"}
 };
@@ -2559,6 +2689,13 @@ if(Array.prototype.filter == null) Array.prototype.filter = function(f1) {
 };
 var __map_reserved = {}
 js_Boot.__toStr = {}.toString;
+spark_Debug.enabled = false;
+spark_Debug.updateTime = 0;
+spark_Debug.collisionTime = 0;
+spark_Debug.drawTime = 0;
+spark_Debug.guiTime = 0;
+spark_Debug.traceCanvas = null;
+spark_Debug.traceView = null;
 spark_Input.Button = { 'LEFT' : 0, 'MIDDLE' : 1, 'RIGHT' : 2};
 spark_Input.Key = { 'BACKSPACE' : 8, 'TAB' : 9, 'ENTER' : 13, 'PAUSE' : 19, 'CAPS' : 20, 'ESC' : 27, 'SPACE' : 32, 'PAGE_UP' : 33, 'PAGE_DOWN' : 34, 'END' : 35, 'HOME' : 36, 'LEFT' : 37, 'UP' : 38, 'RIGHT' : 39, 'DOWN' : 40, 'INSERT' : 45, 'DELETE' : 46, '_0' : 48, '_1' : 49, '_2' : 50, '_3' : 51, '_4' : 52, '_5' : 53, '_6' : 54, '_7' : 55, '_8' : 56, '_9' : 57, 'A' : 65, 'B' : 66, 'C' : 67, 'D' : 68, 'E' : 69, 'F' : 70, 'G' : 71, 'H' : 72, 'I' : 73, 'J' : 74, 'K' : 75, 'L' : 76, 'M' : 77, 'N' : 78, 'O' : 79, 'P' : 80, 'Q' : 81, 'R' : 82, 'S' : 83, 'T' : 84, 'U' : 85, 'V' : 86, 'W' : 87, 'X' : 88, 'Y' : 89, 'Z' : 90, 'NUMPAD_0' : 96, 'NUMPAD_1' : 97, 'NUMPAD_2' : 98, 'NUMPAD_3' : 99, 'NUMPAD_4' : 100, 'NUMPAD_5' : 101, 'NUMPAD_6' : 102, 'NUMPAD_7' : 103, 'NUMPAD_8' : 104, 'NUMPAD_9' : 105, 'MULTIPLY' : 106, 'ADD' : 107, 'SUBSTRACT' : 109, 'DECIMAL' : 110, 'DIVIDE' : 111, 'F1' : 112, 'F2' : 113, 'F3' : 114, 'F4' : 115, 'F5' : 116, 'F6' : 117, 'F7' : 118, 'F8' : 119, 'F9' : 120, 'F10' : 121, 'F11' : 122, 'F12' : 123, 'SHIFT' : 16, 'CTRL' : 17, 'ALT' : 18, 'PLUS' : 187, 'COMMA' : 188, 'MINUS' : 189, 'PERIOD' : 190};
 spark_collision_Quadtree.DEPTH_LIMIT = 3;

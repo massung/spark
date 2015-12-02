@@ -9,6 +9,11 @@ package spark;
 @:expose
 class Util {
 
+  // float to string conversion with precision
+  static public function flToStr(f: Float, ?p: Int = 2): String {
+    return cast (Math.round(f * Math.pow(10, p)) / Math.pow(10, p));
+  }
+
   // convert degrees to radians
   static public function degToRad(r: Float): Float {
     return r * Math.PI / 180.0;

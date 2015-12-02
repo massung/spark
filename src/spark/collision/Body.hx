@@ -61,7 +61,7 @@ class Body {
 
   // process a collision
   public function collide(body: Body) {
-    if (this.oncollision != null) {
+    if (this.oncollision != null && body.filter != null) {
       this.oncollision(body);
     }
   }
