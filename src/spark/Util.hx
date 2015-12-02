@@ -10,8 +10,21 @@ package spark;
 class Util {
 
   // float to string conversion with precision
-  static public function flToStr(f: Float, ?p: Int = 2): String {
-    return cast (Math.round(f * Math.pow(10, p)) / Math.pow(10, p));
+  static public function flToStr(f: Float, ?prec: Int = 2): String {
+    var s: String = '' + (f * Math.pow(10, prec) / Math.pow(10, prec));
+    var n: Int = s.lastIndexOf('.');
+
+    // no decimal, add one and pad
+    if (n < 0) {
+      return StringTools.rpad(s + '.', '0', s.length + 1 + prec);
+    }
+
+    // not enough zeroes, pad out
+    if (s.length - n < prec) {
+      return StringTools.rpad(s, '0', s.length - n + prec);
+    }
+
+    return s.substr(0, n + 1 + prec);
   }
 
   // convert degrees to radians

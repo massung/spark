@@ -18,5 +18,5 @@ interface Layer {
   public function draw(): Void;
 
   // for debugging, accumulate stats
-  public function accumDebugStats(stats: Debug.Stats): Void;
+  public function debugStats(stats: Debug.Stats): Void;
 }

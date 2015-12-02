@@ -138,13 +138,13 @@ class Debug {
 
     // show timings in milliseconds for gui, draw, update, collision
     Spark.view.fillStyle = '#66b2ff';
-    Spark.view.fillText('Update    : ' + Util.flToStr(updateTime, 1) + 'ms', 10, Spark.canvas.height - y - 24);
+    Spark.view.fillText('Update    : ' + Util.flToStr(updateTime, 3) + 'ms', 10, Spark.canvas.height - y - 24);
     Spark.view.fillStyle = '#c354ff';
-    Spark.view.fillText('Collision : ' + Util.flToStr(collisionTime, 1) + 'ms', 10, Spark.canvas.height - y - 36);
+    Spark.view.fillText('Collision : ' + Util.flToStr(collisionTime, 3) + 'ms', 10, Spark.canvas.height - y - 36);
     Spark.view.fillStyle = '#2dffb2';
-    Spark.view.fillText('Draw      : ' + Util.flToStr(drawTime, 1) + 'ms', 10, Spark.canvas.height - y - 48);
+    Spark.view.fillText('Draw      : ' + Util.flToStr(drawTime, 3) + 'ms', 10, Spark.canvas.height - y - 48);
     Spark.view.fillStyle = '#fa5882';
-    Spark.view.fillText('GUI       : ' + Util.flToStr(guiTime, 1) + 'ms', 10, Spark.canvas.height - y - 60);
+    Spark.view.fillText('GUI       : ' + Util.flToStr(guiTime, 3) + 'ms', 10, Spark.canvas.height - y - 60);
 
     // show stats if provided
     if (stats != null) {

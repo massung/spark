@@ -73,6 +73,7 @@ function playerControls(sprite, step) {
 
   if (spark.Input.keyHit(spark.Input.Key.T)) {
     shake.playOn(scene.camera);
+    explosionSound.woof();
   }
 }
 

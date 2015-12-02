@@ -326,6 +326,78 @@ StringBuf.prototype = {
 	,__class__: StringBuf
 	,__properties__: {get_length:"get_length"}
 };
+var StringTools = function() { };
+$hxClasses["StringTools"] = StringTools;
+StringTools.__name__ = ["StringTools"];
+StringTools.urlEncode = function(s) {
+	return encodeURIComponent(s);
+};
+StringTools.urlDecode = function(s) {
+	return decodeURIComponent(s.split("+").join(" "));
+};
+StringTools.htmlEscape = function(s,quotes) {
+	s = s.split("&").join("&amp;").split("<").join("&lt;").split(">").join("&gt;");
+	if(quotes) return s.split("\"").join("&quot;").split("'").join("&#039;"); else return s;
+};
+StringTools.htmlUnescape = function(s) {
+	return s.split("&gt;").join(">").split("&lt;").join("<").split("&quot;").join("\"").split("&#039;").join("'").split("&amp;").join("&");
+};
+StringTools.startsWith = function(s,start) {
+	return s.length >= start.length && HxOverrides.substr(s,0,start.length) == start;
+};
+StringTools.endsWith = function(s,end) {
+	var elen = end.length;
+	var slen = s.length;
+	return slen >= elen && HxOverrides.substr(s,slen - elen,elen) == end;
+};
+StringTools.isSpace = function(s,pos) {
+	var c = HxOverrides.cca(s,pos);
+	return c > 8 && c < 14 || c == 32;
+};
+StringTools.ltrim = function(s) {
+	var l = s.length;
+	var r = 0;
+	while(r < l && StringTools.isSpace(s,r)) r++;
+	if(r > 0) return HxOverrides.substr(s,r,l - r); else return s;
+};
+StringTools.rtrim = function(s) {
+	var l = s.length;
+	var r = 0;
+	while(r < l && StringTools.isSpace(s,l - r - 1)) r++;
+	if(r > 0) return HxOverrides.substr(s,0,l - r); else return s;
+};
+StringTools.trim = function(s) {
+	return StringTools.ltrim(StringTools.rtrim(s));
+};
+StringTools.lpad = function(s,c,l) {
+	if(c.length <= 0) return s;
+	while(s.length < l) s = c + s;
+	return s;
+};
+StringTools.rpad = function(s,c,l) {
+	if(c.length <= 0) return s;
+	while(s.length < l) s = s + c;
+	return s;
+};
+StringTools.replace = function(s,sub,by) {
+	return s.split(sub).join(by);
+};
+StringTools.hex = function(n,digits) {
+	var s = "";
+	var hexChars = "0123456789ABCDEF";
+	do {
+		s = hexChars.charAt(n & 15) + s;
+		n >>>= 4;
+	} while(n > 0);
+	if(digits != null) while(s.length < digits) s = "0" + s;
+	return s;
+};
+StringTools.fastCodeAt = function(s,index) {
+	return s.charCodeAt(index);
+};
+StringTools.isEof = function(c) {
+	return c != c;
+};
 var ValueType = $hxClasses["ValueType"] = { __ename__ : ["ValueType"], __constructs__ : ["TNull","TInt","TFloat","TBool","TObject","TFunction","TClass","TEnum","TUnknown"] };
 ValueType.TNull = ["TNull",0];
 ValueType.TNull.toString = $estr;
@@ -1045,13 +1117,13 @@ spark_Debug.drawPerf = function(frame,stats) {
 	Spark.view.drawImage(spark_Debug.traceCanvas,0,Spark.canvas.height - h);
 	Spark.view.font = "bold 10px \"Courier New\", sans-serif";
 	Spark.view.fillStyle = "#66b2ff";
-	Spark.view.fillText("Update    : " + spark_Util.flToStr(spark_Debug.updateTime,1) + "ms",10,Spark.canvas.height - y - 24);
+	Spark.view.fillText("Update    : " + spark_Util.flToStr(spark_Debug.updateTime,3) + "ms",10,Spark.canvas.height - y - 24);
 	Spark.view.fillStyle = "#c354ff";
-	Spark.view.fillText("Collision : " + spark_Util.flToStr(spark_Debug.collisionTime,1) + "ms",10,Spark.canvas.height - y - 36);
+	Spark.view.fillText("Collision : " + spark_Util.flToStr(spark_Debug.collisionTime,3) + "ms",10,Spark.canvas.height - y - 36);
 	Spark.view.fillStyle = "#2dffb2";
-	Spark.view.fillText("Draw      : " + spark_Util.flToStr(spark_Debug.drawTime,1) + "ms",10,Spark.canvas.height - y - 48);
+	Spark.view.fillText("Draw      : " + spark_Util.flToStr(spark_Debug.drawTime,3) + "ms",10,Spark.canvas.height - y - 48);
 	Spark.view.fillStyle = "#fa5882";
-	Spark.view.fillText("GUI       : " + spark_Util.flToStr(spark_Debug.guiTime,1) + "ms",10,Spark.canvas.height - y - 60);
+	Spark.view.fillText("GUI       : " + spark_Util.flToStr(spark_Debug.guiTime,3) + "ms",10,Spark.canvas.height - y - 60);
 	if(stats != null) {
 		Spark.view.fillStyle = "#ccc";
 		Spark.view.fillText("FPS       : " + spark_Util.flToStr(stats.fps,1),10,Spark.canvas.height - y - 2);
@@ -1251,7 +1323,7 @@ spark_Layer.prototype = {
 	,update: null
 	,updateCollision: null
 	,draw: null
-	,accumDebugStats: null
+	,debugStats: null
 	,__class__: spark_Layer
 };
 var spark_Mat = $hx_exports.spark.Mat = function(x,y,rx,ry,sx,sy) {
@@ -1463,7 +1535,7 @@ spark_Scene.prototype = {
 			var _g = this.layers.length;
 			while(_g1 < _g) {
 				var i = _g1++;
-				this.layers[i].accumDebugStats(stats);
+				this.layers[i].debugStats(stats);
 			}
 			spark_Debug.drawPerf(this.framecount,stats);
 		}
@@ -1552,9 +1624,13 @@ spark_Scene.prototype = {
 var spark_Util = $hx_exports.spark.Util = function() { };
 $hxClasses["spark.Util"] = spark_Util;
 spark_Util.__name__ = ["spark","Util"];
-spark_Util.flToStr = function(f,p) {
-	if(p == null) p = 2;
-	return Math.round(f * Math.pow(10,p)) / Math.pow(10,p);
+spark_Util.flToStr = function(f,prec) {
+	if(prec == null) prec = 2;
+	var s = "" + f * Math.pow(10,prec) / Math.pow(10,prec);
+	var n = s.lastIndexOf(".");
+	if(n < 0) return StringTools.rpad(s + ".","0",s.length + 1 + prec);
+	if(s.length - n < prec) return StringTools.rpad(s,"0",s.length - n + prec);
+	return HxOverrides.substr(s,0,n + 1 + prec);
 };
 spark_Util.degToRad = function(r) {
 	return r * Math.PI / 180.0;
@@ -2526,7 +2602,7 @@ spark_layer_SpriteLayer.prototype = {
 			this.sprites[i1].draw();
 		}
 	}
-	,accumDebugStats: function(stats) {
+	,debugStats: function(stats) {
 		stats.layers++;
 		stats.sprites += this.count;
 	}

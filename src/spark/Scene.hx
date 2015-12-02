@@ -141,7 +141,7 @@ class Scene {
 
       // count all the active sprites on all layers
       for(i in 0...this.layers.length) {
-        this.layers[i].accumDebugStats(stats);
+        this.layers[i].debugStats(stats);
       }
 
       // draw the performance trace with stats
