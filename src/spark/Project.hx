@@ -10,21 +10,12 @@ import haxe.ds.StringMap;
 
 typedef ProjectInfo = {
   title: String,
-  version: Float,
-  path: String,
-  assetPath: String,
-
-  // list of assets that are a source + optional class ref
-  assets: Array<{ src: String, ?ref: String }>,
+  version: String,
+  path: String
 }
 
 class Project {
-  private var title: String;
-  private var version: String;
-  private var path: String;
-  private var assetPath: String;
-
-  // all loaded assets
+  private var info: ProjectInfo;
   private var assets: StringMap<Asset>;
 
   // the queue of assets waiting to be loaded
@@ -32,32 +23,52 @@ class Project {
 
   // game objects can only be constructed with the main() function
   public function new(projectFile: String, onload: Project -> Void) {
-    this.title = 'Spark Demo';
-    this.version = '1.0';
-    this.path = projectFile.split('/').slice(0, -1).join('/') + '/';
-    this.assetPath = '';
+    var root = projectFile.split('/').slice(0, -1).join('/') + '/';
 
-    // create a new asset list and load queue
+    // create the asset mapping and load queue
     this.assets = new StringMap<Asset>();
     this.loadQueue = new Array<Asset>();
 
+    // default project info
+    this.info = {
+      title: 'Untitled',
+      version: '1.0',
+      path: root,
+    };
+
     // request the project file and finish initializing once loaded
     Spark.loadXML(projectFile, function(doc: js.html.XMLDocument) {
-      var i;
+      var assets, asset, project = doc.firstElementChild;
 
-      this.title = doc.querySelector('spark/project@title').nodeValue ?? this.title;
+      if (project == null || project.nodeName != 'project') {
+        throw 'Invalid Spark project file: ' + projectFile;
+      }
 
-      // overwrite the default project settings
-      Util.merge(this.info, json);
+      // merge project attributes
+      Util.mergeElement(this.info, project);
 
-      // issue load requests for any assets specified
-      for(i in 0...this.info.assets.length) {
-        var asset = this.info.assets[i];
+      // find all the asset groups
+      for(assets in project.getElementsByTagName('assets')) {
+        var assetPath = assets.getAttribute('path');
 
-        if (asset.ref != null) {
-          this.load(asset.src, cast Type.resolveClass(asset.ref));
-        } else {
-          this.load(asset.src);
+        // load all the assets in the group
+        for(asset in assets.getElementsByTagName('asset')) {
+          var src = asset.getAttribute('src');
+          var id = asset.getAttribute('id');
+          var ref = asset.getAttribute('class');
+
+          // default the unique id to the source filename
+          if (id == null) id = src;
+
+          if (src != null) {
+            var path = this.info.path + assetPath + src;
+
+            if (ref != null) {
+              this.load(id, path, cast Type.resolveClass(ref));
+            } else {
+              this.load(id, path);
+            }
+          }
         }
       }
 
@@ -67,7 +78,7 @@ class Project {
   }
 
   // create a new asset instance and add it to the load queue
-  private function load(src: String, ?classRef: Class<Asset>): Asset {
+  private function load(id: String, src: String, ?classRef: Class<Asset>): Asset {
     if (classRef == null) {
       classRef = Asset.classOfExt(src.split('/').pop().split('.').pop());
 
@@ -79,20 +90,23 @@ class Project {
     }
 
     // if an asset already exists with that name, don't overwrite it
-    if (this.assets.exists(src)) {
-      trace('Asset "' + src + '" already loaded; skipping...');
+    if (this.assets.exists(id)) {
+      trace('Asset "' + id + '" already loaded; skipping...');
       return null;
     }
 
     // create an instance of the asset
-    var asset: Asset = Type.createInstance(classRef, [this.info.path + this.info.assetPath + src]);
+    var asset: Asset = Type.createInstance(classRef, [src]);
 
     // save the asset and track the load
-    this.assets.set(src, asset);
+    this.assets.set(id, asset);
     this.loadQueue.push(asset);
 
     return asset;
   }
+
+  // lookup a loaded asset by id
+  public function get(id: String): Asset return this.assets.get(id);
 
   // waits until all loading is complete, then call onload
   public function launch(onload: Void -> Void) {
@@ -142,32 +156,4 @@ class Project {
       });
     }
   }
-
-  // load a particle emitter
-  public function newEmitter(src: String): spark.graphics.Emitter {
-    return cast this.load(src, spark.graphics.Emitter);
-  }
-
-  // load a new font
-  public function newFont(src: String): spark.graphics.Font {
-    return cast this.load(src, spark.graphics.Font);
-  }
-
-  // load a new audio sound clip
-  public function newSound(src: String): spark.audio.Sound {
-    return cast this.load(src, spark.audio.Sound);
-  }
-
-  // load a new texture
-  public function newTexture(src: String): spark.graphics.Texture {
-    return cast this.load(src, spark.graphics.Texture);
-  }
-
-  // load a new timeline animation
-  public function newTimeline(src: String): spark.anim.Timeline {
-    return cast this.load(src, spark.anim.Timeline);
-  }
-
-  // lookup a loaded asset by source filename
-  public function get(src: String): Asset return this.assets.get(src);
 }

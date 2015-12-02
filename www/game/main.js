@@ -6,8 +6,9 @@ var playerLayer;
 var asteroidLayer;
 
 // create a new game instance
-spark.Game.main('game/project.json', proj => {
-  proj.newTexture('player.png');
+spark.Game.main('game/project.xml', proj => {
+
+  // TODO: ??
 
   proj.launch(() => {
     scene = new spark.Scene('middle', 1400, 1400);

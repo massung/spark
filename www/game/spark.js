@@ -551,6 +551,12 @@ haxe_Log.trace = function(v,infos) {
 haxe_Log.clear = function() {
 	js_Boot.__clear_trace();
 };
+var haxe_ds_Option = $hxClasses["haxe.ds.Option"] = { __ename__ : ["haxe","ds","Option"], __constructs__ : ["Some","None"] };
+haxe_ds_Option.Some = function(v) { var $x = ["Some",0,v]; $x.__enum__ = haxe_ds_Option; $x.toString = $estr; return $x; };
+haxe_ds_Option.None = ["None",1];
+haxe_ds_Option.None.toString = $estr;
+haxe_ds_Option.None.__enum__ = haxe_ds_Option;
+haxe_ds_Option.__empty_constructs__ = [haxe_ds_Option.None];
 var haxe_ds__$StringMap_StringMapIterator = function(map,keys) {
 	this.map = map;
 	this.keys = keys;
@@ -1363,18 +1369,36 @@ spark_Mat.prototype = {
 };
 var spark_Project = function(projectFile,onload) {
 	var _g = this;
+	var root = projectFile.split("/").slice(0,-1).join("/") + "/";
 	this.assets = new haxe_ds_StringMap();
 	this.loadQueue = [];
-	this.info = { path : projectFile.split("/").slice(0,-1).join("/") + "/", assetPath : "", title : "Spark Game", version : 1.0, assets : []};
-	Spark.loadJSON(projectFile,function(json) {
-		var i;
-		spark_Util.merge(_g.info,json);
-		var _g2 = 0;
-		var _g1 = _g.info.assets.length;
-		while(_g2 < _g1) {
-			var i1 = _g2++;
-			var asset = _g.info.assets[i1];
-			if(asset.ref != null) _g.load(asset.src,Type.resolveClass(asset.ref)); else _g.load(asset.src);
+	this.info = { title : "Untitled", version : "1.0", path : root};
+	Spark.loadXML(projectFile,function(doc) {
+		var assets;
+		var asset;
+		var project = doc.firstElementChild;
+		if(project == null || project.nodeName != "project") throw new js__$Boot_HaxeError("Invalid Spark project file: " + projectFile);
+		spark_Util.mergeElement(_g.info,project);
+		var _g1 = 0;
+		var _g2 = project.getElementsByTagName("assets");
+		while(_g1 < _g2.length) {
+			var assets1 = _g2[_g1];
+			++_g1;
+			var assetPath = assets1.getAttribute("path");
+			var _g3 = 0;
+			var _g4 = assets1.getElementsByTagName("asset");
+			while(_g3 < _g4.length) {
+				var asset1 = _g4[_g3];
+				++_g3;
+				var src = asset1.getAttribute("src");
+				var id = asset1.getAttribute("id");
+				var ref = asset1.getAttribute("class");
+				if(id == null) id = src;
+				if(src != null) {
+					var path = _g.info.path + assetPath + src;
+					if(ref != null) _g.load(id,path,Type.resolveClass(ref)); else _g.load(id,path);
+				}
+			}
 		}
 		onload(_g);
 	});
@@ -1383,24 +1407,27 @@ $hxClasses["spark.Project"] = spark_Project;
 spark_Project.__name__ = ["spark","Project"];
 spark_Project.prototype = {
 	info: null
-	,loadQueue: null
 	,assets: null
-	,load: function(src,classRef) {
+	,loadQueue: null
+	,load: function(id,src,classRef) {
 		if(classRef == null) {
 			classRef = spark_Asset.classOfExt(src.split("/").pop().split(".").pop());
 			if(classRef == null) {
-				haxe_Log.trace("Unknown asset type \"" + src + "\"; skipping...",{ fileName : "Project.hx", lineNumber : 74, className : "spark.Project", methodName : "load"});
+				haxe_Log.trace("Unknown asset type \"" + src + "\"; skipping...",{ fileName : "Project.hx", lineNumber : 87, className : "spark.Project", methodName : "load"});
 				return null;
 			}
 		}
-		if(this.assets.exists(src)) {
-			haxe_Log.trace("Asset \"" + src + "\" already loaded; skipping...",{ fileName : "Project.hx", lineNumber : 81, className : "spark.Project", methodName : "load"});
+		if(this.assets.exists(id)) {
+			haxe_Log.trace("Asset \"" + id + "\" already loaded; skipping...",{ fileName : "Project.hx", lineNumber : 94, className : "spark.Project", methodName : "load"});
 			return null;
 		}
-		var asset = Type.createInstance(classRef,[this.info.path + this.info.assetPath + src]);
-		this.assets.set(src,asset);
+		var asset = Type.createInstance(classRef,[src]);
+		this.assets.set(id,asset);
 		this.loadQueue.push(asset);
 		return asset;
+	}
+	,get: function(id) {
+		return this.assets.get(id);
 	}
 	,launch: function(onload) {
 		var _g = this;
@@ -1434,24 +1461,6 @@ spark_Project.prototype = {
 			Spark.view.restore();
 			_g.launch(onload);
 		});
-	}
-	,newEmitter: function(src) {
-		return this.load(src,spark_graphics_Emitter);
-	}
-	,newFont: function(src) {
-		return this.load(src,spark_graphics_Font);
-	}
-	,newSound: function(src) {
-		return this.load(src,spark_audio_Sound);
-	}
-	,newTexture: function(src) {
-		return this.load(src,spark_graphics_Texture);
-	}
-	,newTimeline: function(src) {
-		return this.load(src,spark_anim_Timeline);
-	}
-	,get: function(src) {
-		return this.assets.get(src);
 	}
 	,__class__: spark_Project
 };
@@ -1684,16 +1693,6 @@ spark_Scene.prototype = {
 var spark_Util = $hx_exports.spark.Util = function() { };
 $hxClasses["spark.Util"] = spark_Util;
 spark_Util.__name__ = ["spark","Util"];
-spark_Util.merge = function(a,b) {
-	var i;
-	var fields = Reflect.fields(b);
-	var _g1 = 0;
-	var _g = fields.length;
-	while(_g1 < _g) {
-		var i1 = _g1++;
-		Reflect.setField(a,fields[i1],Reflect.field(b,fields[i1]));
-	}
-};
 spark_Util.flToStr = function(f,prec) {
 	if(prec == null) prec = 2;
 	var s = "" + f * Math.pow(10,prec) / Math.pow(10,prec);
@@ -1729,6 +1728,30 @@ spark_Util.arand = function(array) {
 spark_Util.lerp = function(p,q,k,max) {
 	if(max == null) max = 1;
 	return p + (q - p) * k / max;
+};
+spark_Util.query = function(doc,node,xpath) {
+	return doc.evaluate(xpath,node,null,0,null);
+};
+spark_Util.mergeElement = function(obj,node) {
+	var i;
+	var fields = Reflect.fields(obj);
+	var _g1 = 0;
+	var _g = fields.length;
+	while(_g1 < _g) {
+		var i1 = _g1++;
+		var attr = node.getAttribute(fields[i1]);
+		if(attr != null) obj[fields[i1]] = attr;
+	}
+};
+spark_Util.merge = function(a,b) {
+	var i;
+	var fields = Reflect.fields(b);
+	var _g1 = 0;
+	var _g = fields.length;
+	while(_g1 < _g) {
+		var i1 = _g1++;
+		Reflect.setField(a,fields[i1],Reflect.field(b,fields[i1]));
+	}
 };
 var spark_Vec = $hx_exports.spark.Vec = function(x,y) {
 	this.x = x;

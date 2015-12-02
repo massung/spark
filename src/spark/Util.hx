@@ -6,18 +6,10 @@
 
 package spark;
 
+import haxe.ds.Option;
+
 @:expose
 class Util {
-
-  // merge one anonymous structure (b) into another (a), overwrite
-  static public function merge(a: Dynamic, b: Dynamic) {
-    var i, fields = Reflect.fields(b);
-
-    // any fields in a not in b will be unchanged
-    for(i in 0...fields.length) {
-      Reflect.setField(a, fields[i], Reflect.field(b, fields[i]));
-    }
-  }
 
   // float to string conversion with precision
   static public function flToStr(f: Float, ?prec: Int = 2): String {
@@ -80,5 +72,33 @@ class Util {
   // linearly interpolate from p to q by k in the range [0,max | 1]
   static public function lerp(p: Float, q: Float, k: Float, ?max: Float = 1): Float {
     return p + (q - p) * k / max;
+  }
+
+  // helper for executing an xpath query
+  static public function query(doc: js.html.XMLDocument, node: js.html.Node, xpath: String): js.html.XPathResult {
+    return doc.evaluate(xpath, node, null, js.html.XPathResult.ANY_TYPE, null);
+  }
+
+  // get next next result in a query result and merge attributes into an anonymous struct
+  static public function mergeElement(obj: Dynamic, node: js.html.Element) {
+    var i, fields = Reflect.fields(obj);
+
+    for(i in 0...fields.length) {
+      var attr = node.getAttribute(fields[i]);
+
+      if (attr != null) {
+        Reflect.setField(obj, fields[i], attr);
+      }
+    }
+  }
+
+  // merge one anonymous structure (b) into another (a), overwrite
+  static public function merge(a: Dynamic, b: Dynamic) {
+    var i, fields = Reflect.fields(b);
+
+    // any fields in a not in b will be unchanged
+    for(i in 0...fields.length) {
+      Reflect.setField(a, fields[i], Reflect.field(b, fields[i]));
+    }
   }
 }
