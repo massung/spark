@@ -75,7 +75,7 @@ class Mat {
     var x = (v.x * this.s.x * this.r.x) + (v.y * this.s.y * this.r.y);
     var y = (v.y * this.s.y * this.r.x) - (v.x * this.s.x * this.r.y);
 
-    return new Vec(x, y);
+    return new Vec(x + this.p.x, y + this.p.y);
   }
 
   // multiply a matrix by this one and return the new matrix

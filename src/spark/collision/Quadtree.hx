@@ -36,8 +36,10 @@ class Quadtree {
     }
 
     // if this node has children, try adding it to a child
-    for(i in 0...this.nodes.length - 1) {
-      if (this.nodes[i].addShape(shape)) return true;
+    for(i in 0...this.nodes.length) {
+      if (this.nodes[i].addShape(shape)) {
+        return true;
+      }
     }
 
     // add this shape to this node
@@ -63,7 +65,7 @@ class Quadtree {
         var i;
 
         // try and move this shape into a child node
-        for(i in 0...this.nodes.length - 1) {
+        for(i in 0...this.nodes.length) {
           if (this.nodes[i].addShape(shape)) return false;
         }
 
@@ -94,7 +96,7 @@ class Quadtree {
     }
 
     // run over the shapes in this tree and find overlaps
-    for(i in 0...this.shapes.length - 1) {
+    for(i in 0...this.shapes.length) {
       var s = this.shapes[i];
 
       if (m.indexOf(s.getBody()) < 0 && shapeQuery(s, shape)) {
@@ -103,7 +105,7 @@ class Quadtree {
     }
 
     // run over the subtrees as well
-    for (i in 0...this.nodes.length - 1) {
+    for (i in 0...this.nodes.length) {
       m.concat(this.nodes[i].collect(shape));
     }
 
@@ -123,12 +125,12 @@ class Quadtree {
     while (nodes.length > 0) {
       var node: Quadtree = nodes.pop();
 
-      for (i in 0...node.shapes.length - 1) {
+      for (i in 0...node.shapes.length) {
         var a = node.shapes[i];
         var m = [];
 
         // search this node for any collisions
-        for (j in i + 1...node.shapes.length - 1) {
+        for (j in (i + 1)...node.shapes.length) {
           var b = node.shapes[j];
 
           // shapes on the same body cannot collide
@@ -145,11 +147,11 @@ class Quadtree {
           var child = children.pop();
 
           // test against all the shapes in the child node
-          for (k in 0...child.shapes.length - 1) {
+          for (k in 0...child.shapes.length) {
             var b = child.shapes[k];
 
             // if different colliders and intersecting there's a collision
-            if (a.getBody() != b.getBody() && m.indexOf(b.getBody()) < 0 && shapeQuery(a, b)) {
+            if (a.canCollideWidth(b) && m.indexOf(b.getBody()) < 0 && shapeQuery(a, b)) {
               m.push(b.getBody());
             }
           }
@@ -171,11 +173,11 @@ class Quadtree {
     }
 
     // loop over all the contact manifolds and call callbacks
-    for (i in 0...contacts.length - 1) {
+    for (i in 0...contacts.length) {
       var body = contacts[i].body;
       var manifold = contacts[i].manifold;
 
-      for (j in 0...manifold.length - 1) {
+      for (j in 0...manifold.length) {
         body.collide(manifold[j]);
         manifold[j].collide(body);
       }

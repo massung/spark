@@ -120,6 +120,15 @@ class SpriteLayer implements Layer {
     }
   }
 
+  // add sprites to the spacial hash
+  public function updateCollision(space: Quadtree) {
+    var i;
+
+    for(i in 0...this.count) {
+      this.sprites[i].addToQuadtree(space);
+    }
+  }
+
   // render the layer
   public function draw() {
     var i;

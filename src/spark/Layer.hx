@@ -14,5 +14,6 @@ interface Layer {
 
   // called once per frame to simulate and render
   public function update(step: Float): Void;
+  public function updateCollision(space: Quadtree): Void;
   public function draw(): Void;
 }

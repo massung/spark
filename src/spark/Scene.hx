@@ -111,6 +111,7 @@ class Scene {
 
     // update the scene and render it
     this.update(step);
+    this.processCollisions();
     this.draw();
 
     // clear input states
@@ -133,9 +134,19 @@ class Scene {
     for(i in 0...this.layers.length) {
       this.layers[i].update(step);
     }
+  }
 
-    // create a new quadtree to hash all the sprites
+  // create a new spacial hash and all all layers to it
+  private function processCollisions() {
     this.space = new Quadtree(this.rect);
+
+    // let each layer add collision shapes to the spacial hash
+    for(i in 0...this.layers.length) {
+      this.layers[i].updateCollision(this.space);
+    }
+
+    // allow colliding sprites to react to the collisions
+    this.space.processCollisions();
   }
 
   // render the scene

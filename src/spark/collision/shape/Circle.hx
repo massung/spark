@@ -6,10 +6,7 @@
 
 package spark.collision.shape;
 
-class Circle implements Shape {
-  private var body: Body;
-
-  // local space center and radius
+class Circle extends Shape {
   private var c: Vec;
   private var r: Float;
 
@@ -18,22 +15,22 @@ class Circle implements Shape {
 
   // create a new line segment collision shape
   public function new(body: Body, x: Float, y: Float, r: Float) {
-    this.body = body;
+    super(body);
 
     // create the center point
     this.c = new Vec(x, y);
     this.r = r;
-  }
 
-  // the rigid body this shape is attached to
-  public function getBody(): Body return this.body;
+    // create new world transform
+    this.tc = c.copy();
+  }
 
   // returns the world-space center and radius
   public function getCenter(): Vec return this.tc;
   public function getRadius(): Float return this.r;
 
   // true if this shape is completely within a bounding box
-  public function within(rect: Rect): Bool {
+  override public function within(rect: Rect): Bool {
     if (this.tc.x + this.r < rect.getLeft()) return false;
     if (this.tc.x - this.r > rect.getRight()) return false;
     if (this.tc.y + this.r < rect.getTop()) return false;
@@ -43,22 +40,22 @@ class Circle implements Shape {
   }
 
   // update the world vertices
-  public function updateShapeCache(m: Mat) {
+  override public function updateShapeCache(m: Mat) {
     this.tc = m.transform(this.c);
   }
 
   // true if this shape overlaps a line segment
-  public function segmentQuery(s: Segment): Bool {
+  override public function segmentQuery(s: Segment): Bool {
     return this.tc.proj(s.getStart(), s.getEnd()).distsq(this.tc) < this.r * this.r;
   }
 
   // true if this shape overlaps a circle
-  public function circleQuery(s: Circle): Bool {
+  override public function circleQuery(s: Circle): Bool {
     return this.tc.distsq(s.tc) < (this.r * this.r) + (s.r * s.r);
   }
 
   // true if this shape overlaps a box
-  public function boxQuery(s: Box): Bool {
+  override public function boxQuery(s: Box): Bool {
     var tp1 = s.getTopLeft();
     var tp2 = s.getBottomRight();
 

@@ -1147,6 +1147,7 @@ spark_Layer.prototype = {
 	z: null
 	,m: null
 	,update: null
+	,updateCollision: null
 	,draw: null
 	,__class__: spark_Layer
 };
@@ -1198,7 +1199,7 @@ spark_Mat.prototype = {
 	,transform: function(v) {
 		var x = v.x * this.s.x * this.r.x + v.y * this.s.y * this.r.y;
 		var y = v.y * this.s.y * this.r.x - v.x * this.s.x * this.r.y;
-		return new spark_Vec(x,y);
+		return new spark_Vec(x + this.p.x,y + this.p.y);
 	}
 	,mult: function(m) {
 		var p = this.transform(m.p);
@@ -1342,6 +1343,7 @@ spark_Scene.prototype = {
 		this.frametime = now;
 		this.framecount++;
 		this.update(step);
+		this.processCollisions();
 		this.draw();
 		spark_Input.flush();
 		this.runloop = window.requestAnimationFrame($bind(this,this.stepFrame));
@@ -1355,7 +1357,16 @@ spark_Scene.prototype = {
 			var i1 = _g1++;
 			this.layers[i1].update(step);
 		}
+	}
+	,processCollisions: function() {
 		this.space = new spark_collision_Quadtree(this.rect);
+		var _g1 = 0;
+		var _g = this.layers.length;
+		while(_g1 < _g) {
+			var i = _g1++;
+			this.layers[i].updateCollision(this.space);
+		}
+		this.space.processCollisions();
 	}
 	,draw: function() {
 		var i;
@@ -1800,7 +1811,7 @@ spark_collision_Body.prototype = {
 	,updateShapeCache: function(m) {
 		var i;
 		var _g1 = 0;
-		var _g = this.shapes.length - 1;
+		var _g = this.shapes.length;
 		while(_g1 < _g) {
 			var i1 = _g1++;
 			this.shapes[i1].updateShapeCache(m);
@@ -1809,7 +1820,7 @@ spark_collision_Body.prototype = {
 	,addToQuadtree: function(space) {
 		var i;
 		var _g1 = 0;
-		var _g = this.shapes.length - 1;
+		var _g = this.shapes.length;
 		while(_g1 < _g) {
 			var i1 = _g1++;
 			space.addShape(this.shapes[i1]);
@@ -1848,7 +1859,7 @@ spark_collision_Quadtree.prototype = {
 		var i;
 		if(this.depth > 0 && !shape.within(this.rect)) return false;
 		var _g1 = 0;
-		var _g2 = this.nodes.length - 1;
+		var _g2 = this.nodes.length;
 		while(_g1 < _g2) {
 			var i1 = _g1++;
 			if(this.nodes[i1].addShape(shape)) return true;
@@ -1863,7 +1874,7 @@ spark_collision_Quadtree.prototype = {
 			this.shapes = this.shapes.filter(function(shape1) {
 				var i2;
 				var _g21 = 0;
-				var _g11 = _g.nodes.length - 1;
+				var _g11 = _g.nodes.length;
 				while(_g21 < _g11) {
 					var i3 = _g21++;
 					if(_g.nodes[i3].addShape(shape1)) return false;
@@ -1884,7 +1895,7 @@ spark_collision_Quadtree.prototype = {
 		var m = [];
 		if(this.depth > 0 && !shape.within(this.rect)) return m;
 		var _g1 = 0;
-		var _g = this.shapes.length - 1;
+		var _g = this.shapes.length;
 		while(_g1 < _g) {
 			var i1 = _g1++;
 			var s = this.shapes[i1];
@@ -1896,7 +1907,7 @@ spark_collision_Quadtree.prototype = {
 			}(this)) < 0 && this.shapeQuery(s,shape)) m.push(s.getBody());
 		}
 		var _g11 = 0;
-		var _g2 = this.nodes.length - 1;
+		var _g2 = this.nodes.length;
 		while(_g11 < _g2) {
 			var i2 = _g11++;
 			m.concat(this.nodes[i2].collect(shape));
@@ -1913,13 +1924,13 @@ spark_collision_Quadtree.prototype = {
 		while(nodes.length > 0) {
 			var node = nodes.pop();
 			var _g1 = 0;
-			var _g = node.shapes.length - 1;
+			var _g = node.shapes.length;
 			while(_g1 < _g) {
 				var i1 = _g1++;
 				var a = node.shapes[i1];
 				var m = [];
 				var _g3 = i1 + 1;
-				var _g2 = node.shapes.length - 1;
+				var _g2 = node.shapes.length;
 				while(_g3 < _g2) {
 					var j1 = _g3++;
 					var b = node.shapes[j1];
@@ -1934,11 +1945,11 @@ spark_collision_Quadtree.prototype = {
 				while(children.length > 0) {
 					var child = children.pop();
 					var _g31 = 0;
-					var _g21 = child.shapes.length - 1;
+					var _g21 = child.shapes.length;
 					while(_g31 < _g21) {
 						var k1 = _g31++;
 						var b1 = child.shapes[k1];
-						if(a.getBody() != b1.getBody() && (function($this) {
+						if(a.canCollideWidth(b1) && (function($this) {
 							var $r;
 							var x1 = b1.getBody();
 							$r = HxOverrides.indexOf(m,x1,0);
@@ -1952,13 +1963,13 @@ spark_collision_Quadtree.prototype = {
 			nodes = nodes.concat(node.nodes);
 		}
 		var _g11 = 0;
-		var _g4 = contacts.length - 1;
+		var _g4 = contacts.length;
 		while(_g11 < _g4) {
 			var i2 = _g11++;
 			var body = contacts[i2].body;
 			var manifold = contacts[i2].manifold;
 			var _g32 = 0;
-			var _g22 = manifold.length - 1;
+			var _g22 = manifold.length;
 			while(_g32 < _g22) {
 				var j2 = _g32++;
 				body.collide(manifold[j2]);
@@ -1968,39 +1979,54 @@ spark_collision_Quadtree.prototype = {
 	}
 	,__class__: spark_collision_Quadtree
 };
-var spark_collision_Shape = function() { };
+var spark_collision_Shape = function(body) {
+	this.body = body;
+};
 $hxClasses["spark.collision.Shape"] = spark_collision_Shape;
 spark_collision_Shape.__name__ = ["spark","collision","Shape"];
 spark_collision_Shape.prototype = {
-	getBody: null
-	,within: null
-	,updateShapeCache: null
-	,segmentQuery: null
-	,circleQuery: null
-	,boxQuery: null
+	body: null
+	,getBody: function() {
+		return this.body;
+	}
+	,canCollideWidth: function(s) {
+		return this.body != s.body || this.body.getFilter() != s.body.getFilter();
+	}
+	,within: function(rect) {
+		return false;
+	}
+	,updateShapeCache: function(m) {
+	}
+	,segmentQuery: function(s) {
+		return false;
+	}
+	,circleQuery: function(s) {
+		return false;
+	}
+	,boxQuery: function(s) {
+		return false;
+	}
 	,__class__: spark_collision_Shape
 };
 var spark_collision_shape_Box = function(body,x,y,w,h) {
-	this.body = body;
+	spark_collision_Shape.call(this,body);
 	this.p1 = new spark_Vec(x,y);
 	this.p2 = new spark_Vec(x + w,y);
 	this.p3 = new spark_Vec(x,y + h);
 	this.p4 = new spark_Vec(x + w,y + h);
+	this.tp1 = new spark_Vec(x,y);
+	this.tp2 = new spark_Vec(x + w,y + h);
 };
 $hxClasses["spark.collision.shape.Box"] = spark_collision_shape_Box;
 spark_collision_shape_Box.__name__ = ["spark","collision","shape","Box"];
-spark_collision_shape_Box.__interfaces__ = [spark_collision_Shape];
-spark_collision_shape_Box.prototype = {
-	body: null
-	,p1: null
+spark_collision_shape_Box.__super__ = spark_collision_Shape;
+spark_collision_shape_Box.prototype = $extend(spark_collision_Shape.prototype,{
+	p1: null
 	,p2: null
 	,p3: null
 	,p4: null
 	,tp1: null
 	,tp2: null
-	,getBody: function() {
-		return this.body;
-	}
 	,getTopLeft: function() {
 		return this.tp1;
 	}
@@ -2038,23 +2064,20 @@ spark_collision_shape_Box.prototype = {
 		return true;
 	}
 	,__class__: spark_collision_shape_Box
-};
+});
 var spark_collision_shape_Circle = function(body,x,y,r) {
-	this.body = body;
+	spark_collision_Shape.call(this,body);
 	this.c = new spark_Vec(x,y);
 	this.r = r;
+	this.tc = this.c.copy();
 };
 $hxClasses["spark.collision.shape.Circle"] = spark_collision_shape_Circle;
 spark_collision_shape_Circle.__name__ = ["spark","collision","shape","Circle"];
-spark_collision_shape_Circle.__interfaces__ = [spark_collision_Shape];
-spark_collision_shape_Circle.prototype = {
-	body: null
-	,c: null
+spark_collision_shape_Circle.__super__ = spark_collision_Shape;
+spark_collision_shape_Circle.prototype = $extend(spark_collision_Shape.prototype,{
+	c: null
 	,r: null
 	,tc: null
-	,getBody: function() {
-		return this.body;
-	}
 	,getCenter: function() {
 		return this.tc;
 	}
@@ -2088,24 +2111,22 @@ spark_collision_shape_Circle.prototype = {
 		return this.tc.distsq(tp2) <= this.r * this.r;
 	}
 	,__class__: spark_collision_shape_Circle
-};
+});
 var spark_collision_shape_Segment = function(body,x1,y1,x2,y2) {
-	this.body = body;
+	spark_collision_Shape.call(this,body);
 	this.p1 = new spark_Vec(x1,y1);
 	this.p2 = new spark_Vec(x2,y2);
+	this.tp1 = this.p1.copy();
+	this.tp2 = this.p2.copy();
 };
 $hxClasses["spark.collision.shape.Segment"] = spark_collision_shape_Segment;
 spark_collision_shape_Segment.__name__ = ["spark","collision","shape","Segment"];
-spark_collision_shape_Segment.__interfaces__ = [spark_collision_Shape];
-spark_collision_shape_Segment.prototype = {
-	body: null
-	,p1: null
+spark_collision_shape_Segment.__super__ = spark_collision_Shape;
+spark_collision_shape_Segment.prototype = $extend(spark_collision_Shape.prototype,{
+	p1: null
 	,p2: null
 	,tp1: null
 	,tp2: null
-	,getBody: function() {
-		return this.body;
-	}
 	,getStart: function() {
 		return this.tp1;
 	}
@@ -2142,7 +2163,7 @@ spark_collision_shape_Segment.prototype = {
 		return true;
 	}
 	,__class__: spark_collision_shape_Segment
-};
+});
 var spark_graphics_Emitter = function(src) {
 	var _g = this;
 	spark_Asset.call(this,src);
@@ -2316,6 +2337,15 @@ spark_layer_SpriteLayer.prototype = {
 			this.sprites[i1].update(step);
 		}
 	}
+	,updateCollision: function(space) {
+		var i;
+		var _g1 = 0;
+		var _g = this.count;
+		while(_g1 < _g) {
+			var i1 = _g1++;
+			this.sprites[i1].addToQuadtree(space);
+		}
+	}
 	,draw: function() {
 		var i;
 		var _g1 = 0;
@@ -2418,6 +2448,9 @@ spark_object_Sprite.prototype = $extend(spark_object_Actor.prototype,{
 	,getHeight: function() {
 		if(this.texture == null) return 0;
 		if(this.quad != null) return this.quad.getHeight(); else return this.texture.getHeight();
+	}
+	,addToQuadtree: function(space) {
+		if(this.body != null) this.body.addToQuadtree(space);
 	}
 	,update: function(step) {
 		spark_object_Actor.prototype.update.call(this,step);

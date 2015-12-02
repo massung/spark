@@ -30,7 +30,7 @@ class Body {
   public function updateShapeCache(m: Mat) {
     var i;
 
-    for(i in 0...this.shapes.length - 1) {
+    for(i in 0...this.shapes.length) {
       this.shapes[i].updateShapeCache(m);
     }
   }
@@ -39,7 +39,7 @@ class Body {
   public function addToQuadtree(space: Quadtree) {
     var i;
 
-    for(i in 0...this.shapes.length - 1) {
+    for(i in 0...this.shapes.length) {
       space.addShape(this.shapes[i]);
     }
   }

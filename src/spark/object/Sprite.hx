@@ -85,6 +85,13 @@ class Sprite extends Actor {
     return (this.quad != null) ? this.quad.getHeight() : this.texture.getHeight();
   }
 
+  // add all collision shapes on this sprite into the spacial hash
+  public function addToQuadtree(space: Quadtree) {
+    if (this.body != null) {
+      this.body.addToQuadtree(space);
+    }
+  }
+
   // called once a frame to update the sprite
   public override function update(step: Float) {
     super.update(step);
