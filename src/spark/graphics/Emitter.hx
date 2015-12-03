@@ -17,7 +17,6 @@ typedef ParticleData = {
 
 typedef EmitterData = {
   texture: String,
-  quad: String,
   compositeOperation: String,
   startAlpha: Float,
   endAlpha: Float,
@@ -47,12 +46,9 @@ class Emitter extends Asset {
   public function new(src: String) {
     super(src);
 
-    // default values
-    this.texture = null;
-    this.quad = null;
+    // default source values
     this.data = {
       texture: null,
-      quad: null,
       compositeOperation: 'source-over',
       startAlpha: 1.0,
       endAlpha: 1.0,
@@ -68,9 +64,17 @@ class Emitter extends Asset {
       forwardAngle: 0.0,
     };
 
+    // crunched data
+    this.texture = null;
+
     // issue the load
     Spark.loadJSON(src, function(json) {
       Util.merge(this.data, json);
+
+      // if the texture was set, look it up in the project
+      if (this.data.texture != null) {
+        this.texture = Game.getTexture(this.data.texture);
+      }
 
       // create a custom behavior for all particles this emitter spawns
       this.particleBehavior = function(sprite: Actor, step: Float, data: Dynamic) {
@@ -88,43 +92,50 @@ class Emitter extends Asset {
         var s = Util.lerp(this.data.startScale, this.data.endScale, p.age, p.life);
 
         // translate, rotate, and scale
-        sprite.m.translate(p.v.x * step, p.v.y * step);
+        sprite.m.translate(p.v.x * step, -p.v.y * step);
         sprite.m.rotate(p.w * step);
         sprite.m.s.set(s, s);
 
         // linearly interpolate the alpha
         //sprite.contextSettings.globalAlpha = lerp(this.data.startAlpha, this.data.endAlpha, p.age, p.life);
       };
+
+      // asset is now ready for use
+      this.loaded = true;
     });
   }
 
   // spawn particle sprites into the scene
-  public function emit(layer: spark.layer.SpriteLayer, x: Float, y: Float, angle: Float, ?n: Int = 1) {
+  public function emit(layer: spark.layer.SpriteLayer, p: Vec, dir: Float, ?n: Int = 1) {
     var i;
 
     for (i in 0...n) {
       var sprite: Sprite = layer.newSprite();
 
       // set the texture to use
-      sprite.setTexture(this.texture, this.quad);
+      sprite.setTexture(this.texture);
 
-      // random linear and angular velocity
-      var s = Util.rand(this.data.minSpeed, this.data.maxSpeed);
-      var a = Util.rand(-this.data.spread, this.data.spread) + angle;
+      // random linear speed and spread in the direction of travel
+      var speed = Util.rand(this.data.minSpeed, this.data.maxSpeed);
+      var spread = Util.rand(-this.data.spread, this.data.spread);
 
       // initialize the sprite transform
-      sprite.m.p.set(x, y);
-      sprite.m.angle = this.data.forwardAngle + a;
+      sprite.m.p.set(p.x, p.y);
+      sprite.m.angle = this.data.forwardAngle + dir + spread;
 
       // pick a random age
       var life = Util.rand(this.data.minLife, this.data.maxLife);
 
-      // calculate the linear and angular velocities
-      var v = Vec.axis(a, s);
+      // randomize the angular velocity
       var w = Util.rand(this.data.minAngularVelocity, this.data.maxAngularVelocity);
 
       // particle data associated with the behavior
-      var particle = { age: 0, life: life, w: w, v: v };
+      var particle = {
+        age: 0,
+        life: life,
+        v: Vec.axis(dir + spread, speed),
+        w: w,
+      };
 
       // add the particle behavior, bound to particle instance data
       sprite.addBehavior(this.particleBehavior, particle);

@@ -1280,12 +1280,10 @@ spark_Input.onMouseUp = function(event) {
 	if(event.button < spark_Input.buttons.length) spark_Input.buttons[event.button].down = false;
 };
 spark_Input.onMouseMove = function(event) {
-	var eventX = event.clientX - Spark.canvas.offsetLeft;
-	var eventY = event.clientY - Spark.canvas.offsetTop;
-	spark_Input.relX += eventX - spark_Input.x;
-	spark_Input.relY += eventY - spark_Input.y;
-	spark_Input.x = eventX;
-	spark_Input.y = eventY;
+	spark_Input.x = event.clientX - Spark.canvas.offsetLeft;
+	spark_Input.y = event.clientY - Spark.canvas.offsetTop;
+	spark_Input.relX = event.movementX;
+	spark_Input.relY = event.movementY;
 };
 var spark_Layer = function() { };
 $hxClasses["spark.Layer"] = spark_Layer;
@@ -1645,9 +1643,8 @@ spark_Scene.prototype = {
 		var h2 = Spark.canvas.height / 2;
 		var mx = this.rect.getLeft() + this.rect.getWidth() / 2;
 		var my = this.rect.getTop() + this.rect.getHeight() / 2;
-		Spark.view.setTransform(1,0,0,1,0,0);
-		Spark.view.translate(w2,h2);
-		Spark.view.scale(w2 / this.camera.m.s.x,h2 / this.camera.m.s.y);
+		Spark.view.setTransform(w2,0,0,h2,w2,h2);
+		Spark.view.scale(1 / this.camera.m.s.x,1 / this.camera.m.s.y);
 		Spark.view.transform(this.camera.m.r.x,this.camera.m.r.y,-this.camera.m.r.y,this.camera.m.r.x,0,0);
 		Spark.view.translate(-this.camera.m.p.x - mx,-this.camera.m.p.y - my);
 		var _g1 = 0;
@@ -1729,8 +1726,15 @@ spark_Util.lerp = function(p,q,k,max) {
 	if(max == null) max = 1;
 	return p + (q - p) * k / max;
 };
-spark_Util.query = function(doc,node,xpath) {
-	return doc.evaluate(xpath,node,null,0,null);
+spark_Util.merge = function(a,b) {
+	var i;
+	var fields = Reflect.fields(b);
+	var _g1 = 0;
+	var _g = fields.length;
+	while(_g1 < _g) {
+		var i1 = _g1++;
+		Reflect.setField(a,fields[i1],Reflect.field(b,fields[i1]));
+	}
 };
 spark_Util.mergeElement = function(obj,node) {
 	var i;
@@ -1741,16 +1745,6 @@ spark_Util.mergeElement = function(obj,node) {
 		var i1 = _g1++;
 		var attr = node.getAttribute(fields[i1]);
 		if(attr != null) obj[fields[i1]] = attr;
-	}
-};
-spark_Util.merge = function(a,b) {
-	var i;
-	var fields = Reflect.fields(b);
-	var _g1 = 0;
-	var _g = fields.length;
-	while(_g1 < _g) {
-		var i1 = _g1++;
-		Reflect.setField(a,fields[i1],Reflect.field(b,fields[i1]));
 	}
 };
 var spark_Vec = $hx_exports.spark.Vec = function(x,y) {
@@ -2507,11 +2501,11 @@ spark_collision_shape_Segment.prototype = $extend(spark_collision_Shape.prototyp
 var spark_graphics_Emitter = function(src) {
 	var _g = this;
 	spark_Asset.call(this,src);
+	this.data = { texture : null, compositeOperation : "source-over", startAlpha : 1.0, endAlpha : 1.0, minLife : 1.0, maxLife : 1.5, startScale : 1.0, endScale : 1.0, spread : 180.0, minSpeed : 50.0, maxSpeed : 100.0, minAngularVelocity : -90.0, maxAngularVelocity : 90.0, forwardAngle : 0.0};
 	this.texture = null;
-	this.quad = null;
-	this.data = { texture : null, quad : null, compositeOperation : "source-over", startAlpha : 1.0, endAlpha : 1.0, minLife : 1.0, maxLife : 1.5, startScale : 1.0, endScale : 1.0, spread : 180.0, minSpeed : 50.0, maxSpeed : 100.0, minAngularVelocity : -90.0, maxAngularVelocity : 90.0, forwardAngle : 0.0};
 	Spark.loadJSON(src,function(json) {
 		spark_Util.merge(_g.data,json);
+		if(_g.data.texture != null) _g.texture = spark_Game.getTexture(_g.data.texture);
 		_g.particleBehavior = function(sprite,step,data) {
 			var p = data;
 			if((p.age += step) > p.life) {
@@ -2519,10 +2513,11 @@ var spark_graphics_Emitter = function(src) {
 				sprite.dead = true;
 			}
 			var s = spark_Util.lerp(_g.data.startScale,_g.data.endScale,p.age,p.life);
-			sprite.m.translate(p.v.x * step,p.v.y * step);
+			sprite.m.translate(p.v.x * step,-p.v.y * step);
 			sprite.m.rotate(p.w * step);
 			sprite.m.s.set(s,s);
 		};
+		_g.loaded = true;
 	});
 };
 $hxClasses["spark.graphics.Emitter"] = spark_graphics_Emitter;
@@ -2533,22 +2528,21 @@ spark_graphics_Emitter.prototype = $extend(spark_Asset.prototype,{
 	,texture: null
 	,quad: null
 	,particleBehavior: null
-	,emit: function(layer,x,y,angle,n) {
+	,emit: function(layer,p,dir,n) {
 		if(n == null) n = 1;
 		var i;
 		var _g = 0;
 		while(_g < n) {
 			var i1 = _g++;
 			var sprite = layer.newSprite();
-			sprite.setTexture(this.texture,this.quad);
-			var s = spark_Util.rand(this.data.minSpeed,this.data.maxSpeed);
-			var a = spark_Util.rand(-this.data.spread,this.data.spread) + angle;
-			sprite.m.p.set(x,y);
-			sprite.m.set_angle(this.data.forwardAngle + a);
+			sprite.setTexture(this.texture);
+			var speed = spark_Util.rand(this.data.minSpeed,this.data.maxSpeed);
+			var spread = spark_Util.rand(-this.data.spread,this.data.spread);
+			sprite.m.p.set(p.x,p.y);
+			sprite.m.set_angle(this.data.forwardAngle + dir + spread);
 			var life = spark_Util.rand(this.data.minLife,this.data.maxLife);
-			var v = spark_Vec.axis(a,s);
 			var w = spark_Util.rand(this.data.minAngularVelocity,this.data.maxAngularVelocity);
-			var particle = { age : 0, life : life, w : w, v : v};
+			var particle = { age : 0, life : life, v : spark_Vec.axis(dir + spread,speed), w : w};
 			sprite.addBehavior(this.particleBehavior,particle);
 		}
 	}
@@ -2808,6 +2802,7 @@ spark_object_Sprite.prototype = $extend(spark_object_Actor.prototype,{
 		if(this.texture == null) return;
 		Spark.view.save();
 		this.m.apply();
+		Spark.view.scale(1,-1);
 		if(this.quad == null) this.texture.draw(this.pivot); else this.texture.drawq(this.quad,this.pivot);
 		Spark.view.restore();
 	}

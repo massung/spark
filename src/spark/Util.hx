@@ -74,9 +74,14 @@ class Util {
     return p + (q - p) * k / max;
   }
 
-  // helper for executing an xpath query
-  static public function query(doc: js.html.XMLDocument, node: js.html.Node, xpath: String): js.html.XPathResult {
-    return doc.evaluate(xpath, node, null, js.html.XPathResult.ANY_TYPE, null);
+  // merge one anonymous structure (b) into another (a), overwrite
+  static public function merge(a: Dynamic, b: Dynamic) {
+    var i, fields = Reflect.fields(b);
+
+    // any fields in a not in b will be unchanged
+    for(i in 0...fields.length) {
+      Reflect.setField(a, fields[i], Reflect.field(b, fields[i]));
+    }
   }
 
   // get next next result in a query result and merge attributes into an anonymous struct
@@ -89,16 +94,6 @@ class Util {
       if (attr != null) {
         Reflect.setField(obj, fields[i], attr);
       }
-    }
-  }
-
-  // merge one anonymous structure (b) into another (a), overwrite
-  static public function merge(a: Dynamic, b: Dynamic) {
-    var i, fields = Reflect.fields(b);
-
-    // any fields in a not in b will be unchanged
-    for(i in 0...fields.length) {
-      Reflect.setField(a, fields[i], Reflect.field(b, fields[i]));
     }
   }
 }

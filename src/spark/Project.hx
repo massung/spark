@@ -44,7 +44,7 @@ class Project {
         throw 'Invalid Spark project file: ' + projectFile;
       }
 
-      // merge project attributes
+      // see if any project settings are overridden
       Util.mergeElement(this.info, project);
 
       // find all the asset groups

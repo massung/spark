@@ -212,14 +212,11 @@ class Scene {
     var mx = this.rect.getLeft() + (this.rect.getWidth() / 2);
     var my = this.rect.getTop() + (this.rect.getHeight() / 2);
 
-    // set the projection matrix
-    Spark.view.setTransform(1, 0, 0, 1, 0, 0);
+    // set the projection matrix (camera -> viewport)
+    Spark.view.setTransform(w2, 0, 0, h2, w2, h2);
 
-    // camera -> viewport
-    Spark.view.translate(w2, h2);
-    Spark.view.scale(w2 / this.camera.m.s.x, h2 / this.camera.m.s.y);
-
-    // playfield -> camera
+    // playfield -> camera (<-1,-1> - <1,1>)
+    Spark.view.scale(1 / this.camera.m.s.x, 1 / this.camera.m.s.y);
     Spark.view.transform(this.camera.m.r.x, this.camera.m.r.y, -this.camera.m.r.y, this.camera.m.r.x, 0, 0);
     Spark.view.translate(-this.camera.m.p.x - mx, -this.camera.m.p.y - my);
 

@@ -149,16 +149,12 @@ class Input {
 
   // mousemove event handler
   static function onMouseMove(event: js.html.MouseEvent) {
-    var eventX = event.clientX - Spark.canvas.offsetLeft;
-    var eventY = event.clientY - Spark.canvas.offsetTop;
+    x = event.clientX - Spark.canvas.offsetLeft;
+    y = event.clientY - Spark.canvas.offsetTop;
 
     // update relative motion
-    relX += eventX - x;
-    relY += eventY - y;
-
-    // update position
-    x = eventX;
-    y = eventY;
+    relX = event.movementX;
+    relY = event.movementY;
   }
 
   // mouse button constants

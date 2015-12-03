@@ -36,6 +36,8 @@ function spawnPlayer() {
 
   sprite.setTexture(spark.Game.getTexture('player.png'));
 
+  sprite.m.p.set(200, 200);
+
   sprite.addBehavior(playerControls);
   sprite.addBehavior(wrap);
 
@@ -49,6 +51,17 @@ function playerControls(sprite, step) {
   // spawn bullets
   for(var i = 0;i < spark.Input.keyHits(spark.Input.Key.SPACE);i++) {
     shoot(sprite.getLayer(), sprite.m);
+  }
+
+  // thrust forward
+  if (spark.Input.keyDown(spark.Input.Key.UP)) {
+    var p = sprite.localToWorld(new spark.Vec(0, 60));
+    var r = sprite.localToWorldAngle(-90);
+
+    // emit some particles
+    spark.Game.getEmitter('thrust.json').emit(sprite.getLayer(), p, r);
+  } else {
+    // TODO: stop the sound
   }
 
   if (spark.Input.keyHit(spark.Input.Key.T)) {
@@ -72,7 +85,9 @@ function shoot(layer, m) {
   bullet.addBehavior((sprite, step, data) => {
     sprite.m.translate(0, -800 * step, true);
     sprite.dead = (data.age += step) > 1;
-  }, { age: 0.0 });
+  }, {
+    age: 0.0
+  });
 
   spark.Game.getSound('laser.mp3').woof();
 }
