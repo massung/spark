@@ -46,8 +46,8 @@ class Mat {
     var dy = y;
 
     if (local) {
-      dx = (x * this.r.x) + (y * this.r.y);
-      dy = (y * this.r.x) - (x * this.r.y);
+      dx = (x * this.r.x) - (y * this.r.y);
+      dy = (y * this.r.x) + (x * this.r.y);
     }
 
     this.p.x += dx;
@@ -59,7 +59,9 @@ class Mat {
     var x = Math.cos(Util.degToRad(r));
     var y = Math.sin(Util.degToRad(r));
 
-    this.r.set((this.r.x * x) + (this.r.y * y), (this.r.y * x) - (this.r.x * y));
+    this.r.set(
+      (this.r.x * x) - (this.r.y * y),
+      (this.r.y * x) + (this.r.x * y));
   }
 
   // multiply the scale vector
@@ -70,8 +72,8 @@ class Mat {
 
   // apply the matrix to a vector and return a new vector
   public function transform(v: Vec): Vec {
-    var x = (v.x * this.s.x * this.r.x) + (v.y * this.s.y * this.r.y);
-    var y = (v.y * this.s.y * this.r.x) - (v.x * this.s.x * this.r.y);
+    var x = (v.x * this.s.x * this.r.x) - (v.y * this.s.y * this.r.y);
+    var y = (v.y * this.s.y * this.r.x) + (v.x * this.s.x * this.r.y);
 
     return new Vec(x + this.p.x, y + this.p.y);
   }
@@ -94,6 +96,6 @@ class Mat {
     var e = this.p.x;
     var f = this.p.y;
 
-    Spark.view.transform(a, -b, c, d, e, f);
+    Spark.view.transform(a, b, -c, d, e, f);
   }
 }

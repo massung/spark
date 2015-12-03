@@ -213,11 +213,11 @@ class Scene {
     var my = this.rect.getTop() + (this.rect.getHeight() / 2);
 
     // set the projection matrix (camera -> viewport)
-    Spark.view.setTransform(w2, 0, 0, h2, w2, h2);
+    Spark.view.setTransform(w2, 0, 0, -h2, w2, -h2);
 
     // playfield -> camera (<-1,-1> - <1,1>)
     Spark.view.scale(1 / this.camera.m.s.x, 1 / this.camera.m.s.y);
-    Spark.view.transform(this.camera.m.r.x, this.camera.m.r.y, -this.camera.m.r.y, this.camera.m.r.x, 0, 0);
+    Spark.view.transform(this.camera.m.r.x, -this.camera.m.r.y, this.camera.m.r.y, this.camera.m.r.x, 0, 0);
     Spark.view.translate(-this.camera.m.p.x - mx, -this.camera.m.p.y - my);
 
     // TODO: z-ordering of sprites/layers
@@ -246,8 +246,8 @@ class Scene {
     var cy = y - (this.camera.m.p.y + my);
 
     // unrotate
-    var rx = (cx * this.camera.m.r.x) - (cy * this.camera.m.r.y);
-    var ry = (cy * this.camera.m.r.x) + (cx * this.camera.m.r.y);
+    var rx = (cx * this.camera.m.r.x) + (cy * this.camera.m.r.y);
+    var ry = (cy * this.camera.m.r.x) - (cx * this.camera.m.r.y);
 
     // unscale
     var sx = rx * Spark.canvas.height / (2 * this.camera.m.s.x);
@@ -263,8 +263,8 @@ class Scene {
     var cy = (y - Spark.canvas.height / 2) * this.camera.m.s.y * 2 / Spark.canvas.height;
 
     // rotate
-    var vx = (cx * this.camera.m.r.x) + (cy * this.camera.m.r.y);
-    var vy = (cy * this.camera.m.r.x) - (cx * this.camera.m.r.y);
+    var vx = (cx * this.camera.m.r.x) - (cy * this.camera.m.r.y);
+    var vy = (cy * this.camera.m.r.x) + (cx * this.camera.m.r.y);
 
     // find the middle of the playfield
     var mx = this.rect.getLeft() + (this.rect.getWidth() / 2);

@@ -114,6 +114,9 @@ class Sprite extends Actor {
     // apply the model transform to the view
     this.m.apply();
 
+    // flip about the x-axis
+    Spark.view.scale(1, -1);
+
     // apply view settings
     //merge(view, this.contextSettings);
 

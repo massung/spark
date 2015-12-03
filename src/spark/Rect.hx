@@ -29,9 +29,9 @@ class Rect {
 
   // return the bounds of the rectangle
   public function getLeft(): Float return this.x;
-  public function getTop(): Float return this.y;
+  public function getTop(): Float return this.y + this.height;
   public function getRight(): Float return this.x + this.width;
-  public function getBottom(): Float return this.y + this.height;
+  public function getBottom(): Float return this.y;
   public function getWidth(): Float return this.width;
   public function getHeight(): Float return this.height;
 }

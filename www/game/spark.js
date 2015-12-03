@@ -1326,8 +1326,8 @@ spark_Mat.prototype = {
 		var dx = x;
 		var dy = y;
 		if(local) {
-			dx = x * this.r.x + y * this.r.y;
-			dy = y * this.r.x - x * this.r.y;
+			dx = x * this.r.x - y * this.r.y;
+			dy = y * this.r.x + x * this.r.y;
 		}
 		this.p.x += dx;
 		this.p.y += dy;
@@ -1335,15 +1335,15 @@ spark_Mat.prototype = {
 	,rotate: function(r) {
 		var x = Math.cos(spark_Util.degToRad(r));
 		var y = Math.sin(spark_Util.degToRad(r));
-		this.r.set(this.r.x * x + this.r.y * y,this.r.y * x - this.r.x * y);
+		this.r.set(this.r.x * x - this.r.y * y,this.r.y * x + this.r.x * y);
 	}
 	,scale: function(x,y) {
 		this.s.x *= x;
 		if(y == null) this.s.y *= x; else this.s.y *= y;
 	}
 	,transform: function(v) {
-		var x = v.x * this.s.x * this.r.x + v.y * this.s.y * this.r.y;
-		var y = v.y * this.s.y * this.r.x - v.x * this.s.x * this.r.y;
+		var x = v.x * this.s.x * this.r.x - v.y * this.s.y * this.r.y;
+		var y = v.y * this.s.y * this.r.x + v.x * this.s.x * this.r.y;
 		return new spark_Vec(x + this.p.x,y + this.p.y);
 	}
 	,mult: function(m) {
@@ -1359,7 +1359,7 @@ spark_Mat.prototype = {
 		var d = this.r.x * this.s.y;
 		var e = this.p.x;
 		var f = this.p.y;
-		Spark.view.transform(a,-b,c,d,e,f);
+		Spark.view.transform(a,b,-c,d,e,f);
 	}
 	,__class__: spark_Mat
 	,__properties__: {set_angle:"set_angle",get_angle:"get_angle"}
@@ -1481,13 +1481,13 @@ spark_Rect.prototype = {
 		return this.x;
 	}
 	,getTop: function() {
-		return this.y;
+		return this.y + this.height;
 	}
 	,getRight: function() {
 		return this.x + this.width;
 	}
 	,getBottom: function() {
-		return this.y + this.height;
+		return this.y;
 	}
 	,getWidth: function() {
 		return this.width;
@@ -1642,9 +1642,9 @@ spark_Scene.prototype = {
 		var h2 = Spark.canvas.height / 2;
 		var mx = this.rect.getLeft() + this.rect.getWidth() / 2;
 		var my = this.rect.getTop() + this.rect.getHeight() / 2;
-		Spark.view.setTransform(w2,0,0,h2,w2,h2);
+		Spark.view.setTransform(w2,0,0,-h2,w2,-h2);
 		Spark.view.scale(1 / this.camera.m.s.x,1 / this.camera.m.s.y);
-		Spark.view.transform(this.camera.m.r.x,this.camera.m.r.y,-this.camera.m.r.y,this.camera.m.r.x,0,0);
+		Spark.view.transform(this.camera.m.r.x,-this.camera.m.r.y,this.camera.m.r.y,this.camera.m.r.x,0,0);
 		Spark.view.translate(-this.camera.m.p.x - mx,-this.camera.m.p.y - my);
 		var _g1 = 0;
 		var _g = this.layers.length;
@@ -1660,8 +1660,8 @@ spark_Scene.prototype = {
 		var my = this.rect.getTop() + this.rect.getHeight() / 2;
 		var cx = x - (this.camera.m.p.x + mx);
 		var cy = y - (this.camera.m.p.y + my);
-		var rx = cx * this.camera.m.r.x - cy * this.camera.m.r.y;
-		var ry = cy * this.camera.m.r.x + cx * this.camera.m.r.y;
+		var rx = cx * this.camera.m.r.x + cy * this.camera.m.r.y;
+		var ry = cy * this.camera.m.r.x - cx * this.camera.m.r.y;
 		var sx = rx * Spark.canvas.height / (2 * this.camera.m.s.x);
 		var sy = ry * Spark.canvas.width / (2 * this.camera.m.s.y);
 		return new spark_Vec(sx + Spark.canvas.width / 2,sy + Spark.canvas.height / 2);
@@ -1669,8 +1669,8 @@ spark_Scene.prototype = {
 	,screenToWorld: function(x,y) {
 		var cx = (x - Spark.canvas.width / 2) * this.camera.m.s.x * 2 / Spark.canvas.width;
 		var cy = (y - Spark.canvas.height / 2) * this.camera.m.s.y * 2 / Spark.canvas.height;
-		var vx = cx * this.camera.m.r.x + cy * this.camera.m.r.y;
-		var vy = cy * this.camera.m.r.x - cx * this.camera.m.r.y;
+		var vx = cx * this.camera.m.r.x - cy * this.camera.m.r.y;
+		var vy = cy * this.camera.m.r.x + cx * this.camera.m.r.y;
 		var mx = this.rect.getLeft() + this.rect.getWidth() / 2;
 		var my = this.rect.getTop() + this.rect.getHeight() / 2;
 		return new spark_Vec(vx + this.camera.m.p.x + mx,vy + this.camera.m.p.y + my);
@@ -2165,7 +2165,7 @@ spark_collision_Quadtree.prototype = {
 			var w = this.rect.getWidth() / 2;
 			var h = this.rect.getHeight() / 2;
 			var l = this.rect.getLeft();
-			var t = this.rect.getTop();
+			var t = this.rect.getBottom();
 			this.nodes = [new spark_collision_Quadtree(new spark_Rect(l,t,w,h),this.depth + 1),new spark_collision_Quadtree(new spark_Rect(l + w,t,w,h),this.depth + 1),new spark_collision_Quadtree(new spark_Rect(l,t + h,w,h),this.depth + 1),new spark_collision_Quadtree(new spark_Rect(l + w,t + h,w,h),this.depth + 1)];
 			this.shapes = this.shapes.filter(function(shape1) {
 				var i2;
@@ -2277,7 +2277,7 @@ spark_collision_Quadtree.prototype = {
 		var i;
 		Spark.view.save();
 		Spark.view.strokeStyle = "#f00";
-		Spark.view.strokeRect(this.rect.getLeft(),this.rect.getTop(),this.rect.getWidth(),this.rect.getHeight());
+		Spark.view.strokeRect(this.rect.getLeft(),this.rect.getBottom(),this.rect.getWidth(),this.rect.getHeight());
 		var _g1 = 0;
 		var _g = this.nodes.length;
 		while(_g1 < _g) {
@@ -2293,6 +2293,52 @@ spark_collision_Quadtree.prototype = {
 		Spark.view.restore();
 	}
 	,__class__: spark_collision_Quadtree
+};
+var spark_collision_SeparatingAxis = function() { };
+$hxClasses["spark.collision.SeparatingAxis"] = spark_collision_SeparatingAxis;
+spark_collision_SeparatingAxis.__name__ = ["spark","collision","SeparatingAxis"];
+spark_collision_SeparatingAxis.project = function($as,bs,axis) {
+	var i;
+	var n;
+	var amin;
+	var amax;
+	var bmin;
+	var bmax;
+	amin = amax = $as[0].dot(axis);
+	bmin = bmax = bs[0].dot(axis);
+	var _g1 = 1;
+	var _g = $as.length;
+	while(_g1 < _g) {
+		var i1 = _g1++;
+		n = $as[i1].dot(axis);
+		if(n < amin) amin = n;
+		if(n > amax) amax = n;
+	}
+	var _g11 = 1;
+	var _g2 = bs.length;
+	while(_g11 < _g2) {
+		var i2 = _g11++;
+		n = bs[i2].dot(axis);
+		if(n < bmin) bmin = n;
+		if(n > bmax) bmax = n;
+	}
+	return amax < bmin || amin > bmax;
+};
+spark_collision_SeparatingAxis.query = function(aPs,aNs,bPs,bNs) {
+	var i;
+	var _g1 = 0;
+	var _g = aNs.length;
+	while(_g1 < _g) {
+		var i1 = _g1++;
+		if(spark_collision_SeparatingAxis.project(aPs,bPs,aNs[i1]) == false) return false;
+	}
+	var _g11 = 0;
+	var _g2 = bNs.length;
+	while(_g11 < _g2) {
+		var i2 = _g11++;
+		if(spark_collision_SeparatingAxis.project(aPs,bPs,bNs[i2]) == false) return false;
+	}
+	return true;
 };
 var spark_collision_Shape = function(body) {
 	this.body = body;
@@ -2519,7 +2565,7 @@ var spark_graphics_Emitter = function(src) {
 				sprite.dead = true;
 			}
 			var s = spark_Util.lerp(_g.data.startScale,_g.data.endScale,p.age,p.life);
-			sprite.m.translate(p.v.x * step,-p.v.y * step);
+			sprite.m.translate(p.v.x * step,p.v.y * step);
 			sprite.m.rotate(p.w * step);
 			sprite.m.s.set(s,s);
 		};
@@ -2808,6 +2854,7 @@ spark_object_Sprite.prototype = $extend(spark_object_Actor.prototype,{
 		if(this.texture == null) return;
 		Spark.view.save();
 		this.m.apply();
+		Spark.view.scale(1,-1);
 		if(this.quad == null) this.texture.draw(this.pivot); else this.texture.drawq(this.quad,this.pivot);
 		Spark.view.restore();
 	}

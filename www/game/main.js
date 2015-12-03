@@ -4,6 +4,7 @@
 var scene;
 var playerLayer;
 var asteroidLayer;
+var player;
 
 // create a new game instance
 spark.Game.main('game/project.xml', proj => {
@@ -18,7 +19,7 @@ spark.Game.main('game/project.xml', proj => {
     playerLayer = scene.newSpriteLayer();
 
     // spawn the player
-    spawnPlayer();
+    player = spawnPlayer();
 
     // spawn some asteroids
     for(i = 0;i < 6;i++) {
@@ -42,11 +43,13 @@ function spawnPlayer() {
   sprite.addBehavior(wrap);
 
   body.addCircleShape(0, 0, 30);
+
+  return sprite;
 }
 
 function playerControls(sprite, step) {
-  if (spark.Input.keyDown(spark.Input.Key.LEFT)) sprite.m.rotate(-180 * step);
-  if (spark.Input.keyDown(spark.Input.Key.RIGHT)) sprite.m.rotate(180 * step);
+  if (spark.Input.keyDown(spark.Input.Key.LEFT)) sprite.m.rotate(180 * step);
+  if (spark.Input.keyDown(spark.Input.Key.RIGHT)) sprite.m.rotate(-180 * step);
 
   // spawn bullets
   for(var i = 0;i < spark.Input.keyHits(spark.Input.Key.SPACE);i++) {
@@ -55,7 +58,7 @@ function playerControls(sprite, step) {
 
   // thrust forward
   if (spark.Input.keyDown(spark.Input.Key.UP)) {
-    var p = sprite.localToWorld(new spark.Vec(0, 60));
+    var p = sprite.localToWorld(new spark.Vec(0, -60));
     var r = sprite.localToWorldAngle(-90);
 
     // emit some particles
@@ -74,7 +77,7 @@ function shoot(layer, m) {
   var bullet = layer.newSprite();
   var body = bullet.addBody('bullet');
 
-  bullet.m.p = m.transform(new spark.Vec(0, -60));
+  bullet.m.p = m.transform(new spark.Vec(0, 60));
   bullet.m.r = m.r.copy();
 
   // texture
@@ -83,7 +86,7 @@ function shoot(layer, m) {
 
   // create movement behavior
   bullet.addBehavior((sprite, step, data) => {
-    sprite.m.translate(0, -800 * step, true);
+    sprite.m.translate(0, 800 * step, true);
     sprite.dead = (data.age += step) > 1;
   }, {
     age: 0.0
@@ -141,8 +144,8 @@ function wrap(sprite) {
     sprite.m.p.x += scene.rect.getWidth() + w;
   if (sprite.m.p.x - w / 2 > scene.rect.getRight())
     sprite.m.p.x -= scene.rect.getWidth() + w;
-  if (sprite.m.p.y + h / 2 < scene.rect.getTop())
+  if (sprite.m.p.y + h / 2 < scene.rect.getBottom())
     sprite.m.p.y += scene.rect.getHeight() + h;
-  if (sprite.m.p.y - h / 2 > scene.rect.getBottom())
+  if (sprite.m.p.y - h / 2 > scene.rect.getTop())
     sprite.m.p.y -= scene.rect.getHeight() + h;
 }

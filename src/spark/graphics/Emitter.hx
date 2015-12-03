@@ -92,7 +92,7 @@ class Emitter extends Asset {
         var s = Util.lerp(this.data.startScale, this.data.endScale, p.age, p.life);
 
         // translate, rotate, and scale
-        sprite.m.translate(p.v.x * step, -p.v.y * step);
+        sprite.m.translate(p.v.x * step, p.v.y * step);
         sprite.m.rotate(p.w * step);
         sprite.m.s.set(s, s);
 
