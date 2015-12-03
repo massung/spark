@@ -27,9 +27,9 @@ typedef EmitterData = {
   spread: Float,
   minSpeed: Float,
   maxSpeed: Float,
+  angle: Float,
   minAngularVelocity: Float,
   maxAngularVelocity: Float,
-  forwardAngle: Float,
 }
 
 class Emitter extends Asset {
@@ -59,9 +59,9 @@ class Emitter extends Asset {
       spread: 180.0,
       minSpeed: 50.0,
       maxSpeed: 100.0,
+      angle: 0.0,
       minAngularVelocity: -90.0,
       maxAngularVelocity: 90.0,
-      forwardAngle: 0.0,
     };
 
     // crunched data
@@ -106,7 +106,7 @@ class Emitter extends Asset {
   }
 
   // spawn particle sprites into the scene
-  public function emit(layer: spark.layer.SpriteLayer, p: Vec, dir: Float, ?n: Int = 1) {
+  public function emit(layer: spark.layer.SpriteLayer, p: Vec, r: Float, dir: Float, ?n: Int = 1) {
     var i;
 
     for (i in 0...n) {
@@ -121,7 +121,7 @@ class Emitter extends Asset {
 
       // initialize the sprite transform
       sprite.m.p.set(p.x, p.y);
-      sprite.m.angle = this.data.forwardAngle + dir + spread;
+      sprite.m.angle = this.data.angle + r;
 
       // pick a random age
       var life = Util.rand(this.data.minLife, this.data.maxLife);

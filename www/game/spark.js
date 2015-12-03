@@ -1315,11 +1315,10 @@ spark_Mat.prototype = {
 		return new spark_Mat(-this.p.x,-this.p.y,this.r.x,-this.r.y,1 / this.s.x,1 / this.s.y);
 	}
 	,get_angle: function() {
-		return spark_Util.radToDeg(Math.atan2(this.r.y,this.r.x));
+		return this.r.angle();
 	}
 	,set_angle: function(a) {
-		this.r.x = Math.cos(spark_Util.degToRad(a));
-		this.r.y = Math.sin(spark_Util.degToRad(a));
+		this.r.setAngle(a);
 		return a;
 	}
 	,translate: function(x,y,local) {
@@ -1845,6 +1844,13 @@ spark_Vec.prototype = {
 	}
 	,rperp: function() {
 		return new spark_Vec(-this.y,this.x);
+	}
+	,angle: function() {
+		return spark_Util.radToDeg(Math.atan2(this.y,this.x));
+	}
+	,setAngle: function(angle) {
+		this.x = Math.cos(spark_Util.degToRad(angle));
+		this.y = Math.sin(spark_Util.degToRad(angle));
 	}
 	,rotate: function(r) {
 		return new spark_Vec(this.x * r.x + this.y * r.y,this.y * r.x - this.x * r.y);
@@ -2501,7 +2507,7 @@ spark_collision_shape_Segment.prototype = $extend(spark_collision_Shape.prototyp
 var spark_graphics_Emitter = function(src) {
 	var _g = this;
 	spark_Asset.call(this,src);
-	this.data = { texture : null, compositeOperation : "source-over", startAlpha : 1.0, endAlpha : 1.0, minLife : 1.0, maxLife : 1.5, startScale : 1.0, endScale : 1.0, spread : 180.0, minSpeed : 50.0, maxSpeed : 100.0, minAngularVelocity : -90.0, maxAngularVelocity : 90.0, forwardAngle : 0.0};
+	this.data = { texture : null, compositeOperation : "source-over", startAlpha : 1.0, endAlpha : 1.0, minLife : 1.0, maxLife : 1.5, startScale : 1.0, endScale : 1.0, spread : 180.0, minSpeed : 50.0, maxSpeed : 100.0, angle : 0.0, minAngularVelocity : -90.0, maxAngularVelocity : 90.0};
 	this.texture = null;
 	Spark.loadJSON(src,function(json) {
 		spark_Util.merge(_g.data,json);
@@ -2528,7 +2534,7 @@ spark_graphics_Emitter.prototype = $extend(spark_Asset.prototype,{
 	,texture: null
 	,quad: null
 	,particleBehavior: null
-	,emit: function(layer,p,dir,n) {
+	,emit: function(layer,p,r,dir,n) {
 		if(n == null) n = 1;
 		var i;
 		var _g = 0;
@@ -2539,7 +2545,7 @@ spark_graphics_Emitter.prototype = $extend(spark_Asset.prototype,{
 			var speed = spark_Util.rand(this.data.minSpeed,this.data.maxSpeed);
 			var spread = spark_Util.rand(-this.data.spread,this.data.spread);
 			sprite.m.p.set(p.x,p.y);
-			sprite.m.set_angle(this.data.forwardAngle + dir + spread);
+			sprite.m.set_angle(this.data.angle + r);
 			var life = spark_Util.rand(this.data.minLife,this.data.maxLife);
 			var w = spark_Util.rand(this.data.minAngularVelocity,this.data.maxAngularVelocity);
 			var particle = { age : 0, life : life, v : spark_Vec.axis(dir + spread,speed), w : w};
@@ -2802,7 +2808,6 @@ spark_object_Sprite.prototype = $extend(spark_object_Actor.prototype,{
 		if(this.texture == null) return;
 		Spark.view.save();
 		this.m.apply();
-		Spark.view.scale(1,-1);
 		if(this.quad == null) this.texture.draw(this.pivot); else this.texture.drawq(this.quad,this.pivot);
 		Spark.view.restore();
 	}

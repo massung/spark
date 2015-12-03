@@ -32,13 +32,11 @@ class Mat {
 
   // return the angle of rotation in degrees
   public function get_angle(): Float {
-    return Util.radToDeg(Math.atan2(this.r.y, this.r.x));
+    return this.r.angle();
   }
 
   public function set_angle(a: Float): Float {
-    this.r.x = Math.cos(Util.degToRad(a));
-    this.r.y = Math.sin(Util.degToRad(a));
-
+    this.r.setAngle(a);
     return a;
   }
 

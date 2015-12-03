@@ -151,6 +151,17 @@ class Vec {
     return new Vec(-this.y, this.x);
   }
 
+  // angle of the vector in degrees
+  public function angle(): Float {
+    return Util.radToDeg(Math.atan2(this.y, this.x));
+  }
+
+  // set to the unit vector of an angle in degrees
+  public function setAngle(angle: Float) {
+    this.x = Math.cos(Util.degToRad(angle));
+    this.y = Math.sin(Util.degToRad(angle));
+  }
+
   // rotate this vector by a rotation vector
   public function rotate(r: Vec): Vec {
     return new Vec((this.x * r.x) + (this.y * r.y), (this.y * r.x) - (this.x * r.y));

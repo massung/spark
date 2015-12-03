@@ -1,7 +1,7 @@
 {
   "texture": "thrust.png",
   "spread": 5.0,
-  "forwardAngle": 90,
+  "forwardAngle": 0,
   "minAngularVelocity": 0,
   "maxAngularVelocity": 0,
   "startScale": 2.0,

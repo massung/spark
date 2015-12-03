@@ -21,7 +21,7 @@ spark.Game.main('game/project.xml', proj => {
     spawnPlayer();
 
     // spawn some asteroids
-    for(i = 0;i < 20;i++) {
+    for(i = 0;i < 6;i++) {
       spawnAsteroid();
     }
 
@@ -59,7 +59,7 @@ function playerControls(sprite, step) {
     var r = sprite.localToWorldAngle(-90);
 
     // emit some particles
-    spark.Game.getEmitter('thrust.json').emit(sprite.getLayer(), p, r);
+    spark.Game.getEmitter('thrust.json').emit(sprite.getLayer(), p, sprite.m.r.angle(), r);
   } else {
     // TODO: stop the sound
   }
