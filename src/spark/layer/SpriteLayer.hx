@@ -13,6 +13,9 @@ class SpriteLayer implements Layer {
   public var z: Float;
   public var m: Mat;
 
+  // various view settings applied to the entire layer
+  public var contextSettings: Dynamic;
+
   // active, pending, and free sprite lists
   private var sprites: Array<Sprite>;
   private var pool: Array<Sprite>;
@@ -133,10 +136,18 @@ class SpriteLayer implements Layer {
   public function draw() {
     var i;
 
+    Spark.view.save();
+
+    // apply view settings
+    Util.merge(Spark.view, this.contextSettings);
+
     // render all the sprites
     for (i in 0...this.count) {
       this.sprites[i].draw();
     }
+
+    // done
+    Spark.view.restore();
   }
 
   // add to any debug stats when debugging

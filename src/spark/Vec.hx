@@ -164,11 +164,11 @@ class Vec {
 
   // rotate this vector by a rotation vector
   public function rotate(r: Vec): Vec {
-    return new Vec((this.x * r.x) + (this.y * r.y), (this.y * r.x) - (this.x * r.y));
+    return new Vec((this.x * r.x) - (this.y * r.y), (this.y * r.x) + (this.x * r.y));
   }
 
   // inverse rotation of this by a rotation vector
   public function unrotate(r: Vec): Vec {
-    return new Vec((this.x * r.x) - (this.y * r.y), (this.y * r.x) + (this.x * r.y));
+    return new Vec((this.x * r.x) + (this.y * r.y), (this.y * r.x) - (this.x * r.y));
   }
 }

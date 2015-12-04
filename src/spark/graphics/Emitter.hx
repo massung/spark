@@ -49,7 +49,7 @@ class Emitter extends Asset {
     // default source values
     this.data = {
       texture: null,
-      compositeOperation: 'source-over',
+      compositeOperation: 'screen',
       startAlpha: 1.0,
       endAlpha: 1.0,
       minLife: 1.0,
@@ -77,7 +77,8 @@ class Emitter extends Asset {
       }
 
       // create a custom behavior for all particles this emitter spawns
-      this.particleBehavior = function(sprite: Actor, step: Float, data: Dynamic) {
+      this.particleBehavior = function(actor: Actor, step: Float, data: Dynamic) {
+        var s: Sprite = cast actor;
         var p: ParticleData = data;
 
         // age the particle
@@ -85,19 +86,19 @@ class Emitter extends Asset {
           p.age = p.life;
 
           // remove the sprite from the scene
-          (cast sprite).dead = true;
+          s.dead = true;
         }
 
         // calculate the new scale
-        var s = Util.lerp(this.data.startScale, this.data.endScale, p.age, p.life);
+        var scale = Util.lerp(this.data.startScale, this.data.endScale, p.age, p.life);
 
         // translate, rotate, and scale
-        sprite.m.translate(p.v.x * step, p.v.y * step);
-        sprite.m.rotate(p.w * step);
-        sprite.m.s.set(s, s);
+        s.m.translate(p.v.x * step, p.v.y * step);
+        s.m.rotate(p.w * step);
+        s.m.s.set(scale, scale);
 
         // linearly interpolate the alpha
-        //sprite.contextSettings.globalAlpha = lerp(this.data.startAlpha, this.data.endAlpha, p.age, p.life);
+        s.contextSettings.globalAlpha = Util.lerp(this.data.startAlpha, this.data.endAlpha, p.age, p.life);
       };
 
       // asset is now ready for use
@@ -106,7 +107,7 @@ class Emitter extends Asset {
   }
 
   // spawn particle sprites into the scene
-  public function emit(layer: spark.layer.SpriteLayer, p: Vec, r: Float, dir: Float, ?n: Int = 1) {
+  public function emit(layer: spark.layer.SpriteLayer, x: Float, y: Float, r: Float, dir: Float, ?n: Int = 1) {
     var i;
 
     for (i in 0...n) {
@@ -115,12 +116,15 @@ class Emitter extends Asset {
       // set the texture to use
       sprite.setTexture(this.texture);
 
+      // set the composite operation from the source
+      sprite.contextSettings.globalCompositeOperation = this.data.compositeOperation;
+
       // random linear speed and spread in the direction of travel
       var speed = Util.rand(this.data.minSpeed, this.data.maxSpeed);
       var spread = Util.rand(-this.data.spread, this.data.spread);
 
       // initialize the sprite transform
-      sprite.m.p.set(p.x, p.y);
+      sprite.m.p.set(x, y);
       sprite.m.angle = this.data.angle + r;
 
       // pick a random age

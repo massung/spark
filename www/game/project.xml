@@ -12,9 +12,11 @@
     <asset src="asteroid_big_2.png" class="spark.graphics.Texture" />
     <asset src="asteroid_big_3.png" class="spark.graphics.Texture" />
     <asset src="asteroid_big_4.png" class="spark.graphics.Texture" />
+    <asset src="asteroid_particle_1.png" class="spark.graphics.Texture" />
 
     <!-- particle emitters -->
     <asset src="thrust.json" class="spark.graphics.Emitter" />
+    <asset src="explosion.json" class="spark.graphics.Emitter" />
 
     <!-- sounds -->
     <asset src="laser.mp3" class="spark.audio.Sound" />

@@ -22,7 +22,7 @@ spark.Game.main('game/project.xml', proj => {
     player = spawnPlayer();
 
     // spawn some asteroids
-    for(i = 0;i < 6;i++) {
+    for(i = 0;i < 20;i++) {
       spawnAsteroid();
     }
 
@@ -39,7 +39,9 @@ function spawnPlayer() {
 
   sprite.m.p.set(200, 200);
 
-  sprite.addBehavior(playerControls);
+  var thrust = new spark.Vec(0, 0);
+
+  sprite.addBehavior(playerControls, thrust);
   sprite.addBehavior(wrap);
 
   body.addCircleShape(0, 0, 30);
@@ -47,7 +49,7 @@ function spawnPlayer() {
   return sprite;
 }
 
-function playerControls(sprite, step) {
+function playerControls(sprite, step, thrust) {
   if (spark.Input.keyDown(spark.Input.Key.LEFT)) sprite.m.rotate(180 * step);
   if (spark.Input.keyDown(spark.Input.Key.RIGHT)) sprite.m.rotate(-180 * step);
 
@@ -61,16 +63,24 @@ function playerControls(sprite, step) {
     var p = sprite.localToWorld(new spark.Vec(0, -60));
     var r = sprite.localToWorldAngle(-90);
 
+    var d = new spark.Vec(0, 600 * step).rotate(sprite.m.r);
+
+    thrust.x += d.x;
+    thrust.y += d.y;
+
     // emit some particles
-    spark.Game.getEmitter('thrust.json').emit(sprite.getLayer(), p, sprite.m.r.angle(), r);
+    spark.Game.getEmitter('thrust.json').emit(sprite.getLayer(), p.x, p.y, sprite.m.r.angle(), r);
   } else {
     // TODO: stop the sound
   }
 
-  if (spark.Input.keyHit(spark.Input.Key.T)) {
-    spark.Game.getTimeline('shake.json').playOn(scene.camera);
-    spark.Game.getSound('explosion.mp3').woof();
-  }
+  // move based on thrust
+  sprite.m.p.x += thrust.x * step;
+  sprite.m.p.y += thrust.y * step;
+
+  // dampen
+  thrust.x *= 0.98;
+  thrust.y *= 0.98;
 }
 
 function shoot(layer, m) {
@@ -86,7 +96,7 @@ function shoot(layer, m) {
 
   // create movement behavior
   bullet.addBehavior((sprite, step, data) => {
-    sprite.m.translate(0, 800 * step, true);
+    sprite.m.translate(0, 1000 * step, true);
     sprite.dead = (data.age += step) > 1;
   }, {
     age: 0.0
@@ -97,8 +107,13 @@ function shoot(layer, m) {
 
 function spawnAsteroid() {
   var asteroid = asteroidsLayer.newSprite();
-  var body = asteroid.addBody('asteroid', c => {
-    //console.log('boom');
+  var body = asteroid.addBody('asteroid', (a, b) => {
+    if (b.filter === 'bullet') {
+      a.getObject().dead = true;
+      b.getObject().dead = true;
+
+      explodeAsteroid(a.getObject());
+    }
   });
 
   // pick a random image to use
@@ -148,4 +163,10 @@ function wrap(sprite) {
     sprite.m.p.y += scene.rect.getHeight() + h;
   if (sprite.m.p.y - h / 2 > scene.rect.getTop())
     sprite.m.p.y -= scene.rect.getHeight() + h;
+}
+
+function explodeAsteroid(sprite) {
+  spark.Game.getTimeline('shake.json').playOn(scene.camera);
+  spark.Game.getSound('explosion.mp3').woof();
+  spark.Game.getEmitter('explosion.json').emit(sprite.getLayer(), sprite.m.p.x, sprite.m.p.y, sprite.m.r.angle(), 0, 20);
 }

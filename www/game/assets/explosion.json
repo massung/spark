@@ -1,0 +1,13 @@
+{
+  "texture": "asteroid_particle_1.png",
+  "composite": "screen",
+  "minLife": 0.3,
+  "maxLife": 0.5,
+  "spread": 180.0,
+  "minSpeed": 50.0,
+  "maxSpeed": 100.0,
+  "startScale": 1.0,
+  "endScale": 0.6,
+  "startAlpha": 1.0,
+  "endAlpha": 0.5
+}

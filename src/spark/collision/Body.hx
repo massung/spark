@@ -6,7 +6,7 @@
 
 package spark.collision;
 
-typedef CollisionCallback = Body -> Void;
+typedef CollisionCallback = Body -> Body -> Void;
 
 class Body {
   private var object: Dynamic;
@@ -62,7 +62,7 @@ class Body {
   // process a collision
   public function collide(body: Body) {
     if (this.oncollision != null && body.filter != null) {
-      this.oncollision(body);
+      this.oncollision(this, body);
     }
   }
 }

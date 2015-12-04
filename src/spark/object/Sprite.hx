@@ -10,11 +10,14 @@ import spark.anim.*;
 import spark.collision.*;
 import spark.graphics.*;
 
-class Sprite extends Actor {
+class Sprite extends Actor implements Drawable {
   public var pivot: Vec;
 
   // dead is a get/set property for resource ref count
   public var dead: Bool;
+
+  // drawable settings
+  public var contextSettings: Dynamic;
 
   // the layer this sprite was spawned onto
   private var layer: Layer;
@@ -48,7 +51,11 @@ class Sprite extends Actor {
     this.body = null;
     this.texture = null;
     this.quad = null;
-    //this.contextSettings = {};
+    this.contextSettings = {
+      globalAlpha: 1.0,
+      globalCompositeOperation: 'source-over',
+      shadowBlur: 0,
+    };
   }
 
   // get the layer this sprite is on
@@ -107,7 +114,9 @@ class Sprite extends Actor {
 
   // called once a frame to render the sprite
   public function draw() {
-    if (this.texture == null) return;
+    if (this.texture == null) {
+      return;
+    }
 
     Spark.view.save();
 
@@ -118,7 +127,7 @@ class Sprite extends Actor {
     Spark.view.scale(1, -1);
 
     // apply view settings
-    //merge(view, this.contextSettings);
+    Util.merge(Spark.view, this.contextSettings);
 
     // render the texture/quad
     if (this.quad == null) {
