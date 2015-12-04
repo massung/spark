@@ -22,7 +22,7 @@ spark.Game.main('game/project.xml', proj => {
     player = spawnPlayer();
 
     // spawn some asteroids
-    for(i = 0;i < 20;i++) {
+    for(i = 0;i < 40;i++) {
       spawnAsteroid();
     }
 

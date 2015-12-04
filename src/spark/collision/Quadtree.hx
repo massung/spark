@@ -49,15 +49,15 @@ class Quadtree {
     if (this.depth < DEPTH_LIMIT && this.shapes.length >= SHAPE_LIMIT && this.nodes.length == 0) {
       var w = this.rect.getWidth() / 2;
       var h = this.rect.getHeight() / 2;
-      var l = this.rect.getLeft();
-      var t = this.rect.getBottom();
+      var x = this.rect.getLeft();
+      var y = this.rect.getBottom();
 
       // split into 4 nodes
       this.nodes = [
-        new Quadtree(new Rect(l,     t,     w, h), this.depth + 1),
-        new Quadtree(new Rect(l + w, t,     w, h), this.depth + 1),
-        new Quadtree(new Rect(l,     t + h, w, h), this.depth + 1),
-        new Quadtree(new Rect(l + w, t + h, w, h), this.depth + 1),
+        new Quadtree(new Rect(x,     y,     w, h), this.depth + 1),
+        new Quadtree(new Rect(x + w, y,     w, h), this.depth + 1),
+        new Quadtree(new Rect(x,     y + h, w, h), this.depth + 1),
+        new Quadtree(new Rect(x + w, y + h, w, h), this.depth + 1),
       ];
 
       // rehash all the shapes in this node

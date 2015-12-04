@@ -551,6 +551,59 @@ haxe_Log.trace = function(v,infos) {
 haxe_Log.clear = function() {
 	js_Boot.__clear_trace();
 };
+var haxe_ds_IntMap = function() {
+	this.h = { };
+};
+$hxClasses["haxe.ds.IntMap"] = haxe_ds_IntMap;
+haxe_ds_IntMap.__name__ = ["haxe","ds","IntMap"];
+haxe_ds_IntMap.__interfaces__ = [haxe_IMap];
+haxe_ds_IntMap.prototype = {
+	h: null
+	,set: function(key,value) {
+		this.h[key] = value;
+	}
+	,get: function(key) {
+		return this.h[key];
+	}
+	,exists: function(key) {
+		return this.h.hasOwnProperty(key);
+	}
+	,remove: function(key) {
+		if(!this.h.hasOwnProperty(key)) return false;
+		delete(this.h[key]);
+		return true;
+	}
+	,keys: function() {
+		var a = [];
+		for( var key in this.h ) {
+		if(this.h.hasOwnProperty(key)) a.push(key | 0);
+		}
+		return HxOverrides.iter(a);
+	}
+	,iterator: function() {
+		return { ref : this.h, it : this.keys(), hasNext : function() {
+			return this.it.hasNext();
+		}, next : function() {
+			var i = this.it.next();
+			return this.ref[i];
+		}};
+	}
+	,toString: function() {
+		var s_b = "";
+		s_b += "{";
+		var it = this.keys();
+		while( it.hasNext() ) {
+			var i = it.next();
+			if(i == null) s_b += "null"; else s_b += "" + i;
+			s_b += " => ";
+			s_b += Std.string(Std.string(this.h[i]));
+			if(it.hasNext()) s_b += ", ";
+		}
+		s_b += "}";
+		return s_b;
+	}
+	,__class__: haxe_ds_IntMap
+};
 var haxe_ds_Option = $hxClasses["haxe.ds.Option"] = { __ename__ : ["haxe","ds","Option"], __constructs__ : ["Some","None"] };
 haxe_ds_Option.Some = function(v) { var $x = ["Some",0,v]; $x.__enum__ = haxe_ds_Option; $x.toString = $estr; return $x; };
 haxe_ds_Option.None = ["None",1];
@@ -1183,89 +1236,92 @@ spark_Joystick.__name__ = ["spark","Joystick"];
 spark_Joystick.devices = null;
 spark_Joystick.install = function() {
 	var i;
-	spark_Joystick.devices = [];
+	spark_Joystick.devices = new haxe_ds_IntMap();
 	var gamepads = window.navigator.getGamepads();
 	var _g1 = 0;
 	var _g = gamepads.length;
 	while(_g1 < _g) {
 		var i1 = _g1++;
+		if(gamepads[i1] == null) continue;
 		var device = new spark_input_Device(gamepads[i1].buttons.length,gamepads[i1].axes.length >> 1);
 		if(gamepads[i1].connected) device.attach();
+		spark_Joystick.devices.h[gamepads[i1].index] = device;
 	}
 };
 spark_Joystick.flush = function() {
-	var i;
+	var device;
 	var gamepads = window.navigator.getGamepads();
-	var _g1 = 0;
-	var _g = spark_Joystick.devices.length;
-	while(_g1 < _g) {
-		var i1 = _g1++;
-		spark_Joystick.devices[i1].flush();
+	var $it0 = spark_Joystick.devices.iterator();
+	while( $it0.hasNext() ) {
+		var device1 = $it0.next();
+		device1.flush();
 	}
-	var _g11 = 0;
-	var _g2 = gamepads.length;
-	while(_g11 < _g2) {
-		var i2 = _g11++;
+	var _g1 = 0;
+	var _g = gamepads.length;
+	while(_g1 < _g) {
+		var i = _g1++;
 		var axis;
 		var button;
-		if(!gamepads[i2].connected) continue;
+		if(gamepads[i] == null) continue;
+		var device2 = spark_Joystick.devices.h[gamepads[i].index];
+		if(device2 == null || !gamepads[i].connected) continue;
 		var _g3 = 0;
-		var _g21 = gamepads[i2].axes.length >> 1;
-		while(_g3 < _g21) {
+		var _g2 = gamepads[i].axes.length >> 1;
+		while(_g3 < _g2) {
 			var axis1 = _g3++;
-			spark_Joystick.devices[i2].move(axis1,gamepads[i2].axes[axis1 * 2],gamepads[i2].axes[axis1 * 2 + 1]);
+			device2.move(axis1,gamepads[i].axes[axis1 * 2],gamepads[i].axes[axis1 * 2 + 1]);
 		}
 		var _g31 = 0;
-		var _g22 = gamepads[i2].buttons.length;
-		while(_g31 < _g22) {
+		var _g21 = gamepads[i].buttons.length;
+		while(_g31 < _g21) {
 			var button1 = _g31++;
-			if(gamepads[i2].buttons[button1].pressed) spark_Joystick.devices[i2].press(button1); else spark_Joystick.devices[i2].release(button1);
+			if(gamepads[i].buttons[button1].pressed) device2.press(button1); else device2.release(button1);
 		}
 	}
 };
 spark_Joystick.isConnected = function(joy) {
 	if(joy == null) joy = 0;
-	return joy >= 0 && joy < spark_Joystick.devices.length && spark_Joystick.devices[joy].isConnected();
+	return spark_Joystick.devices.h.hasOwnProperty(joy) && spark_Joystick.devices.h[joy].isConnected();
 };
 spark_Joystick.getLeftX = function(joy) {
 	if(joy == null) joy = 0;
-	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices[joy].getX(0); else return 0;
+	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices.h[joy].getX(0); else return 0;
 };
 spark_Joystick.getRightX = function(joy) {
 	if(joy == null) joy = 0;
-	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices[joy].getX(1); else return 0;
+	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices.h[joy].getX(1); else return 0;
 };
 spark_Joystick.getRightY = function(joy) {
 	if(joy == null) joy = 0;
-	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices[joy].getY(1); else return 0;
+	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices.h[joy].getY(1); else return 0;
 };
 spark_Joystick.getLeftRelX = function(joy) {
 	if(joy == null) joy = 0;
-	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices[joy].getRelX(0); else return 0;
+	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices.h[joy].getRelX(0); else return 0;
 };
 spark_Joystick.getLeftRelY = function(joy) {
 	if(joy == null) joy = 0;
-	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices[joy].getRelY(0); else return 0;
+	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices.h[joy].getRelY(0); else return 0;
 };
 spark_Joystick.getRightRelX = function(joy) {
 	if(joy == null) joy = 0;
-	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices[joy].getRelX(1); else return 0;
+	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices.h[joy].getRelX(1); else return 0;
 };
 spark_Joystick.getRightRelY = function(joy) {
 	if(joy == null) joy = 0;
-	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices[joy].getRelY(1); else return 0;
+	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices.h[joy].getRelY(1); else return 0;
 };
 spark_Joystick.hit = function(joy,button) {
 	if(button == null) button = 0;
-	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices[joy].hit(button); else return false;
+	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices.h[joy].hit(button); else return false;
 };
 spark_Joystick.down = function(joy,button) {
 	if(button == null) button = 0;
-	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices[joy].down(button); else return false;
+	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices.h[joy].down(button); else return false;
 };
 spark_Joystick.hits = function(joy,button) {
 	if(button == null) button = 0;
-	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices[joy].hits(button); else return 0;
+	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices.h[joy].hits(button); else return 0;
 };
 var spark_Key = $hx_exports.spark.Key = function() { };
 $hxClasses["spark.Key"] = spark_Key;
@@ -2238,9 +2294,9 @@ spark_collision_Quadtree.prototype = {
 		if(this.depth < spark_collision_Quadtree.DEPTH_LIMIT && this.shapes.length >= spark_collision_Quadtree.SHAPE_LIMIT && this.nodes.length == 0) {
 			var w = this.rect.getWidth() / 2;
 			var h = this.rect.getHeight() / 2;
-			var l = this.rect.getLeft();
-			var t = this.rect.getBottom();
-			this.nodes = [new spark_collision_Quadtree(new spark_Rect(l,t,w,h),this.depth + 1),new spark_collision_Quadtree(new spark_Rect(l + w,t,w,h),this.depth + 1),new spark_collision_Quadtree(new spark_Rect(l,t + h,w,h),this.depth + 1),new spark_collision_Quadtree(new spark_Rect(l + w,t + h,w,h),this.depth + 1)];
+			var x = this.rect.getLeft();
+			var y = this.rect.getBottom();
+			this.nodes = [new spark_collision_Quadtree(new spark_Rect(x,y,w,h),this.depth + 1),new spark_collision_Quadtree(new spark_Rect(x + w,y,w,h),this.depth + 1),new spark_collision_Quadtree(new spark_Rect(x,y + h,w,h),this.depth + 1),new spark_collision_Quadtree(new spark_Rect(x + w,y + h,w,h),this.depth + 1)];
 			this.shapes = this.shapes.filter(function(shape1) {
 				var i2;
 				var _g21 = 0;
@@ -2473,8 +2529,8 @@ spark_collision_shape_Box.prototype = $extend(spark_collision_Shape.prototype,{
 	,within: function(rect) {
 		if(this.tp2.x < rect.getLeft()) return false;
 		if(this.tp1.x > rect.getRight()) return false;
-		if(this.tp2.y < rect.getTop()) return false;
-		if(this.tp1.y > rect.getBottom()) return false;
+		if(this.tp2.y < rect.getBottom()) return false;
+		if(this.tp1.y > rect.getTop()) return false;
 		return true;
 	}
 	,updateShapeCache: function(m) {
