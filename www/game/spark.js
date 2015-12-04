@@ -198,10 +198,10 @@ Spark.main = function() {
 	Spark.view = Spark.canvas.getContext("2d",null);
 	Spark.audio = new AudioContext();
 	spark_Debug.init();
-	spark_Input.init();
-	spark_Input.hideCursor();
-	spark_Input.enableMouse();
-	spark_Input.enableKeyboard();
+	spark_Key.install();
+	spark_Mouse.install();
+	spark_Joystick.install();
+	spark_Mouse.hide();
 	Spark.canvas.oncontextmenu = function(event) {
 		event.preventDefault();
 	};
@@ -1177,113 +1177,123 @@ spark_Game.getTexture = function(src) {
 spark_Game.getTimeline = function(src) {
 	return spark_Game.project.get(src);
 };
-var spark_Input = $hx_exports.spark.Input = function() { };
-$hxClasses["spark.Input"] = spark_Input;
-spark_Input.__name__ = ["spark","Input"];
-spark_Input.keys = null;
-spark_Input.buttons = null;
-spark_Input.x = null;
-spark_Input.y = null;
-spark_Input.relX = null;
-spark_Input.relY = null;
-spark_Input.init = function() {
+var spark_Joystick = $hx_exports.spark.Joystick = function() { };
+$hxClasses["spark.Joystick"] = spark_Joystick;
+spark_Joystick.__name__ = ["spark","Joystick"];
+spark_Joystick.devices = null;
+spark_Joystick.install = function() {
 	var i;
-	spark_Input.keys = [];
-	spark_Input.buttons = [];
-	var _g = 0;
-	while(_g < 255) {
-		var i1 = _g++;
-		spark_Input.keys.push({ down : false, hits : 0});
-	}
+	spark_Joystick.devices = [];
+	var gamepads = window.navigator.getGamepads();
 	var _g1 = 0;
-	while(_g1 < 31) {
-		var i2 = _g1++;
-		spark_Input.buttons.push({ down : false, hits : 0});
-	}
-	spark_Input.relX = 0;
-	spark_Input.relY = 0;
-};
-spark_Input.enableKeyboard = function() {
-	window.addEventListener("keydown",spark_Input.onKeyDown,false);
-	window.addEventListener("keyup",spark_Input.onKeyUp,false);
-};
-spark_Input.enableMouse = function() {
-	window.addEventListener("mousedown",spark_Input.onMouseDown,false);
-	window.addEventListener("mouseup",spark_Input.onMouseUp,false);
-	window.addEventListener("mousemove",spark_Input.onMouseMove,false);
-};
-spark_Input.flush = function() {
-	var _g1 = 0;
-	var _g = spark_Input.keys.length;
+	var _g = gamepads.length;
 	while(_g1 < _g) {
-		var i = _g1++;
-		spark_Input.keys[i].hits = 0;
+		var i1 = _g1++;
+		var device = new spark_input_Device(gamepads[i1].buttons.length,gamepads[i1].axes.length >> 1);
+		if(gamepads[i1].connected) device.attach();
+	}
+};
+spark_Joystick.flush = function() {
+	var i;
+	var gamepads = window.navigator.getGamepads();
+	var _g1 = 0;
+	var _g = spark_Joystick.devices.length;
+	while(_g1 < _g) {
+		var i1 = _g1++;
+		spark_Joystick.devices[i1].flush();
 	}
 	var _g11 = 0;
-	var _g2 = spark_Input.buttons.length;
+	var _g2 = gamepads.length;
 	while(_g11 < _g2) {
-		var i1 = _g11++;
-		spark_Input.buttons[i1].hits = 0;
-	}
-	spark_Input.relX = 0;
-	spark_Input.relY = 0;
-};
-spark_Input.hideCursor = function() {
-	Spark.canvas.style.cursor = "none";
-};
-spark_Input.showCursor = function(image) {
-	if(image == null) Spark.canvas.style.cursor = "pointer"; else Spark.canvas.style.cursor = image;
-};
-spark_Input.mousePos = function() {
-	return new spark_Vec(spark_Input.x,spark_Input.y);
-};
-spark_Input.mouseRel = function() {
-	return new spark_Vec(spark_Input.relX,spark_Input.relY);
-};
-spark_Input.keyDown = function(key) {
-	if(key >= 0 && key < spark_Input.keys.length) return spark_Input.keys[key].down; else return false;
-};
-spark_Input.keyHit = function(key) {
-	return spark_Input.keyHits(key) > 0;
-};
-spark_Input.keyHits = function(key) {
-	if(key >= 0 && key < spark_Input.keys.length) return spark_Input.keys[key].hits; else return 0;
-};
-spark_Input.buttonDown = function(button) {
-	if(button == null) button = 0;
-	if(button >= 0 && button < spark_Input.buttons.length) return spark_Input.buttons[button].down; else return false;
-};
-spark_Input.buttonHit = function(button) {
-	if(button == null) button = 0;
-	return spark_Input.buttonHits(button) > 0;
-};
-spark_Input.buttonHits = function(button) {
-	if(button == null) button = 0;
-	if(button >= 0 && button < spark_Input.buttons.length) return spark_Input.buttons[button].hits; else return 0;
-};
-spark_Input.onKeyDown = function(event) {
-	if(!event.repeat && event.keyCode < spark_Input.keys.length) {
-		spark_Input.keys[event.keyCode].down = true;
-		spark_Input.keys[event.keyCode].hits++;
+		var i2 = _g11++;
+		var axis;
+		var button;
+		if(!gamepads[i2].connected) continue;
+		var _g3 = 0;
+		var _g21 = gamepads[i2].axes.length >> 1;
+		while(_g3 < _g21) {
+			var axis1 = _g3++;
+			spark_Joystick.devices[i2].move(axis1,gamepads[i2].axes[axis1 * 2],gamepads[i2].axes[axis1 * 2 + 1]);
+		}
+		var _g31 = 0;
+		var _g22 = gamepads[i2].buttons.length;
+		while(_g31 < _g22) {
+			var button1 = _g31++;
+			if(gamepads[i2].buttons[button1].pressed) spark_Joystick.devices[i2].press(button1); else spark_Joystick.devices[i2].release(button1);
+		}
 	}
 };
-spark_Input.onKeyUp = function(event) {
-	if(event.keyCode < spark_Input.keys.length) spark_Input.keys[event.keyCode].down = false;
+spark_Joystick.isConnected = function(joy) {
+	if(joy == null) joy = 0;
+	return joy >= 0 && joy < spark_Joystick.devices.length && spark_Joystick.devices[joy].isConnected();
 };
-spark_Input.onMouseDown = function(event) {
-	if(event.button < spark_Input.buttons.length) {
-		spark_Input.buttons[event.button].down = true;
-		spark_Input.buttons[event.button].hits++;
-	}
+spark_Joystick.getLeftX = function(joy) {
+	if(joy == null) joy = 0;
+	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices[joy].getX(0); else return 0;
 };
-spark_Input.onMouseUp = function(event) {
-	if(event.button < spark_Input.buttons.length) spark_Input.buttons[event.button].down = false;
+spark_Joystick.getRightX = function(joy) {
+	if(joy == null) joy = 0;
+	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices[joy].getX(1); else return 0;
 };
-spark_Input.onMouseMove = function(event) {
-	spark_Input.x = event.clientX - Spark.canvas.offsetLeft;
-	spark_Input.y = event.clientY - Spark.canvas.offsetTop;
-	spark_Input.relX = event.movementX;
-	spark_Input.relY = event.movementY;
+spark_Joystick.getRightY = function(joy) {
+	if(joy == null) joy = 0;
+	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices[joy].getY(1); else return 0;
+};
+spark_Joystick.getLeftRelX = function(joy) {
+	if(joy == null) joy = 0;
+	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices[joy].getRelX(0); else return 0;
+};
+spark_Joystick.getLeftRelY = function(joy) {
+	if(joy == null) joy = 0;
+	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices[joy].getRelY(0); else return 0;
+};
+spark_Joystick.getRightRelX = function(joy) {
+	if(joy == null) joy = 0;
+	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices[joy].getRelX(1); else return 0;
+};
+spark_Joystick.getRightRelY = function(joy) {
+	if(joy == null) joy = 0;
+	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices[joy].getRelY(1); else return 0;
+};
+spark_Joystick.hit = function(joy,button) {
+	if(button == null) button = 0;
+	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices[joy].hit(button); else return false;
+};
+spark_Joystick.down = function(joy,button) {
+	if(button == null) button = 0;
+	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices[joy].down(button); else return false;
+};
+spark_Joystick.hits = function(joy,button) {
+	if(button == null) button = 0;
+	if(spark_Joystick.isConnected(joy)) return spark_Joystick.devices[joy].hits(button); else return 0;
+};
+var spark_Key = $hx_exports.spark.Key = function() { };
+$hxClasses["spark.Key"] = spark_Key;
+spark_Key.__name__ = ["spark","Key"];
+spark_Key.device = null;
+spark_Key.install = function() {
+	spark_Key.device = new spark_input_Device(256,0);
+	window.addEventListener("keydown",spark_Key.onKeyDown,false);
+	window.addEventListener("keyup",spark_Key.onKeyUp,false);
+	spark_Key.device.attach();
+};
+spark_Key.flush = function() {
+	spark_Key.device.flush();
+};
+spark_Key.hit = function(key) {
+	return spark_Key.device.hit(key);
+};
+spark_Key.down = function(key) {
+	return spark_Key.device.down(key);
+};
+spark_Key.hits = function(key) {
+	return spark_Key.device.hits(key);
+};
+spark_Key.onKeyDown = function(event) {
+	if(!event.repeat) spark_Key.device.press(event.keyCode);
+};
+spark_Key.onKeyUp = function(event) {
+	spark_Key.device.release(event.keyCode);
 };
 var spark_graphics_Drawable = function() { };
 $hxClasses["spark.graphics.Drawable"] = spark_graphics_Drawable;
@@ -1370,6 +1380,61 @@ spark_Mat.prototype = {
 	}
 	,__class__: spark_Mat
 	,__properties__: {set_angle:"set_angle",get_angle:"get_angle"}
+};
+var spark_Mouse = $hx_exports.spark.Mouse = function() { };
+$hxClasses["spark.Mouse"] = spark_Mouse;
+spark_Mouse.__name__ = ["spark","Mouse"];
+spark_Mouse.device = null;
+spark_Mouse.install = function() {
+	spark_Mouse.device = new spark_input_Device(32,1);
+	window.addEventListener("mousedown",spark_Mouse.onMouseDown,false);
+	window.addEventListener("mouseup",spark_Mouse.onMouseUp,false);
+	window.addEventListener("mousemove",spark_Mouse.onMouseMove,false);
+	spark_Mouse.device.attach();
+};
+spark_Mouse.flush = function() {
+	spark_Mouse.device.flush();
+};
+spark_Mouse.hide = function() {
+	Spark.canvas.style.cursor = "none";
+};
+spark_Mouse.show = function(image) {
+	if(image == null) Spark.canvas.style.cursor = "pointer"; else Spark.canvas.style.cursor = image;
+};
+spark_Mouse.getX = function() {
+	return spark_Mouse.device.getX(0);
+};
+spark_Mouse.getY = function() {
+	return spark_Mouse.device.getY(0);
+};
+spark_Mouse.getRelX = function() {
+	return spark_Mouse.device.getRelX(0);
+};
+spark_Mouse.getRelY = function() {
+	return spark_Mouse.device.getRelY(0);
+};
+spark_Mouse.hit = function(button) {
+	if(button == null) button = 0;
+	return spark_Mouse.device.hit(button);
+};
+spark_Mouse.down = function(button) {
+	if(button == null) button = 0;
+	return spark_Mouse.device.down(button);
+};
+spark_Mouse.hits = function(button) {
+	if(button == null) button = 0;
+	return spark_Mouse.device.hits(button);
+};
+spark_Mouse.onMouseDown = function(event) {
+	spark_Mouse.device.press(event.button);
+};
+spark_Mouse.onMouseUp = function(event) {
+	spark_Mouse.device.release(event.button);
+};
+spark_Mouse.onMouseMove = function(event) {
+	var x = event.clientX - Spark.canvas.offsetLeft;
+	var y = event.clientY - Spark.canvas.offsetTop;
+	spark_Mouse.device.move(0,x,y);
 };
 var spark_Project = function(projectFile,onload) {
 	var _g = this;
@@ -1602,7 +1667,9 @@ spark_Scene.prototype = {
 		spark_Debug.endDraw();
 		spark_Debug.beginGui();
 		spark_Debug.endGui();
-		spark_Input.flush();
+		spark_Key.flush();
+		spark_Mouse.flush();
+		spark_Joystick.flush();
 		if(spark_Debug.isEnabled(spark_Debug.PERF)) {
 			var stats = { fps : 1 / step, layers : 0, sprites : 0};
 			var _g1 = 0;
@@ -2671,6 +2738,91 @@ spark_graphics_Texture.prototype = $extend(spark_Asset.prototype,{
 	}
 	,__class__: spark_graphics_Texture
 });
+var spark_input_Device = function(nButtons,nSticks) {
+	if(nSticks == null) nSticks = 0;
+	var i;
+	this.connected = false;
+	this.buttons = [];
+	this.sticks = [];
+	var _g = 0;
+	while(_g < nButtons) {
+		var i1 = _g++;
+		this.buttons.push({ down : false, hits : 0});
+	}
+	var _g1 = 0;
+	while(_g1 < nSticks) {
+		var i2 = _g1++;
+		this.sticks.push({ x : 0, y : 0, relX : 0, relY : 0});
+	}
+};
+$hxClasses["spark.input.Device"] = spark_input_Device;
+spark_input_Device.__name__ = ["spark","input","Device"];
+spark_input_Device.prototype = {
+	buttons: null
+	,sticks: null
+	,connected: null
+	,attach: function() {
+		this.connected = true;
+	}
+	,isConnected: function() {
+		return this.connected;
+	}
+	,flush: function() {
+		var i;
+		var _g1 = 0;
+		var _g = this.buttons.length;
+		while(_g1 < _g) {
+			var i1 = _g1++;
+			this.buttons[i1].hits = 0;
+		}
+		var _g11 = 0;
+		var _g2 = this.sticks.length;
+		while(_g11 < _g2) {
+			var i2 = _g11++;
+			this.sticks[i2].relX = 0;
+			this.sticks[i2].relY = 0;
+		}
+	}
+	,press: function(button) {
+		if(button >= 0 && button < this.buttons.length) {
+			this.buttons[button].down = true;
+			this.buttons[button].hits++;
+		}
+	}
+	,release: function(button) {
+		if(button >= 0 && button < this.buttons.length) this.buttons[button].down = false;
+	}
+	,move: function(stick,x,y) {
+		if(stick >= 0 && stick < this.sticks.length) {
+			this.sticks[stick].relX += x - this.sticks[stick].x;
+			this.sticks[stick].relY += y - this.sticks[stick].y;
+			this.sticks[stick].x = x;
+			this.sticks[stick].y = y;
+		}
+	}
+	,hit: function(button) {
+		return this.hits(button) > 0;
+	}
+	,down: function(button) {
+		if(button >= 0 && button < this.buttons.length) return this.buttons[button].down; else return false;
+	}
+	,hits: function(button) {
+		if(button >= 0 && button < this.buttons.length) return this.buttons[button].hits; else return 0;
+	}
+	,getX: function(stick) {
+		if(stick >= 0 && stick < this.sticks.length) return this.sticks[stick].x; else return 0;
+	}
+	,getY: function(stick) {
+		if(stick >= 0 && stick < this.sticks.length) return this.sticks[stick].y; else return 0;
+	}
+	,getRelX: function(stick) {
+		if(stick >= 0 && stick < this.sticks.length) return this.sticks[stick].relX; else return 0;
+	}
+	,getRelY: function(stick) {
+		if(stick >= 0 && stick < this.sticks.length) return this.sticks[stick].relY; else return 0;
+	}
+	,__class__: spark_input_Device
+};
 var spark_layer_SpriteLayer = function(n) {
 	if(n == null) n = 100;
 	var i;
@@ -2933,8 +3085,104 @@ spark_Debug.drawTime = 0;
 spark_Debug.guiTime = 0;
 spark_Debug.perfCanvas = null;
 spark_Debug.perfView = null;
-spark_Input.Button = { 'LEFT' : 0, 'MIDDLE' : 1, 'RIGHT' : 2};
-spark_Input.Key = { 'BACKSPACE' : 8, 'TAB' : 9, 'ENTER' : 13, 'PAUSE' : 19, 'CAPS' : 20, 'ESC' : 27, 'SPACE' : 32, 'PAGE_UP' : 33, 'PAGE_DOWN' : 34, 'END' : 35, 'HOME' : 36, 'LEFT' : 37, 'UP' : 38, 'RIGHT' : 39, 'DOWN' : 40, 'INSERT' : 45, 'DELETE' : 46, '_0' : 48, '_1' : 49, '_2' : 50, '_3' : 51, '_4' : 52, '_5' : 53, '_6' : 54, '_7' : 55, '_8' : 56, '_9' : 57, 'A' : 65, 'B' : 66, 'C' : 67, 'D' : 68, 'E' : 69, 'F' : 70, 'G' : 71, 'H' : 72, 'I' : 73, 'J' : 74, 'K' : 75, 'L' : 76, 'M' : 77, 'N' : 78, 'O' : 79, 'P' : 80, 'Q' : 81, 'R' : 82, 'S' : 83, 'T' : 84, 'U' : 85, 'V' : 86, 'W' : 87, 'X' : 88, 'Y' : 89, 'Z' : 90, 'NUMPAD_0' : 96, 'NUMPAD_1' : 97, 'NUMPAD_2' : 98, 'NUMPAD_3' : 99, 'NUMPAD_4' : 100, 'NUMPAD_5' : 101, 'NUMPAD_6' : 102, 'NUMPAD_7' : 103, 'NUMPAD_8' : 104, 'NUMPAD_9' : 105, 'MULTIPLY' : 106, 'ADD' : 107, 'SUBSTRACT' : 109, 'DECIMAL' : 110, 'DIVIDE' : 111, 'F1' : 112, 'F2' : 113, 'F3' : 114, 'F4' : 115, 'F5' : 116, 'F6' : 117, 'F7' : 118, 'F8' : 119, 'F9' : 120, 'F10' : 121, 'F11' : 122, 'F12' : 123, 'SHIFT' : 16, 'CTRL' : 17, 'ALT' : 18, 'PLUS' : 187, 'COMMA' : 188, 'MINUS' : 189, 'PERIOD' : 190};
+spark_Joystick.A = 0;
+spark_Joystick.B = 1;
+spark_Joystick.X = 2;
+spark_Joystick.Y = 3;
+spark_Joystick.UP = 12;
+spark_Joystick.DOWN = 13;
+spark_Joystick.LEFT = 14;
+spark_Joystick.RIGHT = 15;
+spark_Key.BACKSPACE = 8;
+spark_Key.TAB = 9;
+spark_Key.ENTER = 13;
+spark_Key.PAUSE = 19;
+spark_Key.CAPS = 20;
+spark_Key.ESC = 27;
+spark_Key.SPACE = 32;
+spark_Key.PAGE_UP = 33;
+spark_Key.PAGE_DOWN = 34;
+spark_Key.END = 35;
+spark_Key.HOME = 36;
+spark_Key.LEFT = 37;
+spark_Key.UP = 38;
+spark_Key.RIGHT = 39;
+spark_Key.DOWN = 40;
+spark_Key.INSERT = 45;
+spark_Key.DELETE = 46;
+spark_Key._0 = 48;
+spark_Key._1 = 49;
+spark_Key._2 = 50;
+spark_Key._3 = 51;
+spark_Key._4 = 52;
+spark_Key._5 = 53;
+spark_Key._6 = 54;
+spark_Key._7 = 55;
+spark_Key._8 = 56;
+spark_Key._9 = 57;
+spark_Key.A = 65;
+spark_Key.B = 66;
+spark_Key.C = 67;
+spark_Key.D = 68;
+spark_Key.E = 69;
+spark_Key.F = 70;
+spark_Key.G = 71;
+spark_Key.H = 72;
+spark_Key.I = 73;
+spark_Key.J = 74;
+spark_Key.K = 75;
+spark_Key.L = 76;
+spark_Key.M = 77;
+spark_Key.N = 78;
+spark_Key.O = 79;
+spark_Key.P = 80;
+spark_Key.Q = 81;
+spark_Key.R = 82;
+spark_Key.S = 83;
+spark_Key.T = 84;
+spark_Key.U = 85;
+spark_Key.V = 86;
+spark_Key.W = 87;
+spark_Key.X = 88;
+spark_Key.Y = 89;
+spark_Key.Z = 90;
+spark_Key.NUMPAD_0 = 96;
+spark_Key.NUMPAD_1 = 97;
+spark_Key.NUMPAD_2 = 98;
+spark_Key.NUMPAD_3 = 99;
+spark_Key.NUMPAD_4 = 100;
+spark_Key.NUMPAD_5 = 101;
+spark_Key.NUMPAD_6 = 102;
+spark_Key.NUMPAD_7 = 103;
+spark_Key.NUMPAD_8 = 104;
+spark_Key.NUMPAD_9 = 105;
+spark_Key.MULTIPLY = 106;
+spark_Key.ADD = 107;
+spark_Key.SUBSTRACT = 109;
+spark_Key.DECIMAL = 110;
+spark_Key.DIVIDE = 111;
+spark_Key.F1 = 112;
+spark_Key.F2 = 113;
+spark_Key.F3 = 114;
+spark_Key.F4 = 115;
+spark_Key.F5 = 116;
+spark_Key.F6 = 117;
+spark_Key.F7 = 118;
+spark_Key.F8 = 119;
+spark_Key.F9 = 120;
+spark_Key.F10 = 121;
+spark_Key.F11 = 122;
+spark_Key.F12 = 123;
+spark_Key.SHIFT = 16;
+spark_Key.CTRL = 17;
+spark_Key.ALT = 18;
+spark_Key.PLUS = 187;
+spark_Key.COMMA = 188;
+spark_Key.MINUS = 189;
+spark_Key.PERIOD = 190;
+spark_Mouse.LEFT = 0;
+spark_Mouse.MIDDLE = 1;
+spark_Mouse.RIGHT = 2;
 spark_collision_Quadtree.DEPTH_LIMIT = 3;
 spark_collision_Quadtree.SHAPE_LIMIT = 8;
 Spark.main();

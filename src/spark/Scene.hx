@@ -137,8 +137,10 @@ class Scene {
     }
     Debug.endGui();
 
-    // clear input states
-    Input.flush();
+    // clear input devices
+    Key.flush();
+    Mouse.flush();
+    Joystick.flush();
 
     // show the performance trace
     if (Debug.isEnabled(Debug.PERF)) {

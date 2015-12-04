@@ -33,13 +33,13 @@ class Spark {
     // initialize debugging
     spark.Debug.init();
 
-    // initialize input devices
-    spark.Input.init();
-    spark.Input.hideCursor();
+    // install input device handlers
+    spark.Key.install();
+    spark.Mouse.install();
+    spark.Joystick.install();
 
-    // enable all input devices
-    spark.Input.enableMouse();
-    spark.Input.enableKeyboard();
+    // hide the mouse within the canvas
+    spark.Mouse.hide();
 
     // disable the context menu
     canvas.oncontextmenu = function(event) {

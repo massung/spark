@@ -50,16 +50,16 @@ function spawnPlayer() {
 }
 
 function playerControls(sprite, step, thrust) {
-  if (spark.Input.keyDown(spark.Input.Key.LEFT)) sprite.m.rotate(180 * step);
-  if (spark.Input.keyDown(spark.Input.Key.RIGHT)) sprite.m.rotate(-180 * step);
+  if (spark.Key.down(spark.Key.LEFT)) sprite.m.rotate(180 * step);
+  if (spark.Key.down(spark.Key.RIGHT)) sprite.m.rotate(-180 * step);
 
   // spawn bullets
-  for(var i = 0;i < spark.Input.keyHits(spark.Input.Key.SPACE);i++) {
+  for(var i = 0;i < spark.Key.hits(spark.Key.SPACE);i++) {
     shoot(sprite.getLayer(), sprite.m);
   }
 
   // thrust forward
-  if (spark.Input.keyDown(spark.Input.Key.UP)) {
+  if (spark.Key.down(spark.Key.UP)) {
     var p = sprite.localToWorld(new spark.Vec(0, -60));
     var r = sprite.localToWorldAngle(-90);
 
