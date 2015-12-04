@@ -27,7 +27,7 @@ class Rect {
            (y >= this.y && y <= this.y + this.height);
   }
 
-  // return the bounds of the rectangle
+  // return the bounds of the rectangle, left < right and bottom < top
   public function getLeft(): Float return this.x;
   public function getTop(): Float return this.y + this.height;
   public function getRight(): Float return this.x + this.width;

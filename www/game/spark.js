@@ -1289,8 +1289,7 @@ var spark_graphics_Drawable = function() { };
 $hxClasses["spark.graphics.Drawable"] = spark_graphics_Drawable;
 spark_graphics_Drawable.__name__ = ["spark","graphics","Drawable"];
 spark_graphics_Drawable.prototype = {
-	contextSettings: null
-	,draw: null
+	draw: null
 	,__class__: spark_graphics_Drawable
 };
 var spark_Layer = function() { };
@@ -2667,7 +2666,7 @@ spark_graphics_Texture.prototype = $extend(spark_Asset.prototype,{
 			if(pivot == null) x = 0; else x = -w * pivot.x;
 			var y;
 			if(pivot == null) y = 0; else y = -h * pivot.y;
-			Spark.view.drawImage(this.img,quad.getLeft(),quad.getTop(),w,h,x,y,w,h);
+			Spark.view.drawImage(this.img,quad.getLeft(),quad.getBottom(),w,h,x,y,w,h);
 		}
 	}
 	,__class__: spark_graphics_Texture
@@ -2694,7 +2693,6 @@ spark_layer_SpriteLayer.__interfaces__ = [spark_Layer];
 spark_layer_SpriteLayer.prototype = {
 	z: null
 	,m: null
-	,contextSettings: null
 	,sprites: null
 	,pool: null
 	,sp: null
@@ -2747,15 +2745,12 @@ spark_layer_SpriteLayer.prototype = {
 	}
 	,draw: function() {
 		var i;
-		Spark.view.save();
-		spark_Util.merge(Spark.view,this.contextSettings);
 		var _g1 = 0;
 		var _g = this.count;
 		while(_g1 < _g) {
 			var i1 = _g1++;
 			this.sprites[i1].draw();
 		}
-		Spark.view.restore();
 	}
 	,debugStats: function(stats) {
 		stats.layers++;

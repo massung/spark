@@ -28,7 +28,6 @@ class Sprite extends Actor implements Drawable {
   // how this sprite renders
   private var texture: Texture;
   private var quad: Rect;
-  //private var contextSettings: Dynamic;
 
   // create a new sprite
   public function new(layer: Layer) {

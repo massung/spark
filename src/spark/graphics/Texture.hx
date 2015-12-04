@@ -61,7 +61,7 @@ class Texture extends Asset {
       var y = pivot == null ? 0 : -h * pivot.y;
 
       // blit a portion of the image
-      Spark.view.drawImage(this.img, quad.getLeft(), quad.getTop(), w, h, x, y, w, h);
+      Spark.view.drawImage(this.img, quad.getLeft(), quad.getBottom(), w, h, x, y, w, h);
     }
   }
 }
