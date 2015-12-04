@@ -1209,8 +1209,10 @@ var spark_Game = $hx_exports.spark.Game = function() { };
 $hxClasses["spark.Game"] = spark_Game;
 spark_Game.__name__ = ["spark","Game"];
 spark_Game.project = null;
+spark_Game.scene = null;
 spark_Game.main = function(projectFile,onload) {
 	spark_Game.project = new spark_Project(projectFile,onload);
+	spark_Game.scene = null;
 };
 spark_Game.getProject = function() {
 	return spark_Game.project;
@@ -1694,6 +1696,12 @@ spark_Scene.prototype = {
 		if(h == null) h = w * Spark.canvas.height / Spark.canvas.width;
 		this.camera.m.s.set(w / 2,h / 2);
 	}
+	,newBackgroundLayer: function(texture,tiled) {
+		if(tiled == null) tiled = true;
+		var layer = new spark_layer_BackgroundLayer(texture,tiled);
+		this.layers.push(layer);
+		return layer;
+	}
 	,newSpriteLayer: function(n) {
 		if(n == null) n = 100;
 		var layer = new spark_layer_SpriteLayer(n);
@@ -1704,6 +1712,7 @@ spark_Scene.prototype = {
 		this.framecount = 0;
 		this.frametime = window.performance.now();
 		this.runloop = window.requestAnimationFrame($bind(this,this.stepFrame));
+		spark_Game.scene = this;
 	}
 	,quit: function() {
 		window.cancelAnimationFrame(this.runloop);
@@ -2740,7 +2749,7 @@ var spark_graphics_Font = function(src) {
 	var _this = window.document;
 	this.style = _this.createElement("style");
 	this.style.appendChild(window.document.createTextNode(face));
-	window.document.appendChild(this.style);
+	window.document.head.appendChild(this.style);
 	this.loaded = true;
 };
 $hxClasses["spark.graphics.Font"] = spark_graphics_Font;
@@ -2879,6 +2888,99 @@ spark_input_Device.prototype = {
 	}
 	,__class__: spark_input_Device
 };
+var spark_object_Actor = function() {
+	this.rig = new spark_anim_Rig();
+	this.behaviors = [];
+	this.m = spark_Mat.identity();
+};
+$hxClasses["spark.object.Actor"] = spark_object_Actor;
+spark_object_Actor.__name__ = ["spark","object","Actor"];
+spark_object_Actor.prototype = {
+	m: null
+	,behaviors: null
+	,rig: null
+	,addBehavior: function(callback,data) {
+		this.behaviors.push({ callback : callback, data : data});
+	}
+	,worldToLocal: function(p) {
+		return this.m.inverse().transform(p);
+	}
+	,localToWorld: function(p) {
+		return this.m.transform(p);
+	}
+	,worldToLocalAngle: function(angle) {
+		return this.m.get_angle() - angle;
+	}
+	,localToWorldAngle: function(angle) {
+		return this.m.get_angle() + angle;
+	}
+	,update: function(step) {
+		var i;
+		this.rig.update(step);
+		var _g1 = 0;
+		var _g = this.behaviors.length;
+		while(_g1 < _g) {
+			var i1 = _g1++;
+			this.behaviors[i1].callback(this,step,this.behaviors[i1].data);
+		}
+	}
+	,__class__: spark_object_Actor
+};
+var spark_layer_BackgroundLayer = function(texture,tiled) {
+	if(tiled == null) tiled = true;
+	spark_object_Actor.call(this);
+	this.z = 0.0;
+	this.texture = texture;
+	this.tiled = tiled;
+};
+$hxClasses["spark.layer.BackgroundLayer"] = spark_layer_BackgroundLayer;
+spark_layer_BackgroundLayer.__name__ = ["spark","layer","BackgroundLayer"];
+spark_layer_BackgroundLayer.__interfaces__ = [spark_Layer];
+spark_layer_BackgroundLayer.__super__ = spark_object_Actor;
+spark_layer_BackgroundLayer.prototype = $extend(spark_object_Actor.prototype,{
+	z: null
+	,texture: null
+	,tiled: null
+	,update: function(step) {
+		spark_object_Actor.prototype.update.call(this,step);
+		if(this.tiled && this.texture != null) {
+			this.m.p.x %= this.texture.getWidth() * this.m.s.x;
+			this.m.p.y %= this.texture.getHeight() * this.m.s.y;
+		}
+	}
+	,updateCollision: function(space) {
+	}
+	,draw: function() {
+		if(this.texture == null) return;
+		Spark.view.save();
+		this.m.apply();
+		var iw = this.texture.getWidth();
+		var ih = this.texture.getHeight();
+		if(this.tiled == false) this.texture.draw(); else {
+			var l = spark_Game.scene.rect.getLeft();
+			var b = spark_Game.scene.rect.getBottom();
+			var w = spark_Game.scene.rect.getWidth();
+			var h = spark_Game.scene.rect.getHeight();
+			var x = -iw;
+			while(x < w) {
+				var y = -ih;
+				while(y < h) {
+					Spark.view.save();
+					Spark.view.translate(l + x,b + y);
+					this.texture.draw();
+					Spark.view.restore();
+					y += ih - 1;
+				}
+				x += iw - 1;
+			}
+		}
+		Spark.view.restore();
+	}
+	,debugStats: function(stats) {
+		stats.layers++;
+	}
+	,__class__: spark_layer_BackgroundLayer
+});
 var spark_layer_SpriteLayer = function(n) {
 	if(n == null) n = 100;
 	var i;
@@ -2966,44 +3068,6 @@ spark_layer_SpriteLayer.prototype = {
 	}
 	,__class__: spark_layer_SpriteLayer
 	,__properties__: {get_length:"get_length"}
-};
-var spark_object_Actor = function() {
-	this.rig = new spark_anim_Rig();
-	this.behaviors = [];
-	this.m = spark_Mat.identity();
-};
-$hxClasses["spark.object.Actor"] = spark_object_Actor;
-spark_object_Actor.__name__ = ["spark","object","Actor"];
-spark_object_Actor.prototype = {
-	m: null
-	,behaviors: null
-	,rig: null
-	,addBehavior: function(callback,data) {
-		this.behaviors.push({ callback : callback, data : data});
-	}
-	,worldToLocal: function(p) {
-		return this.m.inverse().transform(p);
-	}
-	,localToWorld: function(p) {
-		return this.m.transform(p);
-	}
-	,worldToLocalAngle: function(angle) {
-		return this.m.get_angle() - angle;
-	}
-	,localToWorldAngle: function(angle) {
-		return this.m.get_angle() + angle;
-	}
-	,update: function(step) {
-		var i;
-		this.rig.update(step);
-		var _g1 = 0;
-		var _g = this.behaviors.length;
-		while(_g1 < _g) {
-			var i1 = _g1++;
-			this.behaviors[i1].callback(this,step,this.behaviors[i1].data);
-		}
-	}
-	,__class__: spark_object_Actor
 };
 var spark_object_Camera = function(width,height) {
 	spark_object_Actor.call(this);

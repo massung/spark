@@ -8,11 +8,13 @@ package spark;
 
 @:expose
 class Game {
-  static private var project: Project;
+  static public var project: Project;
+  static public var scene: Scene;
 
   // create the project, load it, and issue callback
   static public function main(projectFile: String, onload: Project -> Void) {
     project = new Project(projectFile, onload);
+    scene = null;
   }
 
   // project accessor function

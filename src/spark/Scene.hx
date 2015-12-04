@@ -8,6 +8,7 @@ package spark;
 
 import spark.collision.*;
 import spark.collision.shape.*;
+import spark.graphics.*;
 import spark.layer.*;
 import spark.object.*;
 
@@ -79,7 +80,17 @@ class Scene {
     this.camera.m.s.set(w / 2, h / 2);
   }
 
-  // add a new layer to the scene
+  // add a new tiled background layer to the scene
+  public function newBackgroundLayer(texture: Texture, ?tiled: Bool = true): BackgroundLayer {
+    var layer = new BackgroundLayer(texture, tiled);
+
+    // add the layer to the list
+    this.layers.push(layer);
+
+    return layer;
+  }
+
+  // add a new sprite layer to the scene
   public function newSpriteLayer(?n: Int = 100): SpriteLayer {
     var layer = new SpriteLayer(n);
 
@@ -94,6 +105,9 @@ class Scene {
     this.framecount = 0;
     this.frametime = js.Browser.window.performance.now();
     this.runloop = js.Browser.window.requestAnimationFrame(this.stepFrame);
+
+    // make this scene the global scene for the game
+    Game.scene = this;
   }
 
   // stop the main game loop

@@ -4,6 +4,7 @@
 var scene;
 var playerLayer;
 var asteroidLayer;
+var starsLayer;
 var player;
 
 // create a new game instance
@@ -15,8 +16,11 @@ spark.Game.main('game/project.xml', proj => {
     scene = new spark.Scene('middle', 1400, 1400);
     scene.setViewport(1400, 1400);
 
+    starsLayer = scene.newBackgroundLayer(spark.Game.getTexture('stars'));
     asteroidsLayer = scene.newSpriteLayer();
     playerLayer = scene.newSpriteLayer();
+
+    starsLayer.m.s.set(4, 4);
 
     // spawn the player
     player = spawnPlayer();
@@ -53,6 +57,14 @@ function playerControls(sprite, step, thrust) {
   if (spark.Key.down(spark.Key.LEFT)) sprite.m.rotate(180 * step);
   if (spark.Key.down(spark.Key.RIGHT)) sprite.m.rotate(-180 * step);
 
+  // rotate and translate the background manually (test)
+  if (spark.Key.down(spark.Key.Q)) starsLayer.m.rotate(180 * step);
+  if (spark.Key.down(spark.Key.E)) starsLayer.m.rotate(-180 * step);
+  if (spark.Key.down(spark.Key.A)) starsLayer.m.translate(-600 * step, 0);
+  if (spark.Key.down(spark.Key.D)) starsLayer.m.translate(600 * step, 0);
+  if (spark.Key.down(spark.Key.W)) starsLayer.m.translate(0, 600 * step);
+  if (spark.Key.down(spark.Key.S)) starsLayer.m.translate(0, -600 * step);
+
   // spawn bullets
   for(var i = 0;i < spark.Key.hits(spark.Key.SPACE);i++) {
     shoot(sprite.getLayer(), sprite.m);
@@ -77,6 +89,9 @@ function playerControls(sprite, step, thrust) {
   // move based on thrust
   sprite.m.p.x += thrust.x * step;
   sprite.m.p.y += thrust.y * step;
+
+  // scroll the background
+  starsLayer.m.translate(thrust.x * step * 0.8, thrust.y * step * 0.8);
 
   // dampen
   thrust.x *= 0.98;

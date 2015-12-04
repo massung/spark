@@ -22,7 +22,7 @@ class Font extends Asset {
     this.style.appendChild(js.Browser.document.createTextNode(face));
 
     // the font will actually load on first use
-    js.Browser.document.appendChild(this.style);
+    js.Browser.document.head.appendChild(this.style);
 
     // mark the asset as loaded
     this.loaded = true;
