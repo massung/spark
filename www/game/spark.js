@@ -2269,9 +2269,9 @@ spark_collision_Body.prototype = {
 var spark_collision_Quadtree = function(rect,depth) {
 	if(depth == null) depth = 0;
 	this.rect = rect;
+	this.depth = depth;
 	this.shapes = [];
 	this.nodes = [];
-	this.depth = depth;
 };
 $hxClasses["spark.collision.Quadtree"] = spark_collision_Quadtree;
 spark_collision_Quadtree.__name__ = ["spark","collision","Quadtree"];

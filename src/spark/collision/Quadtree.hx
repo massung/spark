@@ -6,7 +6,10 @@
 
 package spark.collision;
 
-typedef Contact = { body: Body, manifold: Array<Body> }
+typedef Contact = {
+  body: Body,
+  manifold: Array<Body>,
+}
 
 class Quadtree {
   private var rect: Rect;
@@ -21,9 +24,9 @@ class Quadtree {
   // create a new quadtree spacial hash node
   public function new(rect: Rect, ?depth: Int = 0) {
     this.rect = rect;
-    this.shapes = [];
-    this.nodes = [];
     this.depth = depth;
+    this.shapes = new Array<Shape>();
+    this.nodes = new Array<Quadtree>();
   }
 
   // add a new shape to the hash, subdivide if needed
