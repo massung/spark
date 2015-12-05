@@ -35,7 +35,7 @@ class SeparatingAxis {
     }
 
     // do the projections overlap?
-    return (amax < bmin || amin > bmax);
+    return !(amax < bmin || amin > bmax);
   }
 
   // run the separating axis theorem across two sets of points and normals

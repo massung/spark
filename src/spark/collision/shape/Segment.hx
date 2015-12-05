@@ -6,13 +6,14 @@
 
 package spark.collision.shape;
 
+@:allow(spark.collision.shape)
 class Segment extends Shape {
   private var p1: Vec;
   private var p2: Vec;
 
   // transformed world vertices
-  private var tp1: Vec;
-  private var tp2: Vec;
+  private var tp: Array<Vec>;
+  private var tn: Array<Vec>;
 
   // create a new line segment collision shape
   public function new(body: Body, x1: Float, y1: Float, x2: Float, y2: Float) {
@@ -23,79 +24,41 @@ class Segment extends Shape {
     this.p2 = new Vec(x2, y2);
 
     // create world transform copies
-    this.tp1 = this.p1.copy();
-    this.tp2 = this.p2.copy();
+    this.tp = [this.p1.copy(), this.p2.copy()];
+    this.tn = [this.p2.sub(this.p1).perp()];
   }
-
-  // returns the world-space, end points
-  public function getStart(): Vec return this.tp1;
-  public function getEnd(): Vec return this.tp2;
 
   // true if this shape is completely within a bounding box
   override public function within(rect: Rect): Bool {
-    return rect.contains(this.tp1.x, this.tp1.y) &&
-           rect.contains(this.tp2.x, this.tp2.y);
+    return rect.contains(this.tp[0].x, this.tp[0].y) &&
+           rect.contains(this.tp[1].x, this.tp[1].y);
   }
 
   // update the world vertices
   override public function updateShapeCache(m: Mat) {
-    this.tp1 = m.transform(this.p1);
-    this.tp2 = m.transform(this.p2);
+    super.updateShapeCache(m);
+
+    // transform end-points
+    this.tp[0] = m.transform(this.p1);
+    this.tp[1] = m.transform(this.p2);
+
+    // calculate the normal of the segment
+    this.tn[0] = this.tp[1].sub(this.tp[0]).perp();
   }
 
   // true if this shape overlaps a line segment
   override public function segmentQuery(s: Segment): Bool {
-    if (Math.min(s.tp1.x, s.tp2.x) > Math.max(this.tp1.x, this.tp2.x) ||
-        Math.min(s.tp1.y, s.tp2.y) > Math.max(this.tp1.y, this.tp2.y) ||
-        Math.max(s.tp1.x, s.tp2.x) < Math.min(this.tp1.x, this.tp2.x) ||
-        Math.max(s.tp1.y, s.tp2.y) < Math.min(this.tp1.y, this.tp2.y)) {
-          return false;
-    }
-
-    var sa = Util.sign(this.tp1.cross(s.tp1));
-    var sb = Util.sign(this.tp1.cross(s.tp2));
-
-    // each point must be on opposite sides of the shape
-    if (sa == sb && sa != 0 && sb != 0) {
-      return false;
-    }
-
-    var da = Util.sign(s.tp1.cross(this.tp1));
-    var db = Util.sign(s.tp1.cross(this.tp2));
-
-    // each point of this segment must be on opposite sides of the shape
-    if (da == db && da != 0 && db != 0) {
-      return false;
-    }
-
-    return true;
+    return SeparatingAxis.query(this.tp, this.tn, s.tp, s.tn);
   }
 
   // true if this shape overlaps a circle
   override public function circleQuery(s: Circle): Bool {
-    return s.segmentQuery(this);
+    return s.tc.proj(this.tp[0], this.tp[1]).distsq(s.tc) < s.r * s.r;
   }
 
   // true if this shape overlaps a box
   override public function boxQuery(s: Box): Bool {
-    var tp1 = s.getTopLeft();
-    var tp2 = s.getBottomRight();
-
-    // if either point is within the box, then succeed
-    if (this.tp1.x >= tp1.x && this.tp1.x <= tp2.x) {
-      if (this.tp1.y >= tp1.y && this.tp1.y <= tp2.y) return true;
-    }
-    if (this.tp2.x >= tp1.x && this.tp2.x <= tp2.x) {
-      if (this.tp2.y >= tp1.y && this.tp2.y <= tp2.y) return true;
-    }
-
-    // if both points are on the same side of the box, fail
-    if (this.tp1.x < tp1.x && this.tp2.x < tp1.x) return false;
-    if (this.tp1.x > tp2.x && this.tp2.x > tp2.x) return false;
-    if (this.tp1.y < tp1.y && this.tp2.y < tp1.y) return false;
-    if (this.tp1.y > tp2.y && this.tp2.y > tp2.y) return false;
-
-    return true;
+    return SeparatingAxis.query(this.tp, this.tn, s.tp, s.tn);
   }
 
   // debug render the shape
@@ -104,8 +67,8 @@ class Segment extends Shape {
     Spark.view.beginPath();
 
     // draw the segment
-    Spark.view.moveTo(this.tp1.x, this.tp1.y);
-    Spark.view.lineTo(this.tp2.x, this.tp2.y);
+    Spark.view.moveTo(this.tp[0].x, this.tp[0].y);
+    Spark.view.lineTo(this.tp[1].x, this.tp[1].y);
 
     // done
     Spark.view.stroke();

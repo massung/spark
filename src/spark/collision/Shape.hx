@@ -8,6 +8,7 @@ package spark.collision;
 
 class Shape {
   private var body: Body;
+  private var m: Mat;
 
   // create a new collision shape
   private function new(body: Body) {
@@ -26,7 +27,7 @@ class Shape {
   public function within(rect: Rect): Bool return false;
 
   // update the world vertices -- subclass responsibility
-  public function updateShapeCache(m: Mat) {}
+  public function updateShapeCache(m: Mat) this.m = m;
 
   // collision queries
   public function segmentQuery(s: spark.collision.shape.Segment): Bool return false;

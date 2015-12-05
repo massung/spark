@@ -6,6 +6,7 @@
 
 package spark.collision.shape;
 
+@:allow(spark.collision.shape)
 class Circle extends Shape {
   private var c: Vec;
   private var r: Float;
@@ -25,10 +26,6 @@ class Circle extends Shape {
     this.tc = c.copy();
   }
 
-  // returns the world-space center and radius
-  public function getCenter(): Vec return this.tc;
-  public function getRadius(): Float return this.r;
-
   // true if this shape is completely within a bounding box
   override public function within(rect: Rect): Bool {
     if (this.tc.x + this.r < rect.getLeft()) return false;
@@ -41,12 +38,15 @@ class Circle extends Shape {
 
   // update the world vertices
   override public function updateShapeCache(m: Mat) {
+    super.updateShapeCache(m);
+
+    // transform center
     this.tc = m.transform(this.c);
   }
 
   // true if this shape overlaps a line segment
   override public function segmentQuery(s: Segment): Bool {
-    return this.tc.proj(s.getStart(), s.getEnd()).distsq(this.tc) < this.r * this.r;
+    return s.circleQuery(this);
   }
 
   // true if this shape overlaps a circle
@@ -56,36 +56,39 @@ class Circle extends Shape {
 
   // true if this shape overlaps a box
   override public function boxQuery(s: Box): Bool {
-    var tp1 = s.getTopLeft();
-    var tp2 = s.getBottomRight();
+    var c = s.m.untransform(this.tc);
 
-    // circle is above, below, or inside
-    if (this.tc.x > tp1.x && this.tc.x <= tp2.x) {
-      return this.tc.y + this.r >= tp1.y && this.tc.y - this.r <= tp2.y;
+    // is it within the box horizontally?
+    if (c.x >= s.p1.x && c.x <= s.p3.x) {
+      return c.y + this.r >= s.p1.y && c.y - this.r <= s.p3.y;
     }
 
-    // circle is left, right, or inside
-    if (this.tc.y >= tp1.y && this.tc.y <= tp2.y) {
-      return this.tc.x + this.r >= tp1.x && this.tc.x - this.r <= tp2.x;
+    // is it within the box vertically?
+    if (c.y >= s.p1.y && c.y <= s.p3.y) {
+      return c.x + this.r >= s.p1.x && c.x - this.r <= s.p3.x;
     }
 
-    // above and to the left of the box
-    if (this.tc.x < tp1.x && this.tc.y < tp1.y) {
-      return this.tc.distsq(tp1) <= this.r * this.r;
+    // above and to the left?
+    if (c.x < s.p1.x && c.y < s.p1.y) {
+      return c.distsq(s.p1) <= this.r * this.r;
     }
 
-    // above and to the right of the box
-    if (this.tc.x > tp2.x && this.tc.y < tp1.y) {
-      return this.tc.distsq(new Vec(tp2.x, tp1.y)) <= this.r * this.r;
+    // above and to the right?
+    if (c.x > s.p2.x && c.y < s.p2.y) {
+      return c.distsq(s.p2) <= this.r * this.r;
     }
 
-    // below and to the left of the box
-    if (this.tc.x < tp1.x && this.tc.y > tp2.y) {
-      return this.tc.distsq(new Vec(tp1.x, tp2.y)) <= this.r * this.r;
+    // below and to the right?
+    if (c.x > s.p3.x && c.y > s.p3.y) {
+      return c.distsq(s.p3) <= this.r * this.r;
     }
 
-    // below and to the right of the box
-    return this.tc.distsq(tp2) <= this.r * this.r;
+    // below and to the left?
+    if (c.x < s.p4.x && c.y > s.p4.y) {
+      return c.distsq(s.p4) <= this.r * this.r;
+    }
+
+    return false;
   }
 
   // debug render the shape

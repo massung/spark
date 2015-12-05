@@ -1402,6 +1402,11 @@ spark_Mat.prototype = {
 		var y = v.y * this.s.y * this.r.x + v.x * this.s.x * this.r.y;
 		return new spark_Vec(x + this.p.x,y + this.p.y);
 	}
+	,untransform: function(v) {
+		var x = v.x - this.p.x;
+		var y = v.y - this.p.y;
+		return new spark_Vec(x * this.r.x / this.s.x + y * this.r.y / this.s.y,y * this.r.x / this.s.y - x * this.r.y / this.s.x);
+	}
 	,mult: function(m) {
 		var p = this.transform(m.p);
 		var r = this.r.rotate(m.r);
@@ -2441,7 +2446,7 @@ spark_collision_SeparatingAxis.project = function($as,bs,axis) {
 		if(n < bmin) bmin = n;
 		if(n > bmax) bmax = n;
 	}
-	return amax < bmin || amin > bmax;
+	return !(amax < bmin || amin > bmax);
 };
 spark_collision_SeparatingAxis.query = function(aPs,aNs,bPs,bNs) {
 	var i;
@@ -2466,6 +2471,7 @@ $hxClasses["spark.collision.Shape"] = spark_collision_Shape;
 spark_collision_Shape.__name__ = ["spark","collision","Shape"];
 spark_collision_Shape.prototype = {
 	body: null
+	,m: null
 	,getBody: function() {
 		return this.body;
 	}
@@ -2476,6 +2482,7 @@ spark_collision_Shape.prototype = {
 		return false;
 	}
 	,updateShapeCache: function(m) {
+		this.m = m;
 	}
 	,segmentQuery: function(s) {
 		return false;
@@ -2494,10 +2501,10 @@ var spark_collision_shape_Box = function(body,x,y,w,h) {
 	spark_collision_Shape.call(this,body);
 	this.p1 = new spark_Vec(x,y);
 	this.p2 = new spark_Vec(x + w,y);
-	this.p3 = new spark_Vec(x,y + h);
-	this.p4 = new spark_Vec(x + w,y + h);
-	this.tp1 = new spark_Vec(x,y);
-	this.tp2 = new spark_Vec(x + w,y + h);
+	this.p3 = new spark_Vec(x + w,y + h);
+	this.p4 = new spark_Vec(x,y + h);
+	this.tp = [this.p1.copy(),this.p2.copy(),this.p3.copy(),this.p4.copy()];
+	this.tn = [spark_Vec.up(),spark_Vec.right()];
 };
 $hxClasses["spark.collision.shape.Box"] = spark_collision_shape_Box;
 spark_collision_shape_Box.__name__ = ["spark","collision","shape","Box"];
@@ -2507,30 +2514,23 @@ spark_collision_shape_Box.prototype = $extend(spark_collision_Shape.prototype,{
 	,p2: null
 	,p3: null
 	,p4: null
-	,tp1: null
-	,tp2: null
-	,getTopLeft: function() {
-		return this.tp1;
-	}
-	,getBottomRight: function() {
-		return this.tp2;
-	}
+	,tp: null
+	,tn: null
 	,within: function(rect) {
-		if(this.tp2.x < rect.getLeft()) return false;
-		if(this.tp1.x > rect.getRight()) return false;
-		if(this.tp2.y < rect.getTop()) return false;
-		if(this.tp1.y > rect.getBottom()) return false;
+		if(!rect.contains(this.tp[0].x,this.tp[0].y)) return false;
+		if(!rect.contains(this.tp[1].x,this.tp[1].y)) return false;
+		if(!rect.contains(this.tp[2].x,this.tp[2].y)) return false;
+		if(!rect.contains(this.tp[3].x,this.tp[3].y)) return false;
 		return true;
 	}
 	,updateShapeCache: function(m) {
-		var v1 = m.transform(this.p1);
-		var v2 = m.transform(this.p2);
-		var v3 = m.transform(this.p3);
-		var v4 = m.transform(this.p4);
-		this.tp1.x = Math.min(Math.min(Math.min(v1.x,v2.x),v3.x),v4.x);
-		this.tp1.y = Math.min(Math.min(Math.min(v1.y,v2.y),v3.y),v4.y);
-		this.tp2.x = Math.max(Math.max(Math.max(v1.x,v2.x),v3.x),v4.x);
-		this.tp2.y = Math.max(Math.max(Math.max(v1.y,v2.y),v3.y),v4.y);
+		spark_collision_Shape.prototype.updateShapeCache.call(this,m);
+		this.tp[0] = m.transform(this.p1);
+		this.tp[1] = m.transform(this.p2);
+		this.tp[2] = m.transform(this.p3);
+		this.tp[3] = m.transform(this.p4);
+		this.tn[0] = spark_Vec.up().rotate(m.r);
+		this.tn[1] = spark_Vec.right().rotate(m.r);
 	}
 	,segmentQuery: function(s) {
 		return s.boxQuery(this);
@@ -2539,19 +2539,15 @@ spark_collision_shape_Box.prototype = $extend(spark_collision_Shape.prototype,{
 		return s.boxQuery(this);
 	}
 	,boxQuery: function(s) {
-		var tp1 = s.getTopLeft();
-		var tp2 = s.getBottomRight();
-		if(this.tp2.x < tp1.x || this.tp1.x > tp2.x) return false;
-		if(this.tp2.y < tp1.y || this.tp1.y > tp2.y) return false;
-		return true;
+		return spark_collision_SeparatingAxis.query(this.tp,this.tn,s.tp,s.tn);
 	}
 	,draw: function() {
 		Spark.view.strokeStyle = "#ff0";
 		Spark.view.beginPath();
-		Spark.view.moveTo(this.tp1.x,this.tp1.y);
-		Spark.view.lineTo(this.tp2.x,this.tp1.y);
-		Spark.view.lineTo(this.tp2.x,this.tp2.y);
-		Spark.view.lineTo(this.tp1.x,this.tp2.y);
+		Spark.view.moveTo(this.tp[0].x,this.tp[0].y);
+		Spark.view.lineTo(this.tp[1].x,this.tp[1].y);
+		Spark.view.lineTo(this.tp[2].x,this.tp[2].y);
+		Spark.view.lineTo(this.tp[3].x,this.tp[3].y);
 		Spark.view.closePath();
 		Spark.view.stroke();
 	}
@@ -2570,12 +2566,6 @@ spark_collision_shape_Circle.prototype = $extend(spark_collision_Shape.prototype
 	c: null
 	,r: null
 	,tc: null
-	,getCenter: function() {
-		return this.tc;
-	}
-	,getRadius: function() {
-		return this.r;
-	}
 	,within: function(rect) {
 		if(this.tc.x + this.r < rect.getLeft()) return false;
 		if(this.tc.x - this.r > rect.getRight()) return false;
@@ -2584,23 +2574,24 @@ spark_collision_shape_Circle.prototype = $extend(spark_collision_Shape.prototype
 		return true;
 	}
 	,updateShapeCache: function(m) {
+		spark_collision_Shape.prototype.updateShapeCache.call(this,m);
 		this.tc = m.transform(this.c);
 	}
 	,segmentQuery: function(s) {
-		return this.tc.proj(s.getStart(),s.getEnd()).distsq(this.tc) < this.r * this.r;
+		return s.circleQuery(this);
 	}
 	,circleQuery: function(s) {
 		return this.tc.distsq(s.tc) < this.r * this.r + s.r * s.r;
 	}
 	,boxQuery: function(s) {
-		var tp1 = s.getTopLeft();
-		var tp2 = s.getBottomRight();
-		if(this.tc.x > tp1.x && this.tc.x <= tp2.x) return this.tc.y + this.r >= tp1.y && this.tc.y - this.r <= tp2.y;
-		if(this.tc.y >= tp1.y && this.tc.y <= tp2.y) return this.tc.x + this.r >= tp1.x && this.tc.x - this.r <= tp2.x;
-		if(this.tc.x < tp1.x && this.tc.y < tp1.y) return this.tc.distsq(tp1) <= this.r * this.r;
-		if(this.tc.x > tp2.x && this.tc.y < tp1.y) return this.tc.distsq(new spark_Vec(tp2.x,tp1.y)) <= this.r * this.r;
-		if(this.tc.x < tp1.x && this.tc.y > tp2.y) return this.tc.distsq(new spark_Vec(tp1.x,tp2.y)) <= this.r * this.r;
-		return this.tc.distsq(tp2) <= this.r * this.r;
+		var c = s.m.untransform(this.tc);
+		if(c.x >= s.p1.x && c.x <= s.p3.x) return c.y + this.r >= s.p1.y && c.y - this.r <= s.p3.y;
+		if(c.y >= s.p1.y && c.y <= s.p3.y) return c.x + this.r >= s.p1.x && c.x - this.r <= s.p3.x;
+		if(c.x < s.p1.x && c.y < s.p1.y) return c.distsq(s.p1) <= this.r * this.r;
+		if(c.x > s.p2.x && c.y < s.p2.y) return c.distsq(s.p2) <= this.r * this.r;
+		if(c.x > s.p3.x && c.y > s.p3.y) return c.distsq(s.p3) <= this.r * this.r;
+		if(c.x < s.p4.x && c.y > s.p4.y) return c.distsq(s.p4) <= this.r * this.r;
+		return false;
 	}
 	,draw: function() {
 		Spark.view.strokeStyle = "#ff0";
@@ -2614,8 +2605,8 @@ var spark_collision_shape_Segment = function(body,x1,y1,x2,y2) {
 	spark_collision_Shape.call(this,body);
 	this.p1 = new spark_Vec(x1,y1);
 	this.p2 = new spark_Vec(x2,y2);
-	this.tp1 = this.p1.copy();
-	this.tp2 = this.p2.copy();
+	this.tp = [this.p1.copy(),this.p2.copy()];
+	this.tn = [this.p2.sub(this.p1).perp()];
 };
 $hxClasses["spark.collision.shape.Segment"] = spark_collision_shape_Segment;
 spark_collision_shape_Segment.__name__ = ["spark","collision","shape","Segment"];
@@ -2623,54 +2614,31 @@ spark_collision_shape_Segment.__super__ = spark_collision_Shape;
 spark_collision_shape_Segment.prototype = $extend(spark_collision_Shape.prototype,{
 	p1: null
 	,p2: null
-	,tp1: null
-	,tp2: null
-	,getStart: function() {
-		return this.tp1;
-	}
-	,getEnd: function() {
-		return this.tp2;
-	}
+	,tp: null
+	,tn: null
 	,within: function(rect) {
-		return rect.contains(this.tp1.x,this.tp1.y) && rect.contains(this.tp2.x,this.tp2.y);
+		return rect.contains(this.tp[0].x,this.tp[0].y) && rect.contains(this.tp[1].x,this.tp[1].y);
 	}
 	,updateShapeCache: function(m) {
-		this.tp1 = m.transform(this.p1);
-		this.tp2 = m.transform(this.p2);
+		spark_collision_Shape.prototype.updateShapeCache.call(this,m);
+		this.tp[0] = m.transform(this.p1);
+		this.tp[1] = m.transform(this.p2);
+		this.tn[0] = this.tp[1].sub(this.tp[0]).perp();
 	}
 	,segmentQuery: function(s) {
-		if(Math.min(s.tp1.x,s.tp2.x) > Math.max(this.tp1.x,this.tp2.x) || Math.min(s.tp1.y,s.tp2.y) > Math.max(this.tp1.y,this.tp2.y) || Math.max(s.tp1.x,s.tp2.x) < Math.min(this.tp1.x,this.tp2.x) || Math.max(s.tp1.y,s.tp2.y) < Math.min(this.tp1.y,this.tp2.y)) return false;
-		var sa = spark_Util.sign(this.tp1.cross(s.tp1));
-		var sb = spark_Util.sign(this.tp1.cross(s.tp2));
-		if(sa == sb && sa != 0 && sb != 0) return false;
-		var da = spark_Util.sign(s.tp1.cross(this.tp1));
-		var db = spark_Util.sign(s.tp1.cross(this.tp2));
-		if(da == db && da != 0 && db != 0) return false;
-		return true;
+		return spark_collision_SeparatingAxis.query(this.tp,this.tn,s.tp,s.tn);
 	}
 	,circleQuery: function(s) {
-		return s.segmentQuery(this);
+		return s.tc.proj(this.tp[0],this.tp[1]).distsq(s.tc) < s.r * s.r;
 	}
 	,boxQuery: function(s) {
-		var tp1 = s.getTopLeft();
-		var tp2 = s.getBottomRight();
-		if(this.tp1.x >= tp1.x && this.tp1.x <= tp2.x) {
-			if(this.tp1.y >= tp1.y && this.tp1.y <= tp2.y) return true;
-		}
-		if(this.tp2.x >= tp1.x && this.tp2.x <= tp2.x) {
-			if(this.tp2.y >= tp1.y && this.tp2.y <= tp2.y) return true;
-		}
-		if(this.tp1.x < tp1.x && this.tp2.x < tp1.x) return false;
-		if(this.tp1.x > tp2.x && this.tp2.x > tp2.x) return false;
-		if(this.tp1.y < tp1.y && this.tp2.y < tp1.y) return false;
-		if(this.tp1.y > tp2.y && this.tp2.y > tp2.y) return false;
-		return true;
+		return spark_collision_SeparatingAxis.query(this.tp,this.tn,s.tp,s.tn);
 	}
 	,draw: function() {
 		Spark.view.strokeStyle = "#ff0";
 		Spark.view.beginPath();
-		Spark.view.moveTo(this.tp1.x,this.tp1.y);
-		Spark.view.lineTo(this.tp2.x,this.tp2.y);
+		Spark.view.moveTo(this.tp[0].x,this.tp[0].y);
+		Spark.view.lineTo(this.tp[1].x,this.tp[1].y);
 		Spark.view.stroke();
 	}
 	,__class__: spark_collision_shape_Segment

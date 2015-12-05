@@ -78,6 +78,16 @@ class Mat {
     return new Vec(x + this.p.x, y + this.p.y);
   }
 
+  // apply the inverse matrix to a vector and return a new vector
+  public function untransform(v: Vec): Vec {
+    var x = v.x - this.p.x;
+    var y = v.y - this.p.y;
+
+    return new Vec(
+      (x * this.r.x / this.s.x) + (y * this.r.y / this.s.y),
+      (y * this.r.x / this.s.y) - (x * this.r.y / this.s.x));
+  }
+
   // multiply a matrix by this one and return the new matrix
   public function mult(m: Mat): Mat {
     var p = this.transform(m.p);

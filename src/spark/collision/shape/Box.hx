@@ -6,6 +6,7 @@
 
 package spark.collision.shape;
 
+@:allow(spark.collision.shape)
 class Box extends Shape {
 
   // local space corner points
@@ -14,9 +15,9 @@ class Box extends Shape {
   private var p3: Vec;
   private var p4: Vec;
 
-  // transformed axis-aligned bounding box
-  private var tp1: Vec;
-  private var tp2: Vec;
+  // transformed world vertices and normals
+  private var tp: Array<Vec>;
+  private var tn: Array<Vec>;
 
   // create a new line segment collision shape
   public function new(body: Body, x: Float, y: Float, w: Float, h: Float) {
@@ -25,40 +26,47 @@ class Box extends Shape {
     // create the 4 corners of the box
     this.p1 = new Vec(x,     y);
     this.p2 = new Vec(x + w, y);
-    this.p3 = new Vec(x,     y + h);
-    this.p4 = new Vec(x + w, y + h);
+    this.p3 = new Vec(x + w, y + h);
+    this.p4 = new Vec(x,     y + h);
 
     // create new world transforms
-    this.tp1 = new Vec(x,     y);
-    this.tp2 = new Vec(x + w, y + h);
-  }
+    this.tp = [
+      this.p1.copy(),
+      this.p2.copy(),
+      this.p3.copy(),
+      this.p4.copy(),
+    ];
 
-  // returns the world-space, corner vertices
-  public function getTopLeft(): Vec return this.tp1;
-  public function getBottomRight(): Vec return this.tp2;
+    // world normals
+    this.tn = [
+      spark.Vec.up(),
+      spark.Vec.right(),
+    ];
+  }
 
   // true if this shape is completely within a bounding box
   override public function within(rect: Rect): Bool {
-    if (this.tp2.x < rect.getLeft()) return false;
-    if (this.tp1.x > rect.getRight()) return false;
-    if (this.tp2.y < rect.getTop()) return false;
-    if (this.tp1.y > rect.getBottom()) return false;
+    if (!rect.contains(this.tp[0].x, this.tp[0].y)) return false;
+    if (!rect.contains(this.tp[1].x, this.tp[1].y)) return false;
+    if (!rect.contains(this.tp[2].x, this.tp[2].y)) return false;
+    if (!rect.contains(this.tp[3].x, this.tp[3].y)) return false;
 
     return true;
   }
 
   // update the world vertices
   override public function updateShapeCache(m: Mat) {
-    var v1 = m.transform(this.p1);
-    var v2 = m.transform(this.p2);
-    var v3 = m.transform(this.p3);
-    var v4 = m.transform(this.p4);
+    super.updateShapeCache(m);
 
-    // find the extents of each vertex
-    this.tp1.x = Math.min(Math.min(Math.min(v1.x, v2.x), v3.x), v4.x);
-    this.tp1.y = Math.min(Math.min(Math.min(v1.y, v2.y), v3.y), v4.y);
-    this.tp2.x = Math.max(Math.max(Math.max(v1.x, v2.x), v3.x), v4.x);
-    this.tp2.y = Math.max(Math.max(Math.max(v1.y, v2.y), v3.y), v4.y);
+    // transform corners
+    this.tp[0] = m.transform(this.p1);
+    this.tp[1] = m.transform(this.p2);
+    this.tp[2] = m.transform(this.p3);
+    this.tp[3] = m.transform(this.p4);
+
+    // transform the normals
+    this.tn[0] = spark.Vec.up().rotate(m.r);
+    this.tn[1] = spark.Vec.right().rotate(m.r);
   }
 
   // true if this shape overlaps a line segment
@@ -73,13 +81,7 @@ class Box extends Shape {
 
   // true if this shape overlaps a box
   override public function boxQuery(s: Box): Bool {
-    var tp1 = s.getTopLeft();
-    var tp2 = s.getBottomRight();
-
-    if (this.tp2.x < tp1.x || this.tp1.x > tp2.x) return false;
-    if (this.tp2.y < tp1.y || this.tp1.y > tp2.y) return false;
-
-    return true;
+    return SeparatingAxis.query(this.tp, this.tn, s.tp, s.tn);
   }
 
   // debug render the shape
@@ -88,10 +90,10 @@ class Box extends Shape {
     Spark.view.beginPath();
 
     // draw the axis-aligned quad
-    Spark.view.moveTo(this.tp1.x, this.tp1.y);
-    Spark.view.lineTo(this.tp2.x, this.tp1.y);
-    Spark.view.lineTo(this.tp2.x, this.tp2.y);
-    Spark.view.lineTo(this.tp1.x, this.tp2.y);
+    Spark.view.moveTo(this.tp[0].x, this.tp[0].y);
+    Spark.view.lineTo(this.tp[1].x, this.tp[1].y);
+    Spark.view.lineTo(this.tp[2].x, this.tp[2].y);
+    Spark.view.lineTo(this.tp[3].x, this.tp[3].y);
 
     // done
     Spark.view.closePath();
