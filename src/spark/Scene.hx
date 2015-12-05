@@ -174,8 +174,10 @@ class Scene {
       Debug.drawPerf(this.framecount, stats);
     }
 
-    // continue
-    this.runloop = js.Browser.window.requestAnimationFrame(this.stepFrame);
+    // continue if this is still the main scene
+    if (spark.Game.scene == this) {
+      this.runloop = js.Browser.window.requestAnimationFrame(this.stepFrame);
+    }
   }
 
   // advance background layers, sprites, etc.

@@ -8,5 +8,5 @@ app.get('/', function(req, res) {
 app.use(express.static('www'));
 
 var server = app.listen(8000, function() {
-  console.log('Spark running at on port %s...', server.address().port);
+  console.log('Spark running on port %s...', server.address().port);
 });

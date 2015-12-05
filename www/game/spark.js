@@ -1726,7 +1726,7 @@ spark_Scene.prototype = {
 			}
 			spark_Debug.drawPerf(this.framecount,stats);
 		}
-		this.runloop = window.requestAnimationFrame($bind(this,this.stepFrame));
+		if(spark_Game.scene == this) this.runloop = window.requestAnimationFrame($bind(this,this.stepFrame));
 	}
 	,update: function(step) {
 		var i;
