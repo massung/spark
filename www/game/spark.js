@@ -2654,6 +2654,12 @@ spark_collision_shape_Segment.prototype = $extend(spark_collision_Shape.prototyp
 	,boxQuery: function(s) {
 		var tp1 = s.getTopLeft();
 		var tp2 = s.getBottomRight();
+		if(this.tp1.x >= tp1.x && this.tp1.x <= tp2.x) {
+			if(this.tp1.y >= tp1.y && this.tp1.y <= tp2.y) return true;
+		}
+		if(this.tp2.x >= tp1.x && this.tp2.x <= tp2.x) {
+			if(this.tp2.y >= tp1.y && this.tp2.y <= tp2.y) return true;
+		}
 		if(this.tp1.x < tp1.x && this.tp2.x < tp1.x) return false;
 		if(this.tp1.x > tp2.x && this.tp2.x > tp2.x) return false;
 		if(this.tp1.y < tp1.y && this.tp2.y < tp1.y) return false;
