@@ -189,12 +189,14 @@ When creating a scene, you are telling Spark how big the game world is, and
 where <0,0> should be within that world. In the above example, the game world
 is 1400x1400 pixels in size and the origin is in the middle.
 
-This means that the bottom-left corner of the game world is at <-700,-700> and
-the top-right corner is at <+700,+700>.
+This means that the top-left corner of the game world is at <-700,-700> and
+the bottom-right corner is at <+700,+700>.
 
-*Note: This is very important! Spark ensures that the bottom of a rectangle
-is always smaller than the top, and that positive rotations are counter-
-clockwise!*
+*Note: This is very important! Spark ensures that the top of a rectangle
+is always less than the bottom, and that positive rotations are clockwise!
+This is in-line with how the HTML5 canvas control orients itself. Please see
+[Canvas.translate](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/translate)
+and [Canvas.rotate](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/rotate).*
 
 All the parameters to the Scene constructor are optional. If the origin is
 not provided, 'top-left' is assumed. If the width is not specified, then the
