@@ -6,7 +6,7 @@
     <asset id="stars" src="background.png" class="spark.graphics.Texture" />
 
     <!-- player images -->
-    <asset src="player.png" class="spark.graphics.Texture" />
+    <asset id="spaceship" src="player.png" class="spark.graphics.Texture" />
     <asset src="laser.png" class="spark.graphics.Texture" />
     <asset src="thrust.png" class="spark.graphics.Texture" />
 

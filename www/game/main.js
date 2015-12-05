@@ -16,19 +16,19 @@ spark.Game.main('game/project.xml', proj => {
     scene = new spark.Scene('middle', 1400, 1400);
     scene.setViewport(1400, 1400);
 
-    starsLayer = scene.newBackgroundLayer(spark.Game.getTexture('stars'));
-    asteroidsLayer = scene.newSpriteLayer();
+    //starsLayer = scene.newBackgroundLayer(spark.Game.getTexture('stars'));
+    //asteroidsLayer = scene.newSpriteLayer();
     playerLayer = scene.newSpriteLayer();
 
-    starsLayer.m.s.set(4, 4);
+    //starsLayer.m.s.set(4, 4);
 
     // spawn the player
     player = spawnPlayer();
 
     // spawn some asteroids
-    for(i = 0;i < 40;i++) {
-      spawnAsteroid();
-    }
+    //for(i = 0;i < 40;i++) {
+    //  spawnAsteroid();
+    //}
 
     // go
     scene.run();
@@ -39,14 +39,14 @@ function spawnPlayer() {
   var sprite = playerLayer.newSprite();
   var body = sprite.addBody('player', c => { });
 
-  sprite.setTexture(spark.Game.getTexture('player.png'));
+  sprite.setTexture(spark.Game.getTexture('spaceship'));
 
-  sprite.m.p.set(200, 200);
+  //sprite.m.p.set(200, 200);
 
   var thrust = new spark.Vec(0, 0);
 
   sprite.addBehavior(playerControls, thrust);
-  sprite.addBehavior(wrap);
+  //sprite.addBehavior(wrap);
 
   body.addCircleShape(0, 0, 30);
 
@@ -87,11 +87,10 @@ function playerControls(sprite, step, thrust) {
   }
 
   // move based on thrust
-  sprite.m.p.x += thrust.x * step;
-  sprite.m.p.y += thrust.y * step;
+  sprite.m.translate(thrust.x * step, thrust.y * step);
 
   // scroll the background
-  starsLayer.m.translate(thrust.x * step * 0.8, thrust.y * step * 0.8);
+  //starsLayer.m.translate(thrust.x * step * 0.8, thrust.y * step * 0.8);
 
   // dampen
   thrust.x *= 0.98;

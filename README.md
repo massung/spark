@@ -47,6 +47,8 @@ You're now ready to begin the rest of the tutorial.
     |    | ---+ spark.js
     |    |
     | ---+ index.html
+    |
+    + ...
 
 #### The `src/` Folder
 
@@ -195,8 +197,8 @@ the bottom-right corner is at <+700,+700>.
 *Note: This is very important! Spark ensures that the top of a rectangle
 is always less than the bottom, and that positive rotations are clockwise!
 This is in-line with how the HTML5 canvas control orients itself. Please see
-[Canvas.translate](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/translate)
-and [Canvas.rotate](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/rotate).*
+[canvas.translate](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/translate)
+and [canvas.rotate](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/rotate).*
 
 All the parameters to the Scene constructor are optional. If the origin is
 not provided, 'top-left' is assumed. If the width is not specified, then the
@@ -206,13 +208,190 @@ game world to determine the height.
 
 #### Setting Up the Camera
 
+Once the game world is defined, then it's possible to setup the camera. When
+the scene was created, a default camera was created for you, but usually you'll
+want to define the camera yourself.
+
+```javascript
+scene.setViewport(1400, 1400);
+```
+
+The camera is defined as having a width and height. This is how many pixels will
+be visible to the player, and will be mapped to the canvas view. In the above
+example, the entire game world will be visible at all times.
+
+This is irrespective of the canvas size. If the canvas is 100x100 pixels,
+then the entire game world will still be visible, but shrunk very small. If the
+canvas were 2000x2000 pixels, then the camera would zoom in the game world to
+fit.
+
+*Note: If the aspect ratio of the canvas doesn't match the aspect ratio of the
+camera, then you will get pinching and stretching.*
+
+Both the width and the height parameters of the viewport are optional. If the
+width is not provided, then the width of the canvas is used. If the height is
+not provided, then - like the game world - the aspect ratio of the canvas is
+maintained and the height is derived from the width of the viewport.
+
+For our tutorial, we'll keep the camera viewport as being able to see the
+entire game world at once.
+
 #### Creating Layers
+
+Next, we need to create a layer for sprites. We'll start with a single layer
+for the player sprite.
+
+```javascript
+var playerLayer = scene.newSpriteLayer();
+```
+
+We can have as many layers as we like, but the order the layers are created
+matters, as layers are rendered in the order they are created.
 
 #### Spawning Sprites
 
-#### Adding Behaviors
+Now that we have a sprite layer, we can spawn a sprite on it: the player.
 
-#### Player Input
+```javascript
+var player = playerLayer.newSprite();
+```
+
+We allocate the player sprite on the layer. By default, the position of this
+sprite will be at the origin (the middle of the game world in our case).
+
+However, we need to also select a texture for our sprite to render with. The
+texture was already loaded by the `project.xml` file. Looking inside, the
+image we want has the `id` of `spaceship`. So let's look it up and use it.
+
+```javascript
+player.setTexture(spark.Game.getTexture('spaceship'));
+```
+
+There. Now, if you load up our web page, you should see this:
+
+[Tutorial 01](!https://github.com/massung/spark/blob/master/doc/i/tutorial_01.png)
+
+If so, congratulations! Next, it's time to add some behaviors to our player ship.
+
+#### Adding a Behavior
+
+Behaviors are just functions - with optional data - that are executed every
+frame. We want our player ship to be able to move around. So, let's create a
+function that will get called by Spark.
+
+```javascript
+function playerControls(sprite, step) {
+  // TODO:
+}
+```
+
+The first parameter is the sprite this behavior is running on. Sprites can
+share behaviors, so this parameter distinguishes them. Next is the delta time
+(game step) - in seconds - since the last frame.
+
+Let's let our sprite turn clockwise and counter-clockwise using the arrow keys.
+This should be pretty easy...
+
+```javascript
+// rotate counter-clockwise
+if (spark.Key.down(spark.Key.LEFT)) {
+  sprite.m.rotate(-180 * step);
+}
+
+// rotate clockwise
+if (spark.Key.down(spark.Key.RIGHT)) {
+  sprite.m.rotate(180 * step);
+}
+```
+
+There's a couple new things here...
+
+1. The `spark.Key` module is used for keyboard input.
+2. The sprite's transform is in its `m` property (m for matrix).
+
+So, every frame, if the left arrow key is down, then the player sprite should
+turn counter-clockwise, and clockwise if the right arrow key is down.
+
+Still, we have to add this behavior to the sprite. Let's go back up to where
+we created the sprite and add the behavior on to it.
+
+```javascript
+player.setTexture(spark.Game.getTexture('spaceship'));
+player.addBehavior(playerControls);
+```
+
+Now, reloading the page, you should be able to turn your sprite.... Great!
+
+However, we still want the player to move around. So, let's make it move when
+we have the up arrow key pressed. Back to our behavior function...
+
+```javascript
+// move the sprite forward
+if (spark.Key.down(spark.Key.UP)) {
+  sprite.m.translate(0, -400 * step, true);
+}
+```
+
+Reload and you should be able to move around the game world.
+
+*Remember - up is negative! Since our spaceship texture points up,
+forward will be in the negative Y. If our spaceship's forward was visually
+down, we'd translate in the positive Y.*
+
+Hmm... this doesn't really feel like outer space, though. Let's add thrust and
+use that to propel the player.
+
+The first thing we need is some data associated with the player's behavior:
+thrust. We also need that data to get to the behavior so it can be kept across
+frames. Let's modify the signature of our behavior function, adding a new
+parameter, which will be data passed to the behavior:
+
+```javascript
+function playerControls(sprite, step, data) {
+```
+
+Next, let's create the data object when we add the behavior:
+
+```javascript
+player.addBehavior(playerControls, {thrust: new spark.Vec(0, 0)});
+```
+
+There. Now, every frame when `playerControls` is called, it will have data
+associated with it that will contain a thrust vector.
+
+Continuing along... instead of translating the sprite, we need to update the
+thrust vector.
+
+```javascript
+if (spark.Key.down(spark.Key.UP)) {
+  var d = new spark.Vec(0, -600 * step).rotate(sprite.m.r);
+
+  // increase the thrust vector
+  thrust.x += d.x;
+  thrust.y += d.y;
+}
+
+// apply the thrust every frame
+sprite.translate(thrust.x * step, thrust.y * step);
+
+// dampen the thrust (slow down)
+thrust.x *= 0.98;
+thrust.y *= 0.98;
+```
+
+We need to calculate the direction of our impulse and add it to the thrust
+vector. Then, regardless of whether or not the player is pressing the up key,
+we still need to apply the thrust and move the player. Finally, we dampen the
+thrust to slowly bring the player to a halt if the the up key is no longer
+being pressed.
+
+Let's reload and try.... Yep, that feels much better!
+
+#### Particle Effects
+
+#### Spawning Asteroids
+
+#### Shooting Lasers
 
 #### Adding Collision
 
