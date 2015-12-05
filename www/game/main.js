@@ -174,9 +174,9 @@ function wrap(sprite) {
     sprite.m.p.x += scene.rect.getWidth() + w;
   if (sprite.m.p.x - w / 2 > scene.rect.getRight())
     sprite.m.p.x -= scene.rect.getWidth() + w;
-  if (sprite.m.p.y + h / 2 < scene.rect.getBottom())
+  if (sprite.m.p.y + h / 2 < scene.rect.getTop())
     sprite.m.p.y += scene.rect.getHeight() + h;
-  if (sprite.m.p.y - h / 2 > scene.rect.getTop())
+  if (sprite.m.p.y - h / 2 > scene.rect.getBottom())
     sprite.m.p.y -= scene.rect.getHeight() + h;
 }
 
