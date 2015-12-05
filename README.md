@@ -72,9 +72,9 @@ This will output `spark.js.map` along-side `spark.js`.
 For exploring and editing the Spark source, I personally recommend using the
 [Atom](https://atom.io/) editor and installing the following packages:
 
-    https://atom.io/packages/linter
-    https://atom.io/packages/language-haxe
-    https://atom.io/packages/haxe
+* [linter](https://atom.io/packages/linter)
+* [language-haxe](https://atom.io/packages/language-haxe)
+* [haxe](https://atom.io/packages/haxe)
 
 Once installed, open the the project folder in Atom and r-click `compile.hxml`
 and choose `Set as active HXML file`. Once done, from anywhere within a Haxe
