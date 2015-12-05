@@ -232,7 +232,7 @@ class Scene {
     var my = this.rect.getTop() + (this.rect.getHeight() / 2);
 
     // set the projection matrix (camera -> viewport)
-    Spark.view.setTransform(w2, 0, 0, -h2, w2, -h2);
+    Spark.view.setTransform(w2, 0, 0, h2, w2, h2);
 
     // set the playfield -> camera transform
     this.camera.draw();

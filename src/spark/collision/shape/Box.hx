@@ -41,8 +41,8 @@ class Box extends Shape {
   override public function within(rect: Rect): Bool {
     if (this.tp2.x < rect.getLeft()) return false;
     if (this.tp1.x > rect.getRight()) return false;
-    if (this.tp2.y < rect.getBottom()) return false;
-    if (this.tp1.y > rect.getTop()) return false;
+    if (this.tp2.y < rect.getTop()) return false;
+    if (this.tp1.y > rect.getBottom()) return false;
 
     return true;
   }

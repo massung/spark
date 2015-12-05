@@ -1592,13 +1592,13 @@ spark_Rect.prototype = {
 		return this.x;
 	}
 	,getTop: function() {
-		return this.y + this.height;
+		return this.y;
 	}
 	,getRight: function() {
 		return this.x + this.width;
 	}
 	,getBottom: function() {
-		return this.y;
+		return this.y + this.height;
 	}
 	,getWidth: function() {
 		return this.width;
@@ -1762,7 +1762,7 @@ spark_Scene.prototype = {
 		var h2 = Spark.canvas.height / 2;
 		var mx = this.rect.getLeft() + this.rect.getWidth() / 2;
 		var my = this.rect.getTop() + this.rect.getHeight() / 2;
-		Spark.view.setTransform(w2,0,0,-h2,w2,-h2);
+		Spark.view.setTransform(w2,0,0,h2,w2,h2);
 		this.camera.draw();
 		Spark.view.translate(-mx,-my);
 		var _g1 = 0;
@@ -2284,7 +2284,7 @@ spark_collision_Quadtree.prototype = {
 			var w = this.rect.getWidth() / 2;
 			var h = this.rect.getHeight() / 2;
 			var x = this.rect.getLeft();
-			var y = this.rect.getBottom();
+			var y = this.rect.getTop();
 			this.nodes = [new spark_collision_Quadtree(new spark_Rect(x,y,w,h),this.depth + 1),new spark_collision_Quadtree(new spark_Rect(x + w,y,w,h),this.depth + 1),new spark_collision_Quadtree(new spark_Rect(x,y + h,w,h),this.depth + 1),new spark_collision_Quadtree(new spark_Rect(x + w,y + h,w,h),this.depth + 1)];
 			this.shapes = this.shapes.filter(function(shape1) {
 				var i2;
@@ -2396,7 +2396,7 @@ spark_collision_Quadtree.prototype = {
 		var i;
 		Spark.view.save();
 		Spark.view.strokeStyle = "#f00";
-		Spark.view.strokeRect(this.rect.getLeft(),this.rect.getBottom(),this.rect.getWidth(),this.rect.getHeight());
+		Spark.view.strokeRect(this.rect.getLeft(),this.rect.getTop(),this.rect.getWidth(),this.rect.getHeight());
 		var _g1 = 0;
 		var _g = this.nodes.length;
 		while(_g1 < _g) {
@@ -2518,8 +2518,8 @@ spark_collision_shape_Box.prototype = $extend(spark_collision_Shape.prototype,{
 	,within: function(rect) {
 		if(this.tp2.x < rect.getLeft()) return false;
 		if(this.tp1.x > rect.getRight()) return false;
-		if(this.tp2.y < rect.getBottom()) return false;
-		if(this.tp1.y > rect.getTop()) return false;
+		if(this.tp2.y < rect.getTop()) return false;
+		if(this.tp1.y > rect.getBottom()) return false;
 		return true;
 	}
 	,updateShapeCache: function(m) {
@@ -3003,7 +3003,6 @@ spark_object_Sprite.prototype = $extend(spark_object_Actor.prototype,{
 		if(this.texture == null) return;
 		Spark.view.save();
 		this.m.apply();
-		Spark.view.scale(1,-1);
 		spark_Util.merge(Spark.view,this.contextSettings);
 		if(this.quad == null) this.texture.draw(this.pivot); else this.texture.drawq(this.quad,this.pivot);
 		Spark.view.restore();
@@ -3038,7 +3037,7 @@ spark_object_layer_BackgroundLayer.prototype = $extend(spark_object_Layer.protot
 		var ih = this.texture.getHeight();
 		if(this.tiled == false) this.texture.draw(); else {
 			var l = spark_Game.scene.rect.getLeft();
-			var b = spark_Game.scene.rect.getBottom();
+			var t = spark_Game.scene.rect.getTop();
 			var w = spark_Game.scene.rect.getWidth();
 			var h = spark_Game.scene.rect.getHeight();
 			var x = -iw;
@@ -3046,7 +3045,7 @@ spark_object_layer_BackgroundLayer.prototype = $extend(spark_object_Layer.protot
 				var y = -ih;
 				while(y < h) {
 					Spark.view.save();
-					Spark.view.translate(l + x,b + y);
+					Spark.view.translate(l + x,t + y);
 					this.texture.draw();
 					Spark.view.restore();
 					y += ih - 1;

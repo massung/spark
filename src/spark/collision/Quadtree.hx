@@ -53,7 +53,7 @@ class Quadtree {
       var w = this.rect.getWidth() / 2;
       var h = this.rect.getHeight() / 2;
       var x = this.rect.getLeft();
-      var y = this.rect.getBottom();
+      var y = this.rect.getTop();
 
       // split into 4 nodes
       this.nodes = [
@@ -196,7 +196,7 @@ class Quadtree {
 
     // render the bounding area of this node
     Spark.view.strokeStyle = '#f00';
-    Spark.view.strokeRect(this.rect.getLeft(), this.rect.getBottom(), this.rect.getWidth(), this.rect.getHeight());
+    Spark.view.strokeRect(this.rect.getLeft(), this.rect.getTop(), this.rect.getWidth(), this.rect.getHeight());
 
     // render all the child nodes
     for(i in 0...this.nodes.length) {

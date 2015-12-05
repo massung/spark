@@ -56,7 +56,7 @@ class BackgroundLayer extends Layer {
       this.texture.draw();
     } else {
       var l = Game.scene.rect.getLeft();
-      var b = Game.scene.rect.getBottom();
+      var t = Game.scene.rect.getTop();
       var w = Game.scene.rect.getWidth();
       var h = Game.scene.rect.getHeight();
 
@@ -68,7 +68,7 @@ class BackgroundLayer extends Layer {
         while(y < h) {
           Spark.view.save();
           {
-            Spark.view.translate(l + x, b + y);
+            Spark.view.translate(l + x, t + y);
 
             this.texture.draw();
           }

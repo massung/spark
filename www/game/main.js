@@ -54,12 +54,12 @@ function spawnPlayer() {
 }
 
 function playerControls(sprite, step, thrust) {
-  if (spark.Key.down(spark.Key.LEFT)) sprite.m.rotate(180 * step);
-  if (spark.Key.down(spark.Key.RIGHT)) sprite.m.rotate(-180 * step);
+  if (spark.Key.down(spark.Key.LEFT)) sprite.m.rotate(-180 * step);
+  if (spark.Key.down(spark.Key.RIGHT)) sprite.m.rotate(180 * step);
 
   // rotate and translate the background manually (test)
-  if (spark.Key.down(spark.Key.Q)) starsLayer.m.rotate(180 * step);
-  if (spark.Key.down(spark.Key.E)) starsLayer.m.rotate(-180 * step);
+  if (spark.Key.down(spark.Key.Q)) starsLayer.m.rotate(-180 * step);
+  if (spark.Key.down(spark.Key.E)) starsLayer.m.rotate(180 * step);
   if (spark.Key.down(spark.Key.A)) starsLayer.m.translate(-600 * step, 0);
   if (spark.Key.down(spark.Key.D)) starsLayer.m.translate(600 * step, 0);
   if (spark.Key.down(spark.Key.W)) starsLayer.m.translate(0, 600 * step);
@@ -72,10 +72,10 @@ function playerControls(sprite, step, thrust) {
 
   // thrust forward
   if (spark.Key.down(spark.Key.UP)) {
-    var p = sprite.localToWorld(new spark.Vec(0, -60));
-    var r = sprite.localToWorldAngle(-90);
+    var p = sprite.localToWorld(new spark.Vec(0, 60));
+    var r = sprite.localToWorldAngle(90);
 
-    var d = new spark.Vec(0, 600 * step).rotate(sprite.m.r);
+    var d = new spark.Vec(0, -600 * step).rotate(sprite.m.r);
 
     thrust.x += d.x;
     thrust.y += d.y;
@@ -102,7 +102,7 @@ function shoot(layer, m) {
   var bullet = layer.newSprite();
   var body = bullet.addBody('bullet');
 
-  bullet.m.p = m.transform(new spark.Vec(0, 60));
+  bullet.m.p = m.transform(new spark.Vec(0, -60));
   bullet.m.r = m.r.copy();
 
   // texture
@@ -111,7 +111,7 @@ function shoot(layer, m) {
 
   // create movement behavior
   bullet.addBehavior((sprite, step, data) => {
-    sprite.m.translate(0, 1000 * step, true);
+    sprite.m.translate(0, -1000 * step, true);
     sprite.dead = (data.age += step) > 1;
   }, {
     age: 0.0
