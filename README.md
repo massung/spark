@@ -269,7 +269,7 @@ player.setTexture(spark.Game.getTexture('spaceship'));
 
 There. Now, if you load up our web page, you should see this:
 
-[Tutorial 01](!https://github.com/massung/spark/blob/master/doc/i/tutorial_01.png)
+![Tutorial 01](https://github.com/massung/spark/blob/master/doc/i/tutorial_screenshot_01.png)
 
 If so, congratulations! Next, it's time to add some behaviors to our player ship.
 
