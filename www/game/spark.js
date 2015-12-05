@@ -2859,7 +2859,7 @@ spark_object_Actor.prototype = {
 		this.behaviors.push({ callback : callback, data : data});
 	}
 	,worldToLocal: function(p) {
-		return this.m.inverse().transform(p);
+		return this.m.untransform(p);
 	}
 	,localToWorld: function(p) {
 		return this.m.transform(p);

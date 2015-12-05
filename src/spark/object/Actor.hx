@@ -42,7 +42,7 @@ class Actor {
 
   // convert point from world to local space
   public function worldToLocal(p: Vec): Vec {
-    return this.m.inverse().transform(p);
+    return this.m.untransform(p);
   }
 
   // convert point from local to world space
