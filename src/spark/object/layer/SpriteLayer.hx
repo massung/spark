@@ -31,13 +31,10 @@ class SpriteLayer extends Layer {
     this.m = Mat.identity();
 
     // allocate the lists
-    this.sprites = new Array<Sprite>();
-    this.pool = new Array<Sprite>();
+    this.sprites = [];
 
     // fill the free list
-    for(i in 0...n) {
-      this.pool.push(new Sprite(this));
-    }
+    this.pool = [for(i in 0...n) new Sprite(this)];
 
     // reset counters
     this.sp = n;

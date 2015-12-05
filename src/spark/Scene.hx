@@ -232,12 +232,14 @@ class Scene {
     // set the projection matrix (camera -> viewport)
     Spark.view.setTransform(w2, 0, 0, -h2, w2, -h2);
 
-    // playfield -> camera (<-1,-1> - <1,1>)
-    Spark.view.scale(1 / this.camera.m.s.x, 1 / this.camera.m.s.y);
-    Spark.view.transform(this.camera.m.r.x, -this.camera.m.r.y, this.camera.m.r.y, this.camera.m.r.x, 0, 0);
-    Spark.view.translate(-this.camera.m.p.x - mx, -this.camera.m.p.y - my);
+    // set the playfield -> camera transform
+    this.camera.draw();
 
-    // TODO: z-ordering of sprites/layers
+    // offset to origin of playfield
+    Spark.view.translate(-mx, -my);
+
+    // z-ordering of layers
+    //this.layers.sort(function(a, b) return Util.sign(a.z - b.z));
 
     // render all the layers
     for(i in 0...this.layers.length) {

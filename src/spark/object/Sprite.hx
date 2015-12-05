@@ -10,7 +10,7 @@ import spark.anim.*;
 import spark.collision.*;
 import spark.graphics.*;
 
-class Sprite extends Actor implements Drawable {
+class Sprite extends Actor {
   public var pivot: Vec;
 
   // dead is a get/set property for resource ref count
@@ -112,7 +112,7 @@ class Sprite extends Actor implements Drawable {
   }
 
   // called once a frame to render the sprite
-  public function draw() {
+  public override function draw() {
     if (this.texture == null) {
       return;
     }

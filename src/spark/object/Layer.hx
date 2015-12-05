@@ -9,7 +9,7 @@ package spark.object;
 import spark.collision.*;
 import spark.graphics.*;
 
-class Layer extends Actor implements Drawable {
+class Layer extends Actor {
   public var z: Float;
 
   // create a new layer
@@ -26,7 +26,7 @@ class Layer extends Actor implements Drawable {
   }
 
   // called once per frame to render
-  public function draw() {
+  public override function draw() {
     // subclass responsibility
   }
 

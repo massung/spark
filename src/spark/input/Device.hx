@@ -23,19 +23,9 @@ class Device {
     // not connected until installed
     this.connected = false;
 
-    // create the input states
-    this.buttons = new Array<ButtonState>();
-    this.sticks = new Array<StickState>();
-
-    // fill in the buttons with default values
-    for(i in 0...nButtons) {
-      this.buttons.push({ down: false, hits: 0 });
-    }
-
-    // fill in all the sticks
-    for(i in 0...nSticks) {
-      this.sticks.push({ x: 0, y: 0, relX: 0, relY: 0 });
-    }
+    // fill in the buttons and sticks with default values
+    this.buttons = [for(i in 0...nButtons) { down: false, hits: 0}];
+    this.sticks = [for(i in 0...nSticks) { x: 0, y: 0, relX: 0, relY: 0 }];
   }
 
   // attach the device

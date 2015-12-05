@@ -1763,9 +1763,8 @@ spark_Scene.prototype = {
 		var mx = this.rect.getLeft() + this.rect.getWidth() / 2;
 		var my = this.rect.getTop() + this.rect.getHeight() / 2;
 		Spark.view.setTransform(w2,0,0,-h2,w2,-h2);
-		Spark.view.scale(1 / this.camera.m.s.x,1 / this.camera.m.s.y);
-		Spark.view.transform(this.camera.m.r.x,-this.camera.m.r.y,this.camera.m.r.y,this.camera.m.r.x,0,0);
-		Spark.view.translate(-this.camera.m.p.x - mx,-this.camera.m.p.y - my);
+		this.camera.draw();
+		Spark.view.translate(-mx,-my);
 		var _g1 = 0;
 		var _g = this.layers.length;
 		while(_g1 < _g) {
@@ -2670,13 +2669,6 @@ spark_collision_shape_Segment.prototype = $extend(spark_collision_Shape.prototyp
 	}
 	,__class__: spark_collision_shape_Segment
 });
-var spark_graphics_Drawable = function() { };
-$hxClasses["spark.graphics.Drawable"] = spark_graphics_Drawable;
-spark_graphics_Drawable.__name__ = ["spark","graphics","Drawable"];
-spark_graphics_Drawable.prototype = {
-	draw: null
-	,__class__: spark_graphics_Drawable
-};
 var spark_graphics_Emitter = function(src) {
 	var _g = this;
 	spark_Asset.call(this,src);
@@ -2795,18 +2787,20 @@ var spark_input_Device = function(nButtons,nSticks) {
 	if(nSticks == null) nSticks = 0;
 	var i;
 	this.connected = false;
-	this.buttons = [];
-	this.sticks = [];
-	var _g = 0;
-	while(_g < nButtons) {
-		var i1 = _g++;
-		this.buttons.push({ down : false, hits : 0});
-	}
+	var _g = [];
 	var _g1 = 0;
-	while(_g1 < nSticks) {
-		var i2 = _g1++;
-		this.sticks.push({ x : 0, y : 0, relX : 0, relY : 0});
+	while(_g1 < nButtons) {
+		var i1 = _g1++;
+		_g.push({ down : false, hits : 0});
 	}
+	this.buttons = _g;
+	var _g11 = [];
+	var _g2 = 0;
+	while(_g2 < nSticks) {
+		var i2 = _g2++;
+		_g11.push({ x : 0, y : 0, relX : 0, relY : 0});
+	}
+	this.sticks = _g11;
 };
 $hxClasses["spark.input.Device"] = spark_input_Device;
 spark_input_Device.__name__ = ["spark","input","Device"];
@@ -2912,6 +2906,8 @@ spark_object_Actor.prototype = {
 			this.behaviors[i1].callback(this,step,this.behaviors[i1].data);
 		}
 	}
+	,draw: function() {
+	}
 	,__class__: spark_object_Actor
 };
 var spark_object_Camera = function(width,height) {
@@ -2922,7 +2918,12 @@ $hxClasses["spark.object.Camera"] = spark_object_Camera;
 spark_object_Camera.__name__ = ["spark","object","Camera"];
 spark_object_Camera.__super__ = spark_object_Actor;
 spark_object_Camera.prototype = $extend(spark_object_Actor.prototype,{
-	__class__: spark_object_Camera
+	draw: function() {
+		Spark.view.scale(1 / this.m.s.x,1 / this.m.s.y);
+		Spark.view.transform(this.m.r.x,-this.m.r.y,this.m.r.y,this.m.r.x,0,0);
+		Spark.view.translate(-this.m.p.x,-this.m.p.y);
+	}
+	,__class__: spark_object_Camera
 });
 var spark_object_Layer = function(z) {
 	if(z == null) z = 0.0;
@@ -2931,7 +2932,6 @@ var spark_object_Layer = function(z) {
 };
 $hxClasses["spark.object.Layer"] = spark_object_Layer;
 spark_object_Layer.__name__ = ["spark","object","Layer"];
-spark_object_Layer.__interfaces__ = [spark_graphics_Drawable];
 spark_object_Layer.__super__ = spark_object_Actor;
 spark_object_Layer.prototype = $extend(spark_object_Actor.prototype,{
 	z: null
@@ -2952,7 +2952,6 @@ var spark_object_Sprite = function(layer) {
 };
 $hxClasses["spark.object.Sprite"] = spark_object_Sprite;
 spark_object_Sprite.__name__ = ["spark","object","Sprite"];
-spark_object_Sprite.__interfaces__ = [spark_graphics_Drawable];
 spark_object_Sprite.__super__ = spark_object_Actor;
 spark_object_Sprite.prototype = $extend(spark_object_Actor.prototype,{
 	pivot: null
@@ -3065,12 +3064,13 @@ var spark_object_layer_SpriteLayer = function(n) {
 	spark_object_Layer.call(this);
 	this.m = spark_Mat.identity();
 	this.sprites = [];
-	this.pool = [];
-	var _g = 0;
-	while(_g < n) {
-		var i1 = _g++;
-		this.pool.push(new spark_object_Sprite(this));
+	var _g = [];
+	var _g1 = 0;
+	while(_g1 < n) {
+		var i1 = _g1++;
+		_g.push(new spark_object_Sprite(this));
 	}
+	this.pool = _g;
 	this.sp = n;
 	this.count = 0;
 	this.pending = 0;

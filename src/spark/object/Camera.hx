@@ -20,4 +20,11 @@ class Camera extends Actor {
     // initialize the scale from the viewport size
     this.m.s.set(width / 2, height / 2);
   }
+
+  // set the world to camera (<-1,-1> - <+1,+1>) to transform
+  public override function draw() {
+    Spark.view.scale(1 / this.m.s.x, 1 / this.m.s.y);
+    Spark.view.transform(this.m.r.x, -this.m.r.y, this.m.r.y, this.m.r.x, 0, 0);
+    Spark.view.translate(-this.m.p.x, -this.m.p.y);
+  }
 }

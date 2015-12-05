@@ -72,4 +72,9 @@ class Actor {
       this.behaviors[i].callback(this, step, this.behaviors[i].data);
     }
   }
+
+  // called once per frame to render
+  public function draw() {
+    // subclass responsibility
+  }
 }
