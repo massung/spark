@@ -7,6 +7,7 @@
 package spark.graphics;
 
 import spark.object.*;
+import spark.object.layer.*;
 
 typedef ParticleData = {
   age: Float,
@@ -107,7 +108,7 @@ class Emitter extends Asset {
   }
 
   // spawn particle sprites into the scene
-  public function emit(layer: spark.layer.SpriteLayer, x: Float, y: Float, r: Float, dir: Float, ?n: Int = 1) {
+  public function emit(layer: SpriteLayer, x: Float, y: Float, r: Float, dir: Float, ?n: Int = 1) {
     var i;
 
     for (i in 0...n) {

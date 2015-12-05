@@ -4,19 +4,13 @@
 // All rights reserved.
 //
 
-package spark.layer;
+package spark.object.layer;
 
 import spark.collision.*;
 import spark.graphics.*;
-import spark.object.*;
 
-class BackgroundLayer extends Actor implements Layer {
-  public var z: Float;
-
-  // the texture to render
+class BackgroundLayer extends Layer {
   private var texture: Texture;
-
-  // if not tiled, the image just renders once
   private var tiled: Bool;
 
   // create a new background layer
@@ -42,11 +36,8 @@ class BackgroundLayer extends Actor implements Layer {
     }
   }
 
-  // background layers have no collision
-  public function updateCollision(space: Quadtree) { }
-
   // render the
-  public function draw() {
+  override public function draw() {
     if (this.texture == null) {
       return;
     }
@@ -92,10 +83,5 @@ class BackgroundLayer extends Actor implements Layer {
 
     // done
     Spark.view.restore();
-  }
-
-  // for debugging, accumulate stats
-  public function debugStats(stats: Debug.Stats) {
-    stats.layers++;
   }
 }

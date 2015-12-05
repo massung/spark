@@ -1353,25 +1353,6 @@ spark_Key.onKeyDown = function(event) {
 spark_Key.onKeyUp = function(event) {
 	spark_Key.device.release(event.keyCode);
 };
-var spark_graphics_Drawable = function() { };
-$hxClasses["spark.graphics.Drawable"] = spark_graphics_Drawable;
-spark_graphics_Drawable.__name__ = ["spark","graphics","Drawable"];
-spark_graphics_Drawable.prototype = {
-	draw: null
-	,__class__: spark_graphics_Drawable
-};
-var spark_Layer = function() { };
-$hxClasses["spark.Layer"] = spark_Layer;
-spark_Layer.__name__ = ["spark","Layer"];
-spark_Layer.__interfaces__ = [spark_graphics_Drawable];
-spark_Layer.prototype = {
-	z: null
-	,m: null
-	,update: null
-	,updateCollision: null
-	,debugStats: null
-	,__class__: spark_Layer
-};
 var spark_Mat = $hx_exports.spark.Mat = function(x,y,rx,ry,sx,sy) {
 	this.p = new spark_Vec(x,y);
 	this.r = new spark_Vec(rx,ry);
@@ -1698,13 +1679,13 @@ spark_Scene.prototype = {
 	}
 	,newBackgroundLayer: function(texture,tiled) {
 		if(tiled == null) tiled = true;
-		var layer = new spark_layer_BackgroundLayer(texture,tiled);
+		var layer = new spark_object_layer_BackgroundLayer(texture,tiled);
 		this.layers.push(layer);
 		return layer;
 	}
 	,newSpriteLayer: function(n) {
 		if(n == null) n = 100;
-		var layer = new spark_layer_SpriteLayer(n);
+		var layer = new spark_object_layer_SpriteLayer(n);
 		this.layers.push(layer);
 		return layer;
 	}
@@ -2689,6 +2670,13 @@ spark_collision_shape_Segment.prototype = $extend(spark_collision_Shape.prototyp
 	}
 	,__class__: spark_collision_shape_Segment
 });
+var spark_graphics_Drawable = function() { };
+$hxClasses["spark.graphics.Drawable"] = spark_graphics_Drawable;
+spark_graphics_Drawable.__name__ = ["spark","graphics","Drawable"];
+spark_graphics_Drawable.prototype = {
+	draw: null
+	,__class__: spark_graphics_Drawable
+};
 var spark_graphics_Emitter = function(src) {
 	var _g = this;
 	spark_Asset.call(this,src);
@@ -2926,149 +2914,6 @@ spark_object_Actor.prototype = {
 	}
 	,__class__: spark_object_Actor
 };
-var spark_layer_BackgroundLayer = function(texture,tiled) {
-	if(tiled == null) tiled = true;
-	spark_object_Actor.call(this);
-	this.z = 0.0;
-	this.texture = texture;
-	this.tiled = tiled;
-};
-$hxClasses["spark.layer.BackgroundLayer"] = spark_layer_BackgroundLayer;
-spark_layer_BackgroundLayer.__name__ = ["spark","layer","BackgroundLayer"];
-spark_layer_BackgroundLayer.__interfaces__ = [spark_Layer];
-spark_layer_BackgroundLayer.__super__ = spark_object_Actor;
-spark_layer_BackgroundLayer.prototype = $extend(spark_object_Actor.prototype,{
-	z: null
-	,texture: null
-	,tiled: null
-	,update: function(step) {
-		spark_object_Actor.prototype.update.call(this,step);
-		if(this.tiled && this.texture != null) {
-			this.m.p.x %= this.texture.getWidth() * this.m.s.x;
-			this.m.p.y %= this.texture.getHeight() * this.m.s.y;
-		}
-	}
-	,updateCollision: function(space) {
-	}
-	,draw: function() {
-		if(this.texture == null) return;
-		Spark.view.save();
-		this.m.apply();
-		var iw = this.texture.getWidth();
-		var ih = this.texture.getHeight();
-		if(this.tiled == false) this.texture.draw(); else {
-			var l = spark_Game.scene.rect.getLeft();
-			var b = spark_Game.scene.rect.getBottom();
-			var w = spark_Game.scene.rect.getWidth();
-			var h = spark_Game.scene.rect.getHeight();
-			var x = -iw;
-			while(x < w) {
-				var y = -ih;
-				while(y < h) {
-					Spark.view.save();
-					Spark.view.translate(l + x,b + y);
-					this.texture.draw();
-					Spark.view.restore();
-					y += ih - 1;
-				}
-				x += iw - 1;
-			}
-		}
-		Spark.view.restore();
-	}
-	,debugStats: function(stats) {
-		stats.layers++;
-	}
-	,__class__: spark_layer_BackgroundLayer
-});
-var spark_layer_SpriteLayer = function(n) {
-	if(n == null) n = 100;
-	var i;
-	this.z = 0;
-	this.m = spark_Mat.identity();
-	this.sprites = [];
-	this.pool = [];
-	var _g = 0;
-	while(_g < n) {
-		var i1 = _g++;
-		this.pool.push(new spark_object_Sprite(this));
-	}
-	this.sp = n;
-	this.count = 0;
-	this.pending = 0;
-};
-$hxClasses["spark.layer.SpriteLayer"] = spark_layer_SpriteLayer;
-spark_layer_SpriteLayer.__name__ = ["spark","layer","SpriteLayer"];
-spark_layer_SpriteLayer.__interfaces__ = [spark_Layer];
-spark_layer_SpriteLayer.prototype = {
-	z: null
-	,m: null
-	,sprites: null
-	,pool: null
-	,sp: null
-	,count: null
-	,pending: null
-	,length: null
-	,get_length: function() {
-		return this.count;
-	}
-	,get: function(i) {
-		return this.sprites[i];
-	}
-	,newSprite: function() {
-		var sprite;
-		if(this.sp > 0) {
-			sprite = this.pool[--this.sp];
-			sprite.init();
-		} else sprite = new spark_object_Sprite(this);
-		if(this.count + this.pending < this.sprites.length) this.sprites[this.count + this.pending] = sprite; else this.sprites.push(sprite);
-		this.pending++;
-		return sprite;
-	}
-	,update: function(step) {
-		var i = 0;
-		this.count += this.pending;
-		this.pending = 0;
-		while(i < this.count) {
-			var sprite = this.sprites[i];
-			if(sprite.dead) {
-				this.sprites[i] = this.sprites[--this.count];
-				if(this.sp < this.pool.length) this.pool[this.sp] = sprite; else this.pool.push(sprite);
-				this.sp++;
-			} else i++;
-		}
-		var _g1 = 0;
-		var _g = this.count;
-		while(_g1 < _g) {
-			var i1 = _g1++;
-			this.sprites[i1].update(step);
-		}
-	}
-	,updateCollision: function(space) {
-		var i;
-		var _g1 = 0;
-		var _g = this.count;
-		while(_g1 < _g) {
-			var i1 = _g1++;
-			this.sprites[i1].addToQuadtree(space);
-		}
-	}
-	,draw: function() {
-		var i;
-		var _g1 = 0;
-		var _g = this.count;
-		while(_g1 < _g) {
-			var i1 = _g1++;
-			this.sprites[i1].draw();
-		}
-	}
-	,debugStats: function(stats) {
-		stats.layers++;
-		stats.sprites += this.count;
-	}
-	,__class__: spark_layer_SpriteLayer
-	,__properties__: {get_length:"get_length"}
-};
 var spark_object_Camera = function(width,height) {
 	spark_object_Actor.call(this);
 	this.m.s.set(width / 2,height / 2);
@@ -3078,6 +2923,26 @@ spark_object_Camera.__name__ = ["spark","object","Camera"];
 spark_object_Camera.__super__ = spark_object_Actor;
 spark_object_Camera.prototype = $extend(spark_object_Actor.prototype,{
 	__class__: spark_object_Camera
+});
+var spark_object_Layer = function(z) {
+	if(z == null) z = 0.0;
+	spark_object_Actor.call(this);
+	this.z = z;
+};
+$hxClasses["spark.object.Layer"] = spark_object_Layer;
+spark_object_Layer.__name__ = ["spark","object","Layer"];
+spark_object_Layer.__interfaces__ = [spark_graphics_Drawable];
+spark_object_Layer.__super__ = spark_object_Actor;
+spark_object_Layer.prototype = $extend(spark_object_Actor.prototype,{
+	z: null
+	,updateCollision: function(space) {
+	}
+	,draw: function() {
+	}
+	,debugStats: function(stats) {
+		stats.layers++;
+	}
+	,__class__: spark_object_Layer
 });
 var spark_object_Sprite = function(layer) {
 	spark_object_Actor.call(this);
@@ -3145,6 +3010,140 @@ spark_object_Sprite.prototype = $extend(spark_object_Actor.prototype,{
 		Spark.view.restore();
 	}
 	,__class__: spark_object_Sprite
+});
+var spark_object_layer_BackgroundLayer = function(texture,tiled) {
+	if(tiled == null) tiled = true;
+	spark_object_Layer.call(this);
+	this.z = 0.0;
+	this.texture = texture;
+	this.tiled = tiled;
+};
+$hxClasses["spark.object.layer.BackgroundLayer"] = spark_object_layer_BackgroundLayer;
+spark_object_layer_BackgroundLayer.__name__ = ["spark","object","layer","BackgroundLayer"];
+spark_object_layer_BackgroundLayer.__super__ = spark_object_Layer;
+spark_object_layer_BackgroundLayer.prototype = $extend(spark_object_Layer.prototype,{
+	texture: null
+	,tiled: null
+	,update: function(step) {
+		spark_object_Layer.prototype.update.call(this,step);
+		if(this.tiled && this.texture != null) {
+			this.m.p.x %= this.texture.getWidth() * this.m.s.x;
+			this.m.p.y %= this.texture.getHeight() * this.m.s.y;
+		}
+	}
+	,draw: function() {
+		if(this.texture == null) return;
+		Spark.view.save();
+		this.m.apply();
+		var iw = this.texture.getWidth();
+		var ih = this.texture.getHeight();
+		if(this.tiled == false) this.texture.draw(); else {
+			var l = spark_Game.scene.rect.getLeft();
+			var b = spark_Game.scene.rect.getBottom();
+			var w = spark_Game.scene.rect.getWidth();
+			var h = spark_Game.scene.rect.getHeight();
+			var x = -iw;
+			while(x < w) {
+				var y = -ih;
+				while(y < h) {
+					Spark.view.save();
+					Spark.view.translate(l + x,b + y);
+					this.texture.draw();
+					Spark.view.restore();
+					y += ih - 1;
+				}
+				x += iw - 1;
+			}
+		}
+		Spark.view.restore();
+	}
+	,__class__: spark_object_layer_BackgroundLayer
+});
+var spark_object_layer_SpriteLayer = function(n) {
+	if(n == null) n = 100;
+	var i;
+	spark_object_Layer.call(this);
+	this.m = spark_Mat.identity();
+	this.sprites = [];
+	this.pool = [];
+	var _g = 0;
+	while(_g < n) {
+		var i1 = _g++;
+		this.pool.push(new spark_object_Sprite(this));
+	}
+	this.sp = n;
+	this.count = 0;
+	this.pending = 0;
+};
+$hxClasses["spark.object.layer.SpriteLayer"] = spark_object_layer_SpriteLayer;
+spark_object_layer_SpriteLayer.__name__ = ["spark","object","layer","SpriteLayer"];
+spark_object_layer_SpriteLayer.__super__ = spark_object_Layer;
+spark_object_layer_SpriteLayer.prototype = $extend(spark_object_Layer.prototype,{
+	sprites: null
+	,pool: null
+	,sp: null
+	,count: null
+	,pending: null
+	,length: null
+	,get_length: function() {
+		return this.count;
+	}
+	,get: function(i) {
+		return this.sprites[i];
+	}
+	,newSprite: function() {
+		var sprite;
+		if(this.sp > 0) {
+			sprite = this.pool[--this.sp];
+			sprite.init();
+		} else sprite = new spark_object_Sprite(this);
+		if(this.count + this.pending < this.sprites.length) this.sprites[this.count + this.pending] = sprite; else this.sprites.push(sprite);
+		this.pending++;
+		return sprite;
+	}
+	,update: function(step) {
+		var i = 0;
+		this.count += this.pending;
+		this.pending = 0;
+		while(i < this.count) {
+			var sprite = this.sprites[i];
+			if(sprite.dead) {
+				this.sprites[i] = this.sprites[--this.count];
+				if(this.sp < this.pool.length) this.pool[this.sp] = sprite; else this.pool.push(sprite);
+				this.sp++;
+			} else i++;
+		}
+		var _g1 = 0;
+		var _g = this.count;
+		while(_g1 < _g) {
+			var i1 = _g1++;
+			this.sprites[i1].update(step);
+		}
+	}
+	,updateCollision: function(space) {
+		var i;
+		var _g1 = 0;
+		var _g = this.count;
+		while(_g1 < _g) {
+			var i1 = _g1++;
+			this.sprites[i1].addToQuadtree(space);
+		}
+	}
+	,draw: function() {
+		var i;
+		var _g1 = 0;
+		var _g = this.count;
+		while(_g1 < _g) {
+			var i1 = _g1++;
+			this.sprites[i1].draw();
+		}
+	}
+	,debugStats: function(stats) {
+		spark_object_Layer.prototype.debugStats.call(this,stats);
+		stats.sprites += this.count;
+	}
+	,__class__: spark_object_layer_SpriteLayer
+	,__properties__: {get_length:"get_length"}
 });
 function $iterator(o) { if( o instanceof Array ) return function() { return HxOverrides.iter(o); }; return typeof(o.iterator) == 'function' ? $bind(o,o.iterator) : o.iterator; }
 var $_, $fid = 0;

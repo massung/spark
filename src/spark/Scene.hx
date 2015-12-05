@@ -11,6 +11,7 @@ import spark.collision.shape.*;
 import spark.graphics.*;
 import spark.layer.*;
 import spark.object.*;
+import spark.object.layer.*;
 
 @:expose
 class Scene {

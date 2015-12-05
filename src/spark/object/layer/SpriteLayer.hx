@@ -4,16 +4,11 @@
 // All rights reserved.
 //
 
-package spark.layer;
+package spark.object.layer;
 
 import spark.collision.*;
-import spark.object.*;
 
-class SpriteLayer implements Layer {
-  public var z: Float;
-  public var m: Mat;
-
-  // active, pending, and free sprite lists
+class SpriteLayer extends Layer {
   private var sprites: Array<Sprite>;
   private var pool: Array<Sprite>;
 
@@ -30,7 +25,7 @@ class SpriteLayer implements Layer {
     var i;
 
     // default z-ordering
-    this.z = 0;
+    super();
 
     // identity transform
     this.m = Mat.identity();
@@ -86,7 +81,7 @@ class SpriteLayer implements Layer {
   }
 
   // update sprites, remove dead sprites
-  public function update(step: Float) {
+  override public function update(step: Float) {
     var i = 0;
 
     // add all the pending sprites from the previous frame
@@ -121,7 +116,7 @@ class SpriteLayer implements Layer {
   }
 
   // add sprites to the spacial hash
-  public function updateCollision(space: Quadtree) {
+  override public function updateCollision(space: Quadtree) {
     var i;
 
     for(i in 0...this.count) {
@@ -130,7 +125,7 @@ class SpriteLayer implements Layer {
   }
 
   // render the layer
-  public function draw() {
+  override public function draw() {
     var i;
 
     // render all the sprites
@@ -140,8 +135,10 @@ class SpriteLayer implements Layer {
   }
 
   // add to any debug stats when debugging
-  public function debugStats(stats: Debug.Stats) {
-    stats.layers++;
+  override public function debugStats(stats: Debug.Stats) {
+    super.debugStats(stats);
+
+    // accumulate sprites
     stats.sprites += this.count;
   }
 }
