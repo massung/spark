@@ -367,16 +367,16 @@ if (spark.Key.down(spark.Key.UP)) {
   var d = new spark.Vec(0, -600 * step).rotate(sprite.m.r);
 
   // increase the thrust vector
-  thrust.x += d.x;
-  thrust.y += d.y;
+  data.thrust.x += d.x;
+  data.thrust.y += d.y;
 }
 
 // apply the thrust every frame
-sprite.translate(thrust.x * step, thrust.y * step);
+sprite.translate(data.thrust.x * step, data.thrust.y * step);
 
 // dampen the thrust (slow down)
-thrust.x *= 0.98;
-thrust.y *= 0.98;
+data.thrust.x *= 0.98;
+data.thrust.y *= 0.98;
 ```
 
 We need to calculate the direction of our impulse and add it to the thrust

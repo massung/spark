@@ -45,7 +45,7 @@ function spawnPlayer() {
 
   var thrust = new spark.Vec(0, 0);
 
-  sprite.addBehavior(playerControls, thrust);
+  sprite.addBehavior(playerControls, { thrust: new spark.Vec(0, 0) });
   //sprite.addBehavior(wrap);
 
   body.addCircleShape(0, 0, 30);
@@ -53,7 +53,7 @@ function spawnPlayer() {
   return sprite;
 }
 
-function playerControls(sprite, step, thrust) {
+function playerControls(sprite, step, data) {
   if (spark.Key.down(spark.Key.LEFT)) sprite.m.rotate(-180 * step);
   if (spark.Key.down(spark.Key.RIGHT)) sprite.m.rotate(180 * step);
 
@@ -77,8 +77,8 @@ function playerControls(sprite, step, thrust) {
 
     var d = new spark.Vec(0, -600 * step).rotate(sprite.m.r);
 
-    thrust.x += d.x;
-    thrust.y += d.y;
+    data.thrust.x += d.x;
+    data.thrust.y += d.y;
 
     // emit some particles
     spark.Game.getEmitter('thrust.json').emit(sprite.getLayer(), p.x, p.y, sprite.m.r.angle(), r);
@@ -87,14 +87,14 @@ function playerControls(sprite, step, thrust) {
   }
 
   // move based on thrust
-  sprite.m.translate(thrust.x * step, thrust.y * step);
+  sprite.m.translate(data.thrust.x * step, data.thrust.y * step);
 
   // scroll the background
   //starsLayer.m.translate(thrust.x * step * 0.8, thrust.y * step * 0.8);
 
   // dampen
-  thrust.x *= 0.98;
-  thrust.y *= 0.98;
+  data.thrust.x *= 0.98;
+  data.thrust.y *= 0.98;
 }
 
 function shoot(layer, m) {
