@@ -81,25 +81,30 @@ class Scene {
     this.camera.m.s.set(w / 2, h / 2);
   }
 
-  // add a new tiled background layer to the scene
-  public function newBackgroundLayer(texture: Texture, ?tiled: Bool = true): BackgroundLayer {
-    var layer = new BackgroundLayer(texture, tiled);
+  // create a new layer of a given type and return it
+  public function newLayer(classRef: Class<Layer>, initargs: Array<Dynamic>): Layer {
+    var layer = Type.createInstance(classRef, initargs);
 
     // add the layer to the list
     this.layers.push(layer);
 
     return layer;
+  }
+
+  // add a new tiled background layer to the scene
+  public function newBackgroundLayer(texture: Texture, ?tiled: Bool = true): BackgroundLayer {
+    return cast this.newLayer(BackgroundLayer, [texture, tiled]);
   }
 
   // add a new sprite layer to the scene
   public function newSpriteLayer(?n: Int = 100): SpriteLayer {
-    var layer = new SpriteLayer(n);
-
-    // add the layer to the list
-    this.layers.push(layer);
-
-    return layer;
+    return cast this.newLayer(SpriteLayer, [n]);
   }
+
+  // create a new tilemap layer and add it to the scene
+  //public function newTilemapLayer(tmx: Tilemap): TilemapLayer {
+  //  return cast this.newLayer(TilemapLayer, [tmx]);
+  //}
 
   // start the main game loop
   public function run() {

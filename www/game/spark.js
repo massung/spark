@@ -7,6 +7,81 @@ function $extend(from, fields) {
 	if( fields.toString !== Object.prototype.toString ) proto.toString = fields.toString;
 	return proto;
 }
+var EReg = function(r,opt) {
+	opt = opt.split("u").join("");
+	this.r = new RegExp(r,opt);
+};
+$hxClasses["EReg"] = EReg;
+EReg.__name__ = ["EReg"];
+EReg.prototype = {
+	r: null
+	,match: function(s) {
+		if(this.r.global) this.r.lastIndex = 0;
+		this.r.m = this.r.exec(s);
+		this.r.s = s;
+		return this.r.m != null;
+	}
+	,matched: function(n) {
+		if(this.r.m != null && n >= 0 && n < this.r.m.length) return this.r.m[n]; else throw new js__$Boot_HaxeError("EReg::matched");
+	}
+	,matchedLeft: function() {
+		if(this.r.m == null) throw new js__$Boot_HaxeError("No string matched");
+		return HxOverrides.substr(this.r.s,0,this.r.m.index);
+	}
+	,matchedRight: function() {
+		if(this.r.m == null) throw new js__$Boot_HaxeError("No string matched");
+		var sz = this.r.m.index + this.r.m[0].length;
+		return HxOverrides.substr(this.r.s,sz,this.r.s.length - sz);
+	}
+	,matchedPos: function() {
+		if(this.r.m == null) throw new js__$Boot_HaxeError("No string matched");
+		return { pos : this.r.m.index, len : this.r.m[0].length};
+	}
+	,matchSub: function(s,pos,len) {
+		if(len == null) len = -1;
+		if(this.r.global) {
+			this.r.lastIndex = pos;
+			this.r.m = this.r.exec(len < 0?s:HxOverrides.substr(s,0,pos + len));
+			var b = this.r.m != null;
+			if(b) this.r.s = s;
+			return b;
+		} else {
+			var b1 = this.match(len < 0?HxOverrides.substr(s,pos,null):HxOverrides.substr(s,pos,len));
+			if(b1) {
+				this.r.s = s;
+				this.r.m.index += pos;
+			}
+			return b1;
+		}
+	}
+	,split: function(s) {
+		var d = "#__delim__#";
+		return s.replace(this.r,d).split(d);
+	}
+	,replace: function(s,by) {
+		return s.replace(this.r,by);
+	}
+	,map: function(s,f) {
+		var offset = 0;
+		var buf = new StringBuf();
+		do {
+			if(offset >= s.length) break; else if(!this.matchSub(s,offset)) {
+				buf.add(HxOverrides.substr(s,offset,null));
+				break;
+			}
+			var p = this.matchedPos();
+			buf.add(HxOverrides.substr(s,offset,p.pos - offset));
+			buf.add(f(this));
+			if(p.len == 0) {
+				buf.add(HxOverrides.substr(s,p.pos,1));
+				offset = p.pos + 1;
+			} else offset = p.pos + p.len;
+		} while(this.r.global);
+		if(!this.r.global && offset > 0 && offset < s.length) buf.add(HxOverrides.substr(s,offset,null));
+		return buf.b;
+	}
+	,__class__: EReg
+};
 var HxOverrides = function() { };
 $hxClasses["HxOverrides"] = HxOverrides;
 HxOverrides.__name__ = ["HxOverrides"];
@@ -105,6 +180,56 @@ IntIterator.prototype = {
 		return this.min++;
 	}
 	,__class__: IntIterator
+};
+var _$Map_Map_$Impl_$ = {};
+$hxClasses["_Map.Map_Impl_"] = _$Map_Map_$Impl_$;
+_$Map_Map_$Impl_$.__name__ = ["_Map","Map_Impl_"];
+_$Map_Map_$Impl_$._new = null;
+_$Map_Map_$Impl_$.set = function(this1,key,value) {
+	this1.set(key,value);
+};
+_$Map_Map_$Impl_$.get = function(this1,key) {
+	return this1.get(key);
+};
+_$Map_Map_$Impl_$.exists = function(this1,key) {
+	return this1.exists(key);
+};
+_$Map_Map_$Impl_$.remove = function(this1,key) {
+	return this1.remove(key);
+};
+_$Map_Map_$Impl_$.keys = function(this1) {
+	return this1.keys();
+};
+_$Map_Map_$Impl_$.iterator = function(this1) {
+	return this1.iterator();
+};
+_$Map_Map_$Impl_$.toString = function(this1) {
+	return this1.toString();
+};
+_$Map_Map_$Impl_$.arrayWrite = function(this1,k,v) {
+	this1.set(k,v);
+	return v;
+};
+_$Map_Map_$Impl_$.toStringMap = function(t) {
+	return new haxe_ds_StringMap();
+};
+_$Map_Map_$Impl_$.toIntMap = function(t) {
+	return new haxe_ds_IntMap();
+};
+_$Map_Map_$Impl_$.toEnumValueMapMap = function(t) {
+	return new haxe_ds_EnumValueMap();
+};
+_$Map_Map_$Impl_$.toObjectMap = function(t) {
+	return new haxe_ds_ObjectMap();
+};
+_$Map_Map_$Impl_$.fromStringMap = function(map) {
+	return map;
+};
+_$Map_Map_$Impl_$.fromIntMap = function(map) {
+	return map;
+};
+_$Map_Map_$Impl_$.fromObjectMap = function(map) {
+	return map;
 };
 Math.__name__ = ["Math"];
 var Reflect = function() { };
@@ -216,8 +341,10 @@ Spark.loadXHR = function(src,respType,onload) {
 	req.send();
 };
 Spark.loadXML = function(src,onload) {
-	Spark.loadXHR(src,"document",function(req) {
-		onload(req.response);
+	Spark.loadXHR(src,"text",function(req) {
+		var doc = Xml.parse(req.response);
+		if(doc == null) throw new js__$Boot_HaxeError("Illegal XML document: " + src);
+		onload(doc);
 	});
 };
 Spark.loadJSON = function(src,onload) {
@@ -529,6 +656,179 @@ Type.enumIndex = function(e) {
 Type.allEnums = function(e) {
 	return e.__empty_constructs__;
 };
+var Xml = function(nodeType) {
+	this.nodeType = nodeType;
+	this.children = [];
+	this.attributeMap = new haxe_ds_StringMap();
+};
+$hxClasses["Xml"] = Xml;
+Xml.__name__ = ["Xml"];
+Xml.parse = function(str) {
+	return haxe_xml_Parser.parse(str);
+};
+Xml.createElement = function(name) {
+	var xml = new Xml(Xml.Element);
+	if(xml.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element but found " + xml.nodeType);
+	xml.nodeName = name;
+	return xml;
+};
+Xml.createPCData = function(data) {
+	var xml = new Xml(Xml.PCData);
+	if(xml.nodeType == Xml.Document || xml.nodeType == Xml.Element) throw new js__$Boot_HaxeError("Bad node type, unexpected " + xml.nodeType);
+	xml.nodeValue = data;
+	return xml;
+};
+Xml.createCData = function(data) {
+	var xml = new Xml(Xml.CData);
+	if(xml.nodeType == Xml.Document || xml.nodeType == Xml.Element) throw new js__$Boot_HaxeError("Bad node type, unexpected " + xml.nodeType);
+	xml.nodeValue = data;
+	return xml;
+};
+Xml.createComment = function(data) {
+	var xml = new Xml(Xml.Comment);
+	if(xml.nodeType == Xml.Document || xml.nodeType == Xml.Element) throw new js__$Boot_HaxeError("Bad node type, unexpected " + xml.nodeType);
+	xml.nodeValue = data;
+	return xml;
+};
+Xml.createDocType = function(data) {
+	var xml = new Xml(Xml.DocType);
+	if(xml.nodeType == Xml.Document || xml.nodeType == Xml.Element) throw new js__$Boot_HaxeError("Bad node type, unexpected " + xml.nodeType);
+	xml.nodeValue = data;
+	return xml;
+};
+Xml.createProcessingInstruction = function(data) {
+	var xml = new Xml(Xml.ProcessingInstruction);
+	if(xml.nodeType == Xml.Document || xml.nodeType == Xml.Element) throw new js__$Boot_HaxeError("Bad node type, unexpected " + xml.nodeType);
+	xml.nodeValue = data;
+	return xml;
+};
+Xml.createDocument = function() {
+	return new Xml(Xml.Document);
+};
+Xml.prototype = {
+	nodeType: null
+	,nodeName: null
+	,nodeValue: null
+	,parent: null
+	,children: null
+	,attributeMap: null
+	,get_nodeName: function() {
+		if(this.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element but found " + this.nodeType);
+		return this.nodeName;
+	}
+	,set_nodeName: function(v) {
+		if(this.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element but found " + this.nodeType);
+		return this.nodeName = v;
+	}
+	,get_nodeValue: function() {
+		if(this.nodeType == Xml.Document || this.nodeType == Xml.Element) throw new js__$Boot_HaxeError("Bad node type, unexpected " + this.nodeType);
+		return this.nodeValue;
+	}
+	,set_nodeValue: function(v) {
+		if(this.nodeType == Xml.Document || this.nodeType == Xml.Element) throw new js__$Boot_HaxeError("Bad node type, unexpected " + this.nodeType);
+		return this.nodeValue = v;
+	}
+	,get: function(att) {
+		if(this.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element but found " + this.nodeType);
+		return this.attributeMap.get(att);
+	}
+	,set: function(att,value) {
+		if(this.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element but found " + this.nodeType);
+		this.attributeMap.set(att,value);
+	}
+	,remove: function(att) {
+		if(this.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element but found " + this.nodeType);
+		this.attributeMap.remove(att);
+	}
+	,exists: function(att) {
+		if(this.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element but found " + this.nodeType);
+		return this.attributeMap.exists(att);
+	}
+	,attributes: function() {
+		if(this.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element but found " + this.nodeType);
+		return this.attributeMap.keys();
+	}
+	,iterator: function() {
+		if(this.nodeType != Xml.Document && this.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element or Document but found " + this.nodeType);
+		return HxOverrides.iter(this.children);
+	}
+	,elements: function() {
+		if(this.nodeType != Xml.Document && this.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element or Document but found " + this.nodeType);
+		var ret;
+		var _g = [];
+		var _g1 = 0;
+		var _g2 = this.children;
+		while(_g1 < _g2.length) {
+			var child = _g2[_g1];
+			++_g1;
+			if(child.nodeType == Xml.Element) _g.push(child);
+		}
+		ret = _g;
+		return HxOverrides.iter(ret);
+	}
+	,elementsNamed: function(name) {
+		if(this.nodeType != Xml.Document && this.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element or Document but found " + this.nodeType);
+		var ret;
+		var _g = [];
+		var _g1 = 0;
+		var _g2 = this.children;
+		while(_g1 < _g2.length) {
+			var child = _g2[_g1];
+			++_g1;
+			if(child.nodeType == Xml.Element && (function($this) {
+				var $r;
+				if(child.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element but found " + child.nodeType);
+				$r = child.nodeName;
+				return $r;
+			}(this)) == name) _g.push(child);
+		}
+		ret = _g;
+		return HxOverrides.iter(ret);
+	}
+	,firstChild: function() {
+		if(this.nodeType != Xml.Document && this.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element or Document but found " + this.nodeType);
+		return this.children[0];
+	}
+	,firstElement: function() {
+		if(this.nodeType != Xml.Document && this.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element or Document but found " + this.nodeType);
+		var _g = 0;
+		var _g1 = this.children;
+		while(_g < _g1.length) {
+			var child = _g1[_g];
+			++_g;
+			if(child.nodeType == Xml.Element) return child;
+		}
+		return null;
+	}
+	,addChild: function(x) {
+		if(this.nodeType != Xml.Document && this.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element or Document but found " + this.nodeType);
+		if(x.parent != null) x.parent.removeChild(x);
+		this.children.push(x);
+		x.parent = this;
+	}
+	,removeChild: function(x) {
+		if(this.nodeType != Xml.Document && this.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element or Document but found " + this.nodeType);
+		if(HxOverrides.remove(this.children,x)) {
+			x.parent = null;
+			return true;
+		}
+		return false;
+	}
+	,insertChild: function(x,pos) {
+		if(this.nodeType != Xml.Document && this.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element or Document but found " + this.nodeType);
+		if(x.parent != null) HxOverrides.remove(x.parent.children,x);
+		this.children.splice(pos,0,x);
+		x.parent = this;
+	}
+	,toString: function() {
+		return haxe_xml_Printer.print(this);
+	}
+	,ensureElementType: function() {
+		if(this.nodeType != Xml.Document && this.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element or Document but found " + this.nodeType);
+	}
+	,__class__: Xml
+	,__properties__: {set_nodeValue:"set_nodeValue",get_nodeValue:"get_nodeValue",set_nodeName:"set_nodeName",get_nodeName:"get_nodeName"}
+};
 var haxe_IMap = function() { };
 $hxClasses["haxe.IMap"] = haxe_IMap;
 haxe_IMap.__name__ = ["haxe","IMap"];
@@ -550,6 +850,246 @@ haxe_Log.trace = function(v,infos) {
 };
 haxe_Log.clear = function() {
 	js_Boot.__clear_trace();
+};
+var haxe_ds_BalancedTree = function() {
+};
+$hxClasses["haxe.ds.BalancedTree"] = haxe_ds_BalancedTree;
+haxe_ds_BalancedTree.__name__ = ["haxe","ds","BalancedTree"];
+haxe_ds_BalancedTree.prototype = {
+	root: null
+	,set: function(key,value) {
+		this.root = this.setLoop(key,value,this.root);
+	}
+	,get: function(key) {
+		var node = this.root;
+		while(node != null) {
+			var c = this.compare(key,node.key);
+			if(c == 0) return node.value;
+			if(c < 0) node = node.left; else node = node.right;
+		}
+		return null;
+	}
+	,remove: function(key) {
+		try {
+			this.root = this.removeLoop(key,this.root);
+			return true;
+		} catch( e ) {
+			haxe_CallStack.lastException = e;
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
+			if( js_Boot.__instanceof(e,String) ) {
+				return false;
+			} else throw(e);
+		}
+	}
+	,exists: function(key) {
+		var node = this.root;
+		while(node != null) {
+			var c = this.compare(key,node.key);
+			if(c == 0) return true; else if(c < 0) node = node.left; else node = node.right;
+		}
+		return false;
+	}
+	,iterator: function() {
+		var ret = [];
+		this.iteratorLoop(this.root,ret);
+		return HxOverrides.iter(ret);
+	}
+	,keys: function() {
+		var ret = [];
+		this.keysLoop(this.root,ret);
+		return HxOverrides.iter(ret);
+	}
+	,setLoop: function(k,v,node) {
+		if(node == null) return new haxe_ds_TreeNode(null,k,v,null);
+		var c = this.compare(k,node.key);
+		if(c == 0) return new haxe_ds_TreeNode(node.left,k,v,node.right,node == null?0:node._height); else if(c < 0) {
+			var nl = this.setLoop(k,v,node.left);
+			return this.balance(nl,node.key,node.value,node.right);
+		} else {
+			var nr = this.setLoop(k,v,node.right);
+			return this.balance(node.left,node.key,node.value,nr);
+		}
+	}
+	,removeLoop: function(k,node) {
+		if(node == null) throw new js__$Boot_HaxeError("Not_found");
+		var c = this.compare(k,node.key);
+		if(c == 0) return this.merge(node.left,node.right); else if(c < 0) return this.balance(this.removeLoop(k,node.left),node.key,node.value,node.right); else return this.balance(node.left,node.key,node.value,this.removeLoop(k,node.right));
+	}
+	,iteratorLoop: function(node,acc) {
+		if(node != null) {
+			this.iteratorLoop(node.left,acc);
+			acc.push(node.value);
+			this.iteratorLoop(node.right,acc);
+		}
+	}
+	,keysLoop: function(node,acc) {
+		if(node != null) {
+			this.keysLoop(node.left,acc);
+			acc.push(node.key);
+			this.keysLoop(node.right,acc);
+		}
+	}
+	,merge: function(t1,t2) {
+		if(t1 == null) return t2;
+		if(t2 == null) return t1;
+		var t = this.minBinding(t2);
+		return this.balance(t1,t.key,t.value,this.removeMinBinding(t2));
+	}
+	,minBinding: function(t) {
+		if(t == null) throw new js__$Boot_HaxeError("Not_found"); else if(t.left == null) return t; else return this.minBinding(t.left);
+	}
+	,removeMinBinding: function(t) {
+		if(t.left == null) return t.right; else return this.balance(this.removeMinBinding(t.left),t.key,t.value,t.right);
+	}
+	,balance: function(l,k,v,r) {
+		var hl;
+		if(l == null) hl = 0; else hl = l._height;
+		var hr;
+		if(r == null) hr = 0; else hr = r._height;
+		if(hl > hr + 2) {
+			if((function($this) {
+				var $r;
+				var _this = l.left;
+				$r = _this == null?0:_this._height;
+				return $r;
+			}(this)) >= (function($this) {
+				var $r;
+				var _this1 = l.right;
+				$r = _this1 == null?0:_this1._height;
+				return $r;
+			}(this))) return new haxe_ds_TreeNode(l.left,l.key,l.value,new haxe_ds_TreeNode(l.right,k,v,r)); else return new haxe_ds_TreeNode(new haxe_ds_TreeNode(l.left,l.key,l.value,l.right.left),l.right.key,l.right.value,new haxe_ds_TreeNode(l.right.right,k,v,r));
+		} else if(hr > hl + 2) {
+			if((function($this) {
+				var $r;
+				var _this2 = r.right;
+				$r = _this2 == null?0:_this2._height;
+				return $r;
+			}(this)) > (function($this) {
+				var $r;
+				var _this3 = r.left;
+				$r = _this3 == null?0:_this3._height;
+				return $r;
+			}(this))) return new haxe_ds_TreeNode(new haxe_ds_TreeNode(l,k,v,r.left),r.key,r.value,r.right); else return new haxe_ds_TreeNode(new haxe_ds_TreeNode(l,k,v,r.left.left),r.left.key,r.left.value,new haxe_ds_TreeNode(r.left.right,r.key,r.value,r.right));
+		} else return new haxe_ds_TreeNode(l,k,v,r,(hl > hr?hl:hr) + 1);
+	}
+	,compare: function(k1,k2) {
+		return Reflect.compare(k1,k2);
+	}
+	,toString: function() {
+		if(this.root == null) return "{}"; else return "{" + this.root.toString() + "}";
+	}
+	,__class__: haxe_ds_BalancedTree
+};
+var haxe_ds_TreeNode = function(l,k,v,r,h) {
+	if(h == null) h = -1;
+	this.left = l;
+	this.key = k;
+	this.value = v;
+	this.right = r;
+	if(h == -1) this._height = ((function($this) {
+		var $r;
+		var _this = $this.left;
+		$r = _this == null?0:_this._height;
+		return $r;
+	}(this)) > (function($this) {
+		var $r;
+		var _this1 = $this.right;
+		$r = _this1 == null?0:_this1._height;
+		return $r;
+	}(this))?(function($this) {
+		var $r;
+		var _this2 = $this.left;
+		$r = _this2 == null?0:_this2._height;
+		return $r;
+	}(this)):(function($this) {
+		var $r;
+		var _this3 = $this.right;
+		$r = _this3 == null?0:_this3._height;
+		return $r;
+	}(this))) + 1; else this._height = h;
+};
+$hxClasses["haxe.ds.TreeNode"] = haxe_ds_TreeNode;
+haxe_ds_TreeNode.__name__ = ["haxe","ds","TreeNode"];
+haxe_ds_TreeNode.prototype = {
+	left: null
+	,right: null
+	,key: null
+	,value: null
+	,_height: null
+	,toString: function() {
+		return (this.left == null?"":this.left.toString() + ", ") + ("" + Std.string(this.key) + "=" + Std.string(this.value)) + (this.right == null?"":", " + this.right.toString());
+	}
+	,__class__: haxe_ds_TreeNode
+};
+var haxe_ds_EnumValueMap = function() {
+	haxe_ds_BalancedTree.call(this);
+};
+$hxClasses["haxe.ds.EnumValueMap"] = haxe_ds_EnumValueMap;
+haxe_ds_EnumValueMap.__name__ = ["haxe","ds","EnumValueMap"];
+haxe_ds_EnumValueMap.__interfaces__ = [haxe_IMap];
+haxe_ds_EnumValueMap.__super__ = haxe_ds_BalancedTree;
+haxe_ds_EnumValueMap.prototype = $extend(haxe_ds_BalancedTree.prototype,{
+	compare: function(k1,k2) {
+		var d = k1[1] - k2[1];
+		if(d != 0) return d;
+		var p1 = k1.slice(2);
+		var p2 = k2.slice(2);
+		if(p1.length == 0 && p2.length == 0) return 0;
+		return this.compareArgs(p1,p2);
+	}
+	,compareArgs: function(a1,a2) {
+		var ld = a1.length - a2.length;
+		if(ld != 0) return ld;
+		var _g1 = 0;
+		var _g = a1.length;
+		while(_g1 < _g) {
+			var i = _g1++;
+			var d = this.compareArg(a1[i],a2[i]);
+			if(d != 0) return d;
+		}
+		return 0;
+	}
+	,compareArg: function(v1,v2) {
+		if(Reflect.isEnumValue(v1) && Reflect.isEnumValue(v2)) return this.compare(v1,v2); else if((v1 instanceof Array) && v1.__enum__ == null && ((v2 instanceof Array) && v2.__enum__ == null)) return this.compareArgs(v1,v2); else return Reflect.compare(v1,v2);
+	}
+	,__class__: haxe_ds_EnumValueMap
+});
+var haxe_ds__$HashMap_HashMap_$Impl_$ = {};
+$hxClasses["haxe.ds._HashMap.HashMap_Impl_"] = haxe_ds__$HashMap_HashMap_$Impl_$;
+haxe_ds__$HashMap_HashMap_$Impl_$.__name__ = ["haxe","ds","_HashMap","HashMap_Impl_"];
+haxe_ds__$HashMap_HashMap_$Impl_$._new = function() {
+	return new haxe_ds__$HashMap_HashMapData();
+};
+haxe_ds__$HashMap_HashMap_$Impl_$.set = function(this1,k,v) {
+	this1.keys.set(k.hashCode(),k);
+	this1.values.set(k.hashCode(),v);
+};
+haxe_ds__$HashMap_HashMap_$Impl_$.get = function(this1,k) {
+	return this1.values.get(k.hashCode());
+};
+haxe_ds__$HashMap_HashMap_$Impl_$.exists = function(this1,k) {
+	return this1.values.exists(k.hashCode());
+};
+haxe_ds__$HashMap_HashMap_$Impl_$.remove = function(this1,k) {
+	this1.values.remove(k.hashCode());
+	return this1.keys.remove(k.hashCode());
+};
+haxe_ds__$HashMap_HashMap_$Impl_$.keys = function(this1) {
+	return this1.keys.iterator();
+};
+haxe_ds__$HashMap_HashMap_$Impl_$.iterator = function(this1) {
+	return this1.values.iterator();
+};
+var haxe_ds__$HashMap_HashMapData = function() {
+	this.keys = new haxe_ds_IntMap();
+	this.values = new haxe_ds_IntMap();
+};
+$hxClasses["haxe.ds._HashMap.HashMapData"] = haxe_ds__$HashMap_HashMapData;
+haxe_ds__$HashMap_HashMapData.__name__ = ["haxe","ds","_HashMap","HashMapData"];
+haxe_ds__$HashMap_HashMapData.prototype = {
+	keys: null
+	,values: null
+	,__class__: haxe_ds__$HashMap_HashMapData
 };
 var haxe_ds_IntMap = function() {
 	this.h = { };
@@ -603,6 +1143,70 @@ haxe_ds_IntMap.prototype = {
 		return s_b;
 	}
 	,__class__: haxe_ds_IntMap
+};
+var haxe_ds_ObjectMap = function() {
+	this.h = { };
+	this.h.__keys__ = { };
+};
+$hxClasses["haxe.ds.ObjectMap"] = haxe_ds_ObjectMap;
+haxe_ds_ObjectMap.__name__ = ["haxe","ds","ObjectMap"];
+haxe_ds_ObjectMap.__interfaces__ = [haxe_IMap];
+haxe_ds_ObjectMap.assignId = function(obj) {
+	return obj.__id__ = ++haxe_ds_ObjectMap.count;
+};
+haxe_ds_ObjectMap.getId = function(obj) {
+	return obj.__id__;
+};
+haxe_ds_ObjectMap.prototype = {
+	h: null
+	,set: function(key,value) {
+		var id = key.__id__ || (key.__id__ = ++haxe_ds_ObjectMap.count);
+		this.h[id] = value;
+		this.h.__keys__[id] = key;
+	}
+	,get: function(key) {
+		return this.h[key.__id__];
+	}
+	,exists: function(key) {
+		return this.h.__keys__[key.__id__] != null;
+	}
+	,remove: function(key) {
+		var id = key.__id__;
+		if(this.h.__keys__[id] == null) return false;
+		delete(this.h[id]);
+		delete(this.h.__keys__[id]);
+		return true;
+	}
+	,keys: function() {
+		var a = [];
+		for( var key in this.h.__keys__ ) {
+		if(this.h.hasOwnProperty(key)) a.push(this.h.__keys__[key]);
+		}
+		return HxOverrides.iter(a);
+	}
+	,iterator: function() {
+		return { ref : this.h, it : this.keys(), hasNext : function() {
+			return this.it.hasNext();
+		}, next : function() {
+			var i = this.it.next();
+			return this.ref[i.__id__];
+		}};
+	}
+	,toString: function() {
+		var s_b = "";
+		s_b += "{";
+		var it = this.keys();
+		while( it.hasNext() ) {
+			var i = it.next();
+			s_b += Std.string(Std.string(i));
+			s_b += " => ";
+			s_b += Std.string(Std.string(this.h[i.__id__]));
+			if(it.hasNext()) s_b += ", ";
+		}
+		s_b += "}";
+		return s_b;
+	}
+	,__class__: haxe_ds_ObjectMap
 };
 var haxe_ds_Option = $hxClasses["haxe.ds.Option"] = { __ename__ : ["haxe","ds","Option"], __constructs__ : ["Some","None"] };
 haxe_ds_Option.Some = function(v) { var $x = ["Some",0,v]; $x.__enum__ = haxe_ds_Option; $x.toString = $estr; return $x; };
@@ -768,6 +1372,514 @@ haxe_ds__$Vector_Vector_$Impl_$.fromArrayCopy = function(array) {
 		vec[i] = array[i];
 	}
 	return vec;
+};
+var haxe_ds_WeakMap = function() {
+	throw new js__$Boot_HaxeError("Not implemented for this platform");
+};
+$hxClasses["haxe.ds.WeakMap"] = haxe_ds_WeakMap;
+haxe_ds_WeakMap.__name__ = ["haxe","ds","WeakMap"];
+haxe_ds_WeakMap.__interfaces__ = [haxe_IMap];
+haxe_ds_WeakMap.prototype = {
+	set: function(key,value) {
+	}
+	,get: function(key) {
+		return null;
+	}
+	,exists: function(key) {
+		return false;
+	}
+	,remove: function(key) {
+		return false;
+	}
+	,keys: function() {
+		return null;
+	}
+	,iterator: function() {
+		return null;
+	}
+	,toString: function() {
+		return null;
+	}
+	,__class__: haxe_ds_WeakMap
+};
+var haxe_xml_Parser = function() { };
+$hxClasses["haxe.xml.Parser"] = haxe_xml_Parser;
+haxe_xml_Parser.__name__ = ["haxe","xml","Parser"];
+haxe_xml_Parser.parse = function(str,strict) {
+	if(strict == null) strict = false;
+	var doc = Xml.createDocument();
+	haxe_xml_Parser.doParse(str,strict,0,doc);
+	return doc;
+};
+haxe_xml_Parser.doParse = function(str,strict,p,parent) {
+	if(p == null) p = 0;
+	var xml = null;
+	var state = 1;
+	var next = 1;
+	var aname = null;
+	var start = 0;
+	var nsubs = 0;
+	var nbrackets = 0;
+	var c = str.charCodeAt(p);
+	var buf = new StringBuf();
+	var escapeNext = 1;
+	var attrValQuote = -1;
+	while(!(c != c)) {
+		switch(state) {
+		case 0:
+			switch(c) {
+			case 10:case 13:case 9:case 32:
+				break;
+			default:
+				state = next;
+				continue;
+			}
+			break;
+		case 1:
+			switch(c) {
+			case 60:
+				state = 0;
+				next = 2;
+				break;
+			default:
+				start = p;
+				state = 13;
+				continue;
+			}
+			break;
+		case 13:
+			if(c == 60) {
+				buf.addSub(str,start,p - start);
+				var child = Xml.createPCData(buf.b);
+				buf = new StringBuf();
+				parent.addChild(child);
+				nsubs++;
+				state = 0;
+				next = 2;
+			} else if(c == 38) {
+				buf.addSub(str,start,p - start);
+				state = 18;
+				escapeNext = 13;
+				start = p + 1;
+			}
+			break;
+		case 17:
+			if(c == 93 && str.charCodeAt(p + 1) == 93 && str.charCodeAt(p + 2) == 62) {
+				var child1 = Xml.createCData(HxOverrides.substr(str,start,p - start));
+				parent.addChild(child1);
+				nsubs++;
+				p += 2;
+				state = 1;
+			}
+			break;
+		case 2:
+			switch(c) {
+			case 33:
+				if(str.charCodeAt(p + 1) == 91) {
+					p += 2;
+					if(HxOverrides.substr(str,p,6).toUpperCase() != "CDATA[") throw new js__$Boot_HaxeError("Expected <![CDATA[");
+					p += 5;
+					state = 17;
+					start = p + 1;
+				} else if(str.charCodeAt(p + 1) == 68 || str.charCodeAt(p + 1) == 100) {
+					if(HxOverrides.substr(str,p + 2,6).toUpperCase() != "OCTYPE") throw new js__$Boot_HaxeError("Expected <!DOCTYPE");
+					p += 8;
+					state = 16;
+					start = p + 1;
+				} else if(str.charCodeAt(p + 1) != 45 || str.charCodeAt(p + 2) != 45) throw new js__$Boot_HaxeError("Expected <!--"); else {
+					p += 2;
+					state = 15;
+					start = p + 1;
+				}
+				break;
+			case 63:
+				state = 14;
+				start = p;
+				break;
+			case 47:
+				if(parent == null) throw new js__$Boot_HaxeError("Expected node name");
+				start = p + 1;
+				state = 0;
+				next = 10;
+				break;
+			default:
+				state = 3;
+				start = p;
+				continue;
+			}
+			break;
+		case 3:
+			if(!(c >= 97 && c <= 122 || c >= 65 && c <= 90 || c >= 48 && c <= 57 || c == 58 || c == 46 || c == 95 || c == 45)) {
+				if(p == start) throw new js__$Boot_HaxeError("Expected node name");
+				xml = Xml.createElement(HxOverrides.substr(str,start,p - start));
+				parent.addChild(xml);
+				nsubs++;
+				state = 0;
+				next = 4;
+				continue;
+			}
+			break;
+		case 4:
+			switch(c) {
+			case 47:
+				state = 11;
+				break;
+			case 62:
+				state = 9;
+				break;
+			default:
+				state = 5;
+				start = p;
+				continue;
+			}
+			break;
+		case 5:
+			if(!(c >= 97 && c <= 122 || c >= 65 && c <= 90 || c >= 48 && c <= 57 || c == 58 || c == 46 || c == 95 || c == 45)) {
+				var tmp;
+				if(start == p) throw new js__$Boot_HaxeError("Expected attribute name");
+				tmp = HxOverrides.substr(str,start,p - start);
+				aname = tmp;
+				if(xml.exists(aname)) throw new js__$Boot_HaxeError("Duplicate attribute");
+				state = 0;
+				next = 6;
+				continue;
+			}
+			break;
+		case 6:
+			switch(c) {
+			case 61:
+				state = 0;
+				next = 7;
+				break;
+			default:
+				throw new js__$Boot_HaxeError("Expected =");
+			}
+			break;
+		case 7:
+			switch(c) {
+			case 34:case 39:
+				buf = new StringBuf();
+				state = 8;
+				start = p + 1;
+				attrValQuote = c;
+				break;
+			default:
+				throw new js__$Boot_HaxeError("Expected \"");
+			}
+			break;
+		case 8:
+			switch(c) {
+			case 38:
+				buf.addSub(str,start,p - start);
+				state = 18;
+				escapeNext = 8;
+				start = p + 1;
+				break;
+			case 62:
+				if(strict) throw new js__$Boot_HaxeError("Invalid unescaped " + String.fromCharCode(c) + " in attribute value"); else if(c == attrValQuote) {
+					buf.addSub(str,start,p - start);
+					var val = buf.b;
+					buf = new StringBuf();
+					xml.set(aname,val);
+					state = 0;
+					next = 4;
+				}
+				break;
+			case 60:
+				if(strict) throw new js__$Boot_HaxeError("Invalid unescaped " + String.fromCharCode(c) + " in attribute value"); else if(c == attrValQuote) {
+					buf.addSub(str,start,p - start);
+					var val1 = buf.b;
+					buf = new StringBuf();
+					xml.set(aname,val1);
+					state = 0;
+					next = 4;
+				}
+				break;
+			default:
+				if(c == attrValQuote) {
+					buf.addSub(str,start,p - start);
+					var val2 = buf.b;
+					buf = new StringBuf();
+					xml.set(aname,val2);
+					state = 0;
+					next = 4;
+				}
+			}
+			break;
+		case 9:
+			p = haxe_xml_Parser.doParse(str,strict,p,xml);
+			start = p;
+			state = 1;
+			break;
+		case 11:
+			switch(c) {
+			case 62:
+				state = 1;
+				break;
+			default:
+				throw new js__$Boot_HaxeError("Expected >");
+			}
+			break;
+		case 12:
+			switch(c) {
+			case 62:
+				if(nsubs == 0) parent.addChild(Xml.createPCData(""));
+				return p;
+			default:
+				throw new js__$Boot_HaxeError("Expected >");
+			}
+			break;
+		case 10:
+			if(!(c >= 97 && c <= 122 || c >= 65 && c <= 90 || c >= 48 && c <= 57 || c == 58 || c == 46 || c == 95 || c == 45)) {
+				if(start == p) throw new js__$Boot_HaxeError("Expected node name");
+				var v = HxOverrides.substr(str,start,p - start);
+				if(v != (function($this) {
+					var $r;
+					if(parent.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element but found " + parent.nodeType);
+					$r = parent.nodeName;
+					return $r;
+				}(this))) throw new js__$Boot_HaxeError("Expected </" + (function($this) {
+					var $r;
+					if(parent.nodeType != Xml.Element) throw "Bad node type, expected Element but found " + parent.nodeType;
+					$r = parent.nodeName;
+					return $r;
+				}(this)) + ">");
+				state = 0;
+				next = 12;
+				continue;
+			}
+			break;
+		case 15:
+			if(c == 45 && str.charCodeAt(p + 1) == 45 && str.charCodeAt(p + 2) == 62) {
+				var xml1 = Xml.createComment(HxOverrides.substr(str,start,p - start));
+				parent.addChild(xml1);
+				nsubs++;
+				p += 2;
+				state = 1;
+			}
+			break;
+		case 16:
+			if(c == 91) nbrackets++; else if(c == 93) nbrackets--; else if(c == 62 && nbrackets == 0) {
+				var xml2 = Xml.createDocType(HxOverrides.substr(str,start,p - start));
+				parent.addChild(xml2);
+				nsubs++;
+				state = 1;
+			}
+			break;
+		case 14:
+			if(c == 63 && str.charCodeAt(p + 1) == 62) {
+				p++;
+				var str1 = HxOverrides.substr(str,start + 1,p - start - 2);
+				var xml3 = Xml.createProcessingInstruction(str1);
+				parent.addChild(xml3);
+				nsubs++;
+				state = 1;
+			}
+			break;
+		case 18:
+			if(c == 59) {
+				var s = HxOverrides.substr(str,start,p - start);
+				if(s.charCodeAt(0) == 35) {
+					var c1;
+					if(s.charCodeAt(1) == 120) c1 = Std.parseInt("0" + HxOverrides.substr(s,1,s.length - 1)); else c1 = Std.parseInt(HxOverrides.substr(s,1,s.length - 1));
+					buf.b += String.fromCharCode(c1);
+				} else if(!haxe_xml_Parser.escapes.exists(s)) {
+					if(strict) throw new js__$Boot_HaxeError("Undefined entity: " + s);
+					buf.b += Std.string("&" + s + ";");
+				} else buf.add(haxe_xml_Parser.escapes.get(s));
+				start = p + 1;
+				state = escapeNext;
+			} else if(!(c >= 97 && c <= 122 || c >= 65 && c <= 90 || c >= 48 && c <= 57 || c == 58 || c == 46 || c == 95 || c == 45) && c != 35) {
+				if(strict) throw new js__$Boot_HaxeError("Invalid character in entity: " + String.fromCharCode(c));
+				buf.b += "&";
+				buf.addSub(str,start,p - start);
+				p--;
+				start = p + 1;
+				state = escapeNext;
+			}
+			break;
+		}
+		c = StringTools.fastCodeAt(str,++p);
+	}
+	if(state == 1) {
+		start = p;
+		state = 13;
+	}
+	if(state == 13) {
+		if(p != start || nsubs == 0) {
+			buf.addSub(str,start,p - start);
+			var xml4 = Xml.createPCData(buf.b);
+			parent.addChild(xml4);
+			nsubs++;
+		}
+		return p;
+	}
+	if(!strict && state == 18 && escapeNext == 13) {
+		buf.b += "&";
+		buf.addSub(str,start,p - start);
+		var xml5 = Xml.createPCData(buf.b);
+		parent.addChild(xml5);
+		nsubs++;
+		return p;
+	}
+	throw new js__$Boot_HaxeError("Unexpected end");
+};
+haxe_xml_Parser.isValidChar = function(c) {
+	return c >= 97 && c <= 122 || c >= 65 && c <= 90 || c >= 48 && c <= 57 || c == 58 || c == 46 || c == 95 || c == 45;
+};
+var haxe_xml_Printer = function(pretty) {
+	this.output = new StringBuf();
+	this.pretty = pretty;
+};
+$hxClasses["haxe.xml.Printer"] = haxe_xml_Printer;
+haxe_xml_Printer.__name__ = ["haxe","xml","Printer"];
+haxe_xml_Printer.print = function(xml,pretty) {
+	if(pretty == null) pretty = false;
+	var printer = new haxe_xml_Printer(pretty);
+	printer.writeNode(xml,"");
+	return printer.output.b;
+};
+haxe_xml_Printer.prototype = {
+	output: null
+	,pretty: null
+	,writeNode: function(value,tabs) {
+		var _g = value.nodeType;
+		switch(_g) {
+		case 2:
+			this.output.b += Std.string(tabs + "<![CDATA[");
+			this.write(StringTools.trim((function($this) {
+				var $r;
+				if(value.nodeType == Xml.Document || value.nodeType == Xml.Element) throw new js__$Boot_HaxeError("Bad node type, unexpected " + value.nodeType);
+				$r = value.nodeValue;
+				return $r;
+			}(this))));
+			this.output.b += "]]>";
+			if(this.pretty) this.output.b += "";
+			break;
+		case 3:
+			var commentContent;
+			if(value.nodeType == Xml.Document || value.nodeType == Xml.Element) throw new js__$Boot_HaxeError("Bad node type, unexpected " + value.nodeType);
+			commentContent = value.nodeValue;
+			commentContent = new EReg("[\n\r\t]+","g").replace(commentContent,"");
+			commentContent = "<!--" + commentContent + "-->";
+			if(tabs == null) this.output.b += "null"; else this.output.b += "" + tabs;
+			this.write(StringTools.trim(commentContent));
+			if(this.pretty) this.output.b += "";
+			break;
+		case 6:
+			var $it0 = (function($this) {
+				var $r;
+				if(value.nodeType != Xml.Document && value.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element or Document but found " + value.nodeType);
+				$r = HxOverrides.iter(value.children);
+				return $r;
+			}(this));
+			while( $it0.hasNext() ) {
+				var child = $it0.next();
+				this.writeNode(child,tabs);
+			}
+			break;
+		case 0:
+			this.output.b += Std.string(tabs + "<");
+			this.write((function($this) {
+				var $r;
+				if(value.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element but found " + value.nodeType);
+				$r = value.nodeName;
+				return $r;
+			}(this)));
+			var $it1 = value.attributes();
+			while( $it1.hasNext() ) {
+				var attribute = $it1.next();
+				this.output.b += Std.string(" " + attribute + "=\"");
+				this.write(StringTools.htmlEscape(value.get(attribute),true));
+				this.output.b += "\"";
+			}
+			if(this.hasChildren(value)) {
+				this.output.b += ">";
+				if(this.pretty) this.output.b += "";
+				var $it2 = (function($this) {
+					var $r;
+					if(value.nodeType != Xml.Document && value.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element or Document but found " + value.nodeType);
+					$r = HxOverrides.iter(value.children);
+					return $r;
+				}(this));
+				while( $it2.hasNext() ) {
+					var child1 = $it2.next();
+					this.writeNode(child1,this.pretty?tabs + "\t":tabs);
+				}
+				this.output.b += Std.string(tabs + "</");
+				this.write((function($this) {
+					var $r;
+					if(value.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element but found " + value.nodeType);
+					$r = value.nodeName;
+					return $r;
+				}(this)));
+				this.output.b += ">";
+				if(this.pretty) this.output.b += "";
+			} else {
+				this.output.b += "/>";
+				if(this.pretty) this.output.b += "";
+			}
+			break;
+		case 1:
+			var nodeValue;
+			if(value.nodeType == Xml.Document || value.nodeType == Xml.Element) throw new js__$Boot_HaxeError("Bad node type, unexpected " + value.nodeType);
+			nodeValue = value.nodeValue;
+			if(nodeValue.length != 0) {
+				this.write(tabs + StringTools.htmlEscape(nodeValue));
+				if(this.pretty) this.output.b += "";
+			}
+			break;
+		case 5:
+			this.write("<?" + (function($this) {
+				var $r;
+				if(value.nodeType == Xml.Document || value.nodeType == Xml.Element) throw new js__$Boot_HaxeError("Bad node type, unexpected " + value.nodeType);
+				$r = value.nodeValue;
+				return $r;
+			}(this)) + "?>");
+			break;
+		case 4:
+			this.write("<!DOCTYPE " + (function($this) {
+				var $r;
+				if(value.nodeType == Xml.Document || value.nodeType == Xml.Element) throw new js__$Boot_HaxeError("Bad node type, unexpected " + value.nodeType);
+				$r = value.nodeValue;
+				return $r;
+			}(this)) + ">");
+			break;
+		}
+	}
+	,write: function(input) {
+		if(input == null) this.output.b += "null"; else this.output.b += "" + input;
+	}
+	,newline: function() {
+		if(this.pretty) this.output.b += "";
+	}
+	,hasChildren: function(value) {
+		var $it0 = (function($this) {
+			var $r;
+			if(value.nodeType != Xml.Document && value.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element or Document but found " + value.nodeType);
+			$r = HxOverrides.iter(value.children);
+			return $r;
+		}(this));
+		while( $it0.hasNext() ) {
+			var child = $it0.next();
+			var _g = child.nodeType;
+			switch(_g) {
+			case 0:case 1:
+				return true;
+			case 2:case 3:
+				if(StringTools.ltrim((function($this) {
+					var $r;
+					if(child.nodeType == Xml.Document || child.nodeType == Xml.Element) throw new js__$Boot_HaxeError("Bad node type, unexpected " + child.nodeType);
+					$r = child.nodeValue;
+					return $r;
+				}(this))).length != 0) return true;
+				break;
+			default:
+			}
+		}
+		return false;
+	}
+	,__class__: haxe_xml_Printer
 };
 var js__$Boot_HaxeError = function(val) {
 	Error.call(this);
@@ -1489,23 +2601,24 @@ var spark_Project = function(projectFile,onload) {
 	Spark.loadXML(projectFile,function(doc) {
 		var assets;
 		var asset;
-		var project = doc.firstElementChild;
-		if(project == null || project.nodeName != "project") throw new js__$Boot_HaxeError("Invalid Spark project file: " + projectFile);
-		spark_Util.mergeElement(_g.info,project);
-		var _g1 = 0;
-		var _g2 = project.getElementsByTagName("assets");
-		while(_g1 < _g2.length) {
-			var assets1 = _g2[_g1];
-			++_g1;
-			var assetPath = assets1.getAttribute("path");
-			var _g3 = 0;
-			var _g4 = assets1.getElementsByTagName("asset");
-			while(_g3 < _g4.length) {
-				var asset1 = _g4[_g3];
-				++_g3;
-				var src = asset1.getAttribute("src");
-				var id = asset1.getAttribute("id");
-				var ref = asset1.getAttribute("class");
+		var project = doc.firstElement();
+		if(project == null || (function($this) {
+			var $r;
+			if(project.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element but found " + project.nodeType);
+			$r = project.nodeName;
+			return $r;
+		}(this)) != "project") throw new js__$Boot_HaxeError("Invalid Spark project file: " + projectFile);
+		spark_Util.mergeXml(_g.info,project);
+		var $it0 = project.elementsNamed("assets");
+		while( $it0.hasNext() ) {
+			var assets1 = $it0.next();
+			var assetPath = assets1.get("path");
+			var $it1 = assets1.elementsNamed("asset");
+			while( $it1.hasNext() ) {
+				var asset1 = $it1.next();
+				var src = asset1.get("src");
+				var id = asset1.get("id");
+				var ref = asset1.get("class");
 				if(id == null) id = src;
 				if(src != null) {
 					var path = _g.info.path + assetPath + src;
@@ -1682,17 +2795,18 @@ spark_Scene.prototype = {
 		if(h == null) h = w * Spark.canvas.height / Spark.canvas.width;
 		this.camera.m.s.set(w / 2,h / 2);
 	}
-	,newBackgroundLayer: function(texture,tiled) {
-		if(tiled == null) tiled = true;
-		var layer = new spark_object_layer_BackgroundLayer(texture,tiled);
+	,newLayer: function(classRef,initargs) {
+		var layer = Type.createInstance(classRef,initargs);
 		this.layers.push(layer);
 		return layer;
 	}
+	,newBackgroundLayer: function(texture,tiled) {
+		if(tiled == null) tiled = true;
+		return this.newLayer(spark_object_layer_BackgroundLayer,[texture,tiled]);
+	}
 	,newSpriteLayer: function(n) {
 		if(n == null) n = 100;
-		var layer = new spark_object_layer_SpriteLayer(n);
-		this.layers.push(layer);
-		return layer;
+		return this.newLayer(spark_object_layer_SpriteLayer,[n]);
 	}
 	,run: function() {
 		this.framecount = 0;
@@ -1849,6 +2963,17 @@ spark_Util.lerp = function(p,q,k,max) {
 	if(max == null) max = 1;
 	return p + (q - p) * k / max;
 };
+spark_Util.parseBool = function(s) {
+	var _g = s.toLowerCase();
+	switch(_g) {
+	case "true":case "yes":case "on":case "1":
+		return true;
+	case "false":case "no":case "off":case "0":
+		return false;
+	default:
+		throw new js__$Boot_HaxeError("Invalid boolean value: " + s);
+	}
+};
 spark_Util.merge = function(a,b) {
 	var i;
 	var fields = Reflect.fields(b);
@@ -1859,15 +2984,40 @@ spark_Util.merge = function(a,b) {
 		Reflect.setField(a,fields[i1],Reflect.field(b,fields[i1]));
 	}
 };
-spark_Util.mergeElement = function(obj,node) {
+spark_Util.mergeXml = function(obj,xml) {
 	var i;
 	var fields = Reflect.fields(obj);
 	var _g1 = 0;
 	var _g = fields.length;
 	while(_g1 < _g) {
 		var i1 = _g1++;
-		var attr = node.getAttribute(fields[i1]);
-		if(attr != null) obj[fields[i1]] = attr;
+		spark_Util.mergeAtt(obj,fields[i1],xml,Type["typeof"](Reflect.field(obj,fields[i1])));
+	}
+};
+spark_Util.mergeAtt = function(obj,field,xml,valType) {
+	if(xml.exists(field)) {
+		var val = xml.get(field);
+		if(valType == null) {
+		} else switch(valType[1]) {
+		case 1:
+			val = Std.parseInt(val);
+			break;
+		case 2:
+			val = Std.parseFloat(val);
+			break;
+		case 3:
+			val = spark_Util.parseBool(val);
+			break;
+		case 6:
+			var c = valType[2];
+			if(Type.getClassName(c) != "String") throw new js__$Boot_HaxeError("Expected attribute class of String, got " + Type.getClassName(c));
+			break;
+		case 0:
+			break;
+		default:
+			throw new js__$Boot_HaxeError("Cannot parse attribute of ValueType " + Std.string(valType));
+		}
+		obj[field] = val;
 	}
 };
 var spark_Vec = $hx_exports.spark.Vec = function(x,y) {
@@ -2013,28 +3163,53 @@ spark_anim_Rig.prototype = {
 var spark_anim_Timeline = function(src) {
 	var _g = this;
 	spark_Asset.call(this,src);
-	this.tweens = null;
-	this.data = { fps : 30, duration : 30, loop : false, tracks : null, events : []};
-	Spark.loadJSON(src,function(json) {
-		spark_Util.merge(_g.data,json);
+	this.data = { fps : 30, duration : 30, loop : false, tracks : [], events : []};
+	Spark.loadXML(src,function(doc) {
+		var timeline = doc.firstElement();
+		if(timeline == null || (function($this) {
+			var $r;
+			if(timeline.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element but found " + timeline.nodeType);
+			$r = timeline.nodeName;
+			return $r;
+		}(this)) != "timeline") throw new js__$Boot_HaxeError("Invalid timeline XML: " + src);
+		spark_Util.mergeAtt(_g.data,"fps",timeline,ValueType.TInt);
+		spark_Util.mergeAtt(_g.data,"duration",timeline,ValueType.TInt);
+		spark_Util.mergeAtt(_g.data,"loop",timeline,ValueType.TBool);
+		var $it0 = timeline.elementsNamed("events");
+		while( $it0.hasNext() ) {
+			var events = $it0.next();
+			var $it1 = events.elementsNamed("event");
+			while( $it1.hasNext() ) {
+				var event = $it1.next();
+				var frame = event.get("frame");
+				var name = event.get("name");
+				if(frame == null || name == null) continue;
+				_g.data.events.push({ frame : Std.parseInt(frame), event : name});
+			}
+		}
 		_g.data.events.sort(function(a,b) {
 			return a.frame - b.frame;
 		});
-		if(_g.data.tracks != null) {
-			var i;
-			var fields = Reflect.fields(_g.data.tracks);
-			_g.tweens = new haxe_ds_StringMap();
-			var _g2 = 0;
-			var _g1 = fields.length;
-			while(_g2 < _g1) {
-				var i1 = _g2++;
-				var field = fields[i1];
-				var track = Reflect.field(_g.data.tracks,field);
-				var keys = track.keys;
-				var method = track.method;
-				if(keys == null || keys.length < 2) continue;
+		var $it2 = timeline.elementsNamed("tracks");
+		while( $it2.hasNext() ) {
+			var tracks = $it2.next();
+			var $it3 = tracks.elementsNamed("track");
+			while( $it3.hasNext() ) {
+				var track = $it3.next();
+				var field = track.get("field");
+				var method = track.get("method");
+				var keys = [];
+				if(field == null) continue;
 				if(method == null) method = "cubic";
-				_g.tweens.set(field,new spark_anim_Tween(keys,_g.data.fps,_g.data.duration,method));
+				var $it4 = track.elementsNamed("key");
+				while( $it4.hasNext() ) {
+					var key = $it4.next();
+					var frame1 = key.get("frame");
+					var value = key.get("value");
+					if(frame1 == null || value == null) continue;
+					keys.push({ frame : Std.parseInt(frame1), value : parseFloat(value)});
+				}
+				_g.data.tracks.push({ field : field, keys : keys, tween : new spark_anim_Tween(keys,_g.data.fps,_g.data.duration,method)});
 			}
 		}
 		_g.loaded = true;
@@ -2045,16 +3220,15 @@ spark_anim_Timeline.__name__ = ["spark","anim","Timeline"];
 spark_anim_Timeline.__super__ = spark_Asset;
 spark_anim_Timeline.prototype = $extend(spark_Asset.prototype,{
 	data: null
-	,tweens: null
 	,playOn: function(obj,onevent) {
 		var rig = new spark_anim_Rig();
 		var prop;
-		if(this.tweens != null) {
-			var $it0 = this.tweens.keys();
-			while( $it0.hasNext() ) {
-				var prop1 = $it0.next();
-				this.tweens.get(prop1).playOn(obj,prop1,this.data.loop);
-			}
+		var _g = 0;
+		var _g1 = this.data.tracks;
+		while(_g < _g1.length) {
+			var track = _g1[_g];
+			++_g;
+			track.tween.playOn(obj,track.field,this.data.loop);
 		}
 		var timeline = this;
 		var eventIndex = 0;
@@ -2074,8 +3248,19 @@ spark_anim_Timeline.prototype = $extend(spark_Asset.prototype,{
 	}
 	,__class__: spark_anim_Timeline
 });
-var spark_anim_Tween = function(keys,fps,duration,interp) {
-	if(interp == null) interp = "cubic";
+var spark_anim_InterpMethod = $hxClasses["spark.anim.InterpMethod"] = { __ename__ : ["spark","anim","InterpMethod"], __constructs__ : ["Step","Linear","Cubic"] };
+spark_anim_InterpMethod.Step = ["Step",0];
+spark_anim_InterpMethod.Step.toString = $estr;
+spark_anim_InterpMethod.Step.__enum__ = spark_anim_InterpMethod;
+spark_anim_InterpMethod.Linear = ["Linear",1];
+spark_anim_InterpMethod.Linear.toString = $estr;
+spark_anim_InterpMethod.Linear.__enum__ = spark_anim_InterpMethod;
+spark_anim_InterpMethod.Cubic = ["Cubic",2];
+spark_anim_InterpMethod.Cubic.toString = $estr;
+spark_anim_InterpMethod.Cubic.__enum__ = spark_anim_InterpMethod;
+spark_anim_InterpMethod.__empty_constructs__ = [spark_anim_InterpMethod.Step,spark_anim_InterpMethod.Linear,spark_anim_InterpMethod.Cubic];
+var spark_anim_Tween = function(keys,fps,duration,method) {
+	if(method == null) method = "cubic";
 	var i = 0;
 	var k;
 	this.fps = fps;
@@ -2115,7 +3300,7 @@ var spark_anim_Tween = function(keys,fps,duration,interp) {
 		if(i2 == n.frame) {
 			this.keys[i2 - 1] = n.value;
 			p = hks.shift();
-		} else if(interp != null) switch(interp) {
+		} else if(method != null) switch(method) {
 		case "step":
 			this.keys[i2 - 1] = p.value;
 			break;
@@ -2646,10 +3831,30 @@ spark_collision_shape_Segment.prototype = $extend(spark_collision_Shape.prototyp
 var spark_graphics_Emitter = function(src) {
 	var _g = this;
 	spark_Asset.call(this,src);
-	this.data = { texture : null, compositeOperation : "screen", startAlpha : 1.0, endAlpha : 1.0, minLife : 1.0, maxLife : 1.5, startScale : 1.0, endScale : 1.0, spread : 180.0, minSpeed : 50.0, maxSpeed : 100.0, angle : 0.0, minAngularVelocity : -90.0, maxAngularVelocity : 90.0};
+	this.data = { texture : null, blend : "screen", startAlpha : 1.0, endAlpha : 1.0, minLife : 1.0, maxLife : 1.5, startScale : 1.0, endScale : 1.0, spread : 180.0, minSpeed : 50.0, maxSpeed : 100.0, angle : 0.0, minAngularVelocity : -90.0, maxAngularVelocity : 90.0};
 	this.texture = null;
-	Spark.loadJSON(src,function(json) {
-		spark_Util.merge(_g.data,json);
+	Spark.loadXML(src,function(doc) {
+		var emitter = doc.firstElement();
+		if(emitter == null || (function($this) {
+			var $r;
+			if(emitter.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element but found " + emitter.nodeType);
+			$r = emitter.nodeName;
+			return $r;
+		}(this)) != "emitter") throw new js__$Boot_HaxeError("Invalid emitter XML: " + src);
+		spark_Util.mergeAtt(_g.data,"texture",emitter);
+		spark_Util.mergeAtt(_g.data,"blend",emitter);
+		spark_Util.mergeAtt(_g.data,"startAlpha",emitter,ValueType.TFloat);
+		spark_Util.mergeAtt(_g.data,"endAlpha",emitter,ValueType.TFloat);
+		spark_Util.mergeAtt(_g.data,"minLife",emitter,ValueType.TFloat);
+		spark_Util.mergeAtt(_g.data,"maxLife",emitter,ValueType.TFloat);
+		spark_Util.mergeAtt(_g.data,"startScale",emitter,ValueType.TFloat);
+		spark_Util.mergeAtt(_g.data,"endScale",emitter,ValueType.TFloat);
+		spark_Util.mergeAtt(_g.data,"spread",emitter,ValueType.TFloat);
+		spark_Util.mergeAtt(_g.data,"minSpeed",emitter,ValueType.TFloat);
+		spark_Util.mergeAtt(_g.data,"maxSpeed",emitter,ValueType.TFloat);
+		spark_Util.mergeAtt(_g.data,"angle",emitter,ValueType.TFloat);
+		spark_Util.mergeAtt(_g.data,"minAngularVelocity",emitter,ValueType.TFloat);
+		spark_Util.mergeAtt(_g.data,"maxAngularVelocity",emitter,ValueType.TFloat);
 		if(_g.data.texture != null) _g.texture = spark_Game.getTexture(_g.data.texture);
 		_g.particleBehavior = function(actor,step,data) {
 			var s = actor;
@@ -2659,10 +3864,10 @@ var spark_graphics_Emitter = function(src) {
 				s.dead = true;
 			}
 			var scale = spark_Util.lerp(_g.data.startScale,_g.data.endScale,p.age,p.life);
-			s.m.translate(p.v.x * step,p.v.y * step);
+			s.m.translate(p.vx * step,p.vy * step);
 			s.m.rotate(p.w * step);
 			s.m.s.set(scale,scale);
-			s.contextSettings.globalAlpha = spark_Util.lerp(_g.data.startAlpha,_g.data.endAlpha,p.age,p.life);
+			s.alpha = spark_Util.lerp(_g.data.startAlpha,_g.data.endAlpha,p.age,p.life);
 		};
 		_g.loaded = true;
 	});
@@ -2683,14 +3888,16 @@ spark_graphics_Emitter.prototype = $extend(spark_Asset.prototype,{
 			var i1 = _g++;
 			var sprite = layer.newSprite();
 			sprite.setTexture(this.texture);
-			sprite.contextSettings.globalCompositeOperation = this.data.compositeOperation;
+			sprite.blend = this.data.blend;
 			var speed = spark_Util.rand(this.data.minSpeed,this.data.maxSpeed);
 			var spread = spark_Util.rand(-this.data.spread,this.data.spread);
 			sprite.m.p.set(x,y);
 			sprite.m.set_angle(this.data.angle + r);
 			var life = spark_Util.rand(this.data.minLife,this.data.maxLife);
 			var w = spark_Util.rand(this.data.minAngularVelocity,this.data.maxAngularVelocity);
-			var particle = { age : 0, life : life, v : spark_Vec.axis(dir + spread,speed), w : w};
+			var dx = Math.cos(spark_Util.degToRad(dir + spread));
+			var dy = Math.sin(spark_Util.degToRad(dir + spread));
+			var particle = { age : 0, life : life, w : w, vx : dx * speed, vy : dy * speed};
 			sprite.addBehavior(this.particleBehavior,particle);
 		}
 	}
@@ -2930,7 +4137,8 @@ spark_object_Sprite.__super__ = spark_object_Actor;
 spark_object_Sprite.prototype = $extend(spark_object_Actor.prototype,{
 	pivot: null
 	,dead: null
-	,contextSettings: null
+	,alpha: null
+	,blend: null
 	,layer: null
 	,body: null
 	,texture: null
@@ -2943,7 +4151,8 @@ spark_object_Sprite.prototype = $extend(spark_object_Actor.prototype,{
 		this.body = null;
 		this.texture = null;
 		this.quad = null;
-		this.contextSettings = { globalAlpha : 1.0, globalCompositeOperation : "source-over", shadowBlur : 0};
+		this.alpha = 1.0;
+		this.blend = "source-over";
 	}
 	,getLayer: function() {
 		return this.layer;
@@ -2977,7 +4186,8 @@ spark_object_Sprite.prototype = $extend(spark_object_Actor.prototype,{
 		if(this.texture == null) return;
 		Spark.view.save();
 		this.m.apply();
-		spark_Util.merge(Spark.view,this.contextSettings);
+		Spark.view.globalAlpha = this.alpha;
+		Spark.view.globalCompositeOperation = this.blend;
 		if(this.quad == null) this.texture.draw(this.pivot); else this.texture.drawq(this.quad,this.pivot);
 		Spark.view.restore();
 	}
@@ -3118,6 +4328,15 @@ spark_object_layer_SpriteLayer.prototype = $extend(spark_object_Layer.prototype,
 	,__class__: spark_object_layer_SpriteLayer
 	,__properties__: {get_length:"get_length"}
 });
+var spark_object_layer_TilemapLayer = function(z) {
+	spark_object_Layer.call(this,z);
+};
+$hxClasses["spark.object.layer.TilemapLayer"] = spark_object_layer_TilemapLayer;
+spark_object_layer_TilemapLayer.__name__ = ["spark","object","layer","TilemapLayer"];
+spark_object_layer_TilemapLayer.__super__ = spark_object_Layer;
+spark_object_layer_TilemapLayer.prototype = $extend(spark_object_Layer.prototype,{
+	__class__: spark_object_layer_TilemapLayer
+});
 function $iterator(o) { if( o instanceof Array ) return function() { return HxOverrides.iter(o); }; return typeof(o.iterator) == 'function' ? $bind(o,o.iterator) : o.iterator; }
 var $_, $fid = 0;
 function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $fid++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = function(){ return f.method.apply(f.scope, arguments); }; f.scope = o; f.method = m; o.hx__closures__[m.__id__] = f; } return f; }
@@ -3166,6 +4385,25 @@ if(Array.prototype.filter == null) Array.prototype.filter = function(f1) {
 	return a1;
 };
 var __map_reserved = {}
+Xml.Element = 0;
+Xml.PCData = 1;
+Xml.CData = 2;
+Xml.Comment = 3;
+Xml.DocType = 4;
+Xml.ProcessingInstruction = 5;
+Xml.Document = 6;
+haxe_ds_ObjectMap.count = 0;
+haxe_xml_Parser.escapes = (function($this) {
+	var $r;
+	var h = new haxe_ds_StringMap();
+	if(__map_reserved.lt != null) h.setReserved("lt","<"); else h.h["lt"] = "<";
+	if(__map_reserved.gt != null) h.setReserved("gt",">"); else h.h["gt"] = ">";
+	if(__map_reserved.amp != null) h.setReserved("amp","&"); else h.h["amp"] = "&";
+	if(__map_reserved.quot != null) h.setReserved("quot","\""); else h.h["quot"] = "\"";
+	if(__map_reserved.apos != null) h.setReserved("apos","'"); else h.h["apos"] = "'";
+	$r = h;
+	return $r;
+}(this));
 js_Boot.__toStr = {}.toString;
 spark_Debug.flags = 0;
 spark_Debug.PERF = 1;

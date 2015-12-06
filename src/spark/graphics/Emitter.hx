@@ -13,12 +13,13 @@ typedef ParticleData = {
   age: Float,
   life: Float,
   w: Float,
-  v: Vec,
+  vx: Float,
+  vy: Float,
 }
 
 typedef EmitterData = {
   texture: String,
-  compositeOperation: String,
+  blend: String,
   startAlpha: Float,
   endAlpha: Float,
   minLife: Float,
@@ -50,7 +51,7 @@ class Emitter extends Asset {
     // default source values
     this.data = {
       texture: null,
-      compositeOperation: 'screen',
+      blend: 'screen',
       startAlpha: 1.0,
       endAlpha: 1.0,
       minLife: 1.0,
@@ -69,8 +70,28 @@ class Emitter extends Asset {
     this.texture = null;
 
     // issue the load
-    Spark.loadJSON(src, function(json) {
-      Util.merge(this.data, json);
+    Spark.loadXML(src, function(doc) {
+      var emitter: Xml = doc.firstElement();
+
+      if (emitter == null || emitter.nodeName != 'emitter') {
+        throw 'Invalid emitter XML: ' + src;
+      }
+
+      // get all the emitter properties and override defaults
+      Util.mergeAtt(this.data, 'texture', emitter);
+      Util.mergeAtt(this.data, 'blend', emitter);
+      Util.mergeAtt(this.data, 'startAlpha', emitter, TFloat);
+      Util.mergeAtt(this.data, 'endAlpha', emitter, TFloat);
+      Util.mergeAtt(this.data, 'minLife', emitter, TFloat);
+      Util.mergeAtt(this.data, 'maxLife', emitter, TFloat);
+      Util.mergeAtt(this.data, 'startScale', emitter, TFloat);
+      Util.mergeAtt(this.data, 'endScale', emitter, TFloat);
+      Util.mergeAtt(this.data, 'spread', emitter, TFloat);
+      Util.mergeAtt(this.data, 'minSpeed', emitter, TFloat);
+      Util.mergeAtt(this.data, 'maxSpeed', emitter, TFloat);
+      Util.mergeAtt(this.data, 'angle', emitter, TFloat);
+      Util.mergeAtt(this.data, 'minAngularVelocity', emitter, TFloat);
+      Util.mergeAtt(this.data, 'maxAngularVelocity', emitter, TFloat);
 
       // if the texture was set, look it up in the project
       if (this.data.texture != null) {
@@ -80,7 +101,7 @@ class Emitter extends Asset {
       // create a custom behavior for all particles this emitter spawns
       this.particleBehavior = function(actor: Actor, step: Float, data: Dynamic) {
         var s: Sprite = cast actor;
-        var p: ParticleData = data;
+        var p: ParticleData = cast data;
 
         // age the particle
         if ((p.age += step) > p.life) {
@@ -94,12 +115,12 @@ class Emitter extends Asset {
         var scale = Util.lerp(this.data.startScale, this.data.endScale, p.age, p.life);
 
         // translate, rotate, and scale
-        s.m.translate(p.v.x * step, p.v.y * step);
+        s.m.translate(p.vx * step, p.vy * step);
         s.m.rotate(p.w * step);
         s.m.s.set(scale, scale);
 
         // linearly interpolate the alpha
-        s.contextSettings.globalAlpha = Util.lerp(this.data.startAlpha, this.data.endAlpha, p.age, p.life);
+        s.alpha = Util.lerp(this.data.startAlpha, this.data.endAlpha, p.age, p.life);
       };
 
       // asset is now ready for use
@@ -118,7 +139,7 @@ class Emitter extends Asset {
       sprite.setTexture(this.texture);
 
       // set the composite operation from the source
-      sprite.contextSettings.globalCompositeOperation = this.data.compositeOperation;
+      sprite.blend = this.data.blend;
 
       // random linear speed and spread in the direction of travel
       var speed = Util.rand(this.data.minSpeed, this.data.maxSpeed);
@@ -134,12 +155,17 @@ class Emitter extends Asset {
       // randomize the angular velocity
       var w = Util.rand(this.data.minAngularVelocity, this.data.maxAngularVelocity);
 
+      // get the direction of travel unit vector
+      var dx = Math.cos(Util.degToRad(dir + spread));
+      var dy = Math.sin(Util.degToRad(dir + spread));
+
       // particle data associated with the behavior
       var particle = {
         age: 0,
         life: life,
-        v: Vec.axis(dir + spread, speed),
         w: w,
+        vx: dx * speed,
+        vy: dy * speed,
       };
 
       // add the particle behavior, bound to particle instance data

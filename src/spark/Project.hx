@@ -37,25 +37,25 @@ class Project {
     };
 
     // request the project file and finish initializing once loaded
-    Spark.loadXML(projectFile, function(doc: js.html.XMLDocument) {
-      var assets, asset, project = doc.firstElementChild;
+    Spark.loadXML(projectFile, function(doc: Xml) {
+      var assets, asset, project = doc.firstElement();
 
       if (project == null || project.nodeName != 'project') {
         throw 'Invalid Spark project file: ' + projectFile;
       }
 
       // see if any project settings are overridden
-      Util.mergeElement(this.info, project);
+      Util.mergeXml(this.info, project);
 
       // find all the asset groups
-      for(assets in project.getElementsByTagName('assets')) {
-        var assetPath = assets.getAttribute('path');
+      for(assets in project.elementsNamed('assets')) {
+        var assetPath = assets.get('path');
 
         // load all the assets in the group
-        for(asset in assets.getElementsByTagName('asset')) {
-          var src = asset.getAttribute('src');
-          var id = asset.getAttribute('id');
-          var ref = asset.getAttribute('class');
+        for(asset in assets.elementsNamed('asset')) {
+          var src = asset.get('src');
+          var id = asset.get('id');
+          var ref = asset.get('class');
 
           // default the unique id to the source filename
           if (id == null) id = src;

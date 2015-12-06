@@ -74,6 +74,17 @@ class Util {
     return p + (q - p) * k / max;
   }
 
+  // there's no Std.parseBool...
+  static public function parseBool(s: String): Bool {
+    switch(s.toLowerCase()) {
+      case 'true', 'yes', 'on', '1': return true;
+      case 'false', 'no', 'off', '0': return false;
+
+      // not sure how to parse this string, so toss an error
+      default: throw 'Invalid boolean value: ' + s;
+    }
+  }
+
   // merge one anonymous structure (b) into another (a), overwrite
   static public function merge(a: Dynamic, b: Dynamic) {
     var i, fields = Reflect.fields(b);
@@ -84,16 +95,38 @@ class Util {
     }
   }
 
-  // get next next result in a query result and merge attributes into an anonymous struct
-  static public function mergeElement(obj: Dynamic, node: js.html.Element) {
+  // check if any fields in an object are in the attributes of an xml node
+  static public function mergeXml(obj: Dynamic, xml: Xml) {
     var i, fields = Reflect.fields(obj);
 
     for(i in 0...fields.length) {
-      var attr = node.getAttribute(fields[i]);
+      mergeAtt(obj, fields[i], xml, Type.typeof(Reflect.field(obj, fields[i])));
+    }
+  }
 
-      if (attr != null) {
-        Reflect.setField(obj, fields[i], attr);
+  // get an attribute from an xml node if it exists and replace a field with it
+  static public function mergeAtt(obj: Dynamic, field: String, xml: Xml, ?valType: Type.ValueType) {
+    if (xml.exists(field)) {
+      var val: Dynamic = xml.get(field);
+
+      switch(valType) {
+        case TInt: val = Std.parseInt(val);
+        case TFloat: val = Std.parseFloat(val);
+        case TBool: val = parseBool(val);
+        case TClass(c):
+          if (Type.getClassName(c) != 'String') {
+            throw 'Expected attribute class of String, got ' + Type.getClassName(c);
+          }
+
+        // null values are assumed to just be null strings
+        case TNull, null: { /* do nothing */ }
+
+        // anything else is an error
+        default: throw 'Cannot parse attribute of ValueType ' + valType;
       }
+
+      // assign the parsed value into the object
+      Reflect.setField(obj, field, val);
     }
   }
 }

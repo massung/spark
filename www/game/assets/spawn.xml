@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<timeline fps="30" duration="15" loop="false">
+  <tracks>
+    <track field="m.s.x">
+      <key frame="1" value="0.85" />
+      <key frame="7" value="1.15" />
+      <key frame="15" value="1.00" />
+    </track>
+    <track field="m.s.y">
+      <key frame="1" value="0.85" />
+      <key frame="7" value="1.15" />
+      <key frame="15" value="1.00" />
+    </track>
+  </tracks>
+</timeline>

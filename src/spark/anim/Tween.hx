@@ -8,7 +8,17 @@ package spark.anim;
 
 import haxe.ds.Vector;
 
-typedef Key = { frame: Int, value: Float, ?tangent: Float };
+typedef Key = {
+  frame: Int,
+  value: Float,
+  ?tangent: Float,
+};
+
+enum InterpMethod {
+  Step;
+  Linear;
+  Cubic;
+}
 
 class Tween {
   private var fps: Int;
@@ -16,7 +26,7 @@ class Tween {
   private var keys: Vector<Float>;
 
   // crunch soft keys from hard keys
-  public function new(keys: Array<Key>, fps: Int, duration: Int, ?interp: String = 'cubic') {
+  public function new(keys: Array<Key>, fps: Int, duration: Int, ?method: String = 'cubic') {
     var i = 0, k;
 
     // copy settings
@@ -68,7 +78,7 @@ class Tween {
       }
 
       else {
-        switch (interp) {
+        switch (method) {
 
           // step interpolation keeps the previous hard key's value
           case 'step':

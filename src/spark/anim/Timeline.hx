@@ -20,63 +20,92 @@ typedef TimelineData = {
   }>,
 
   // tweens to crunch
-  tracks: Dynamic,
+  tracks: Array<{
+    field: String,
+    keys: Array<Tween.Key>,
+    tween: Tween,
+  }>,
 }
-
-typedef Track = { method: String, keys: Array<Tween.Key> };
 
 class Timeline extends Asset {
   private var data: TimelineData;
 
-  // crunched tracks
-  private var tweens: StringMap<Tween>;
-
   // load a new timeline asset
   public function new(src: String) {
     super(src);
-
-    // no tweens by default (tracks must exist)
-    this.tweens = null;
 
     // default settings
     this.data = {
       fps: 30,
       duration: 30,
       loop: false,
-      tracks: null,
+      tracks: [],
       events: [],
     }
 
     // load the JSON document with all the settings and tracks
-    Spark.loadJSON(src, function(json: Dynamic) {
-      Util.merge(this.data, json);
+    Spark.loadXML(src, function(doc: Xml) {
+      var timeline = doc.firstElement();
+
+      if (timeline == null || timeline.nodeName != 'timeline') {
+        throw 'Invalid timeline XML: ' + src;
+      }
+
+      // merge the timeline settings
+      Util.mergeAtt(this.data, 'fps', timeline, TInt);
+      Util.mergeAtt(this.data, 'duration', timeline, TInt);
+      Util.mergeAtt(this.data, 'loop', timeline, TBool);
+
+      // find all the events
+      for(events in timeline.elementsNamed('events')) {
+        for(event in events.elementsNamed('event')) {
+          var frame = event.get('frame');
+          var name = event.get('name');
+
+          // drop the eventif there's no frame or name
+          if (frame == null || name == null) {
+            continue;
+          }
+
+          // add the event to the timeline
+          this.data.events.push({ frame: Std.parseInt(frame), event: name });
+        }
+      }
 
       // sort all the events by their frame #
       this.data.events.sort(function(a, b) return a.frame - b.frame);
 
-      // crunch all the tracks
-      if (this.data.tracks != null) {
-        var i, fields = Reflect.fields(this.data.tracks);
+      // find all the tracks and keys
+      for(tracks in timeline.elementsNamed('tracks')) {
+        for(track in tracks.elementsNamed('track')) {
+          var field = track.get('field');
+          var method = track.get('method');
+          var keys = [];
 
-        // map property to crunched track
-        this.tweens = new StringMap<Tween>();
+          // drop the track if there's no field
+          if (field == null) continue;
 
-        for(i in 0...fields.length) {
-          var field = fields[i];
-          var track: Track = Reflect.field(this.data.tracks, field);
-          var keys = track.keys;
-          var method = track.method;
-
-          // skip any track that doesn't have at least 2 keys in it
-          if (keys == null || keys.length < 2) {
-            continue;
-          }
-
-          // if the method isn't set, use cubic interpolation
+          // if no method is specified, use cubic
           if (method == null) method = 'cubic';
 
-          // crunch the track into a tween
-          this.tweens.set(field, new Tween(keys, this.data.fps, this.data.duration, method));
+          // collect all the keys for the track
+          for(key in track.elementsNamed('key')) {
+            var frame = key.get('frame');
+            var value = key.get('value');
+
+            // drop keys with no frame or value
+            if (frame == null || value == null) continue;
+
+            // add the key to the track
+            keys.push({ frame: Std.parseInt(frame), value: Std.parseFloat(value) });
+          }
+
+          // crunch the tween and add it to the track list
+          this.data.tracks.push({
+            field: field,
+            keys: keys,
+            tween: new Tween(keys, this.data.fps, this.data.duration, method),
+          });
         }
       }
 
@@ -91,10 +120,8 @@ class Timeline extends Asset {
     var prop;
 
     // spawn all the tracks on the same rigging
-    if (this.tweens != null) {
-      for (prop in this.tweens.keys()) {
-        this.tweens.get(prop).playOn(obj, prop, this.data.loop);
-      }
+    for(track in this.data.tracks) {
+      track.tween.playOn(obj, track.field, this.data.loop);
     }
 
     // lexical data for the animation

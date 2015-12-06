@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<emitter
+  texture="thrust.png"
+  blend="source-over"
+  spread="5.0"
+  angle="0"
+  minAngularVelocity="0"
+  maxAngularVelocity="0"
+  startScale="2.0"
+  endScale="1.5"
+  minLife="0.2"
+  maxLife="0.3"
+  startAlpha="1.0"
+  endAlpha="0.4"
+/>

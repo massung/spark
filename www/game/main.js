@@ -79,7 +79,7 @@ function playerControls(sprite, step, data) {
     data.thrust.y += d.y;
 
     // emit some particles
-    spark.Game.getEmitter('thrust.json').emit(sprite.getLayer(), p.x, p.y, sprite.m.r.angle(), r);
+    spark.Game.getEmitter('thrust.xml').emit(sprite.getLayer(), p.x, p.y, sprite.m.r.angle(), r);
   } else {
     // TODO: stop the sound
   }
@@ -160,7 +160,7 @@ function spawnAsteroid() {
     sprite.m.rotate(w * step);
   });
 
-  spark.Game.getTimeline('spawn.json').playOn(asteroid);
+  spark.Game.getTimeline('spawn.xml').playOn(asteroid);
 }
 
 function wrap(sprite) {
@@ -178,7 +178,7 @@ function wrap(sprite) {
 }
 
 function explodeAsteroid(sprite) {
-  spark.Game.getTimeline('shake.json').playOn(scene.camera);
+  spark.Game.getTimeline('shake.xml').playOn(scene.camera);
   spark.Game.getSound('explosion.mp3').woof();
-  spark.Game.getEmitter('explosion.json').emit(sprite.getLayer(), sprite.m.p.x, sprite.m.p.y, sprite.m.r.angle(), 0, 20);
+  spark.Game.getEmitter('explosion.xml').emit(sprite.getLayer(), sprite.m.p.x, sprite.m.p.y, sprite.m.r.angle(), 0, 20);
 }

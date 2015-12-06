@@ -16,8 +16,9 @@ class Sprite extends Actor {
   // dead is a get/set property for resource ref count
   public var dead: Bool;
 
-  // drawable settings
-  public var contextSettings: Dynamic;
+  // alpha and blend operation
+  public var alpha: Float;
+  public var blend: String;
 
   // the layer this sprite was spawned onto
   private var layer: Layer;
@@ -50,11 +51,8 @@ class Sprite extends Actor {
     this.body = null;
     this.texture = null;
     this.quad = null;
-    this.contextSettings = {
-      globalAlpha: 1.0,
-      globalCompositeOperation: 'source-over',
-      shadowBlur: 0,
-    };
+    this.alpha = 1.0;
+    this.blend = 'source-over';
   }
 
   // get the layer this sprite is on
@@ -123,7 +121,8 @@ class Sprite extends Actor {
     this.m.apply();
 
     // apply view settings
-    Util.merge(Spark.view, this.contextSettings);
+    Spark.view.globalAlpha = this.alpha;
+    Spark.view.globalCompositeOperation = this.blend;
 
     // render the texture/quad
     if (this.quad == null) {

@@ -22,8 +22,8 @@
     <asset src="virgo.ttf" class="spark.graphics.Font" />
 
     <!-- particle emitters -->
-    <asset src="thrust.json" class="spark.graphics.Emitter" />
-    <asset src="explosion.json" class="spark.graphics.Emitter" />
+    <asset src="thrust.xml" class="spark.graphics.Emitter" />
+    <asset src="explosion.xml" class="spark.graphics.Emitter" />
 
     <!-- sounds -->
     <asset src="laser.mp3" class="spark.audio.Sound" />
@@ -31,7 +31,7 @@
     <asset src="reload.mp3" class="spark.audio.Sound" />
 
     <!-- timeline animations -->
-    <asset src="shake.json" class="spark.anim.Timeline" />
-    <asset src="spawn.json" class="spark.anim.Timeline" />
+    <asset src="shake.xml" class="spark.anim.Timeline" />
+    <asset src="spawn.xml" class="spark.anim.Timeline" />
   </assets>
 </project>

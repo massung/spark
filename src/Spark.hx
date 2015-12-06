@@ -67,9 +67,15 @@ class Spark {
   }
 
   // issue an XHR request for an XML document
-  static public function loadXML(src: String, onload: js.html.XMLDocument -> Void) {
-    loadXHR(src, js.html.XMLHttpRequestResponseType.DOCUMENT, function(req) {
-      onload(req.response);
+  static public function loadXML(src: String, onload: Xml -> Void) {
+    loadXHR(src, js.html.XMLHttpRequestResponseType.TEXT, function(req) {
+      var doc = Xml.parse(req.response);
+
+      if (doc == null) {
+        throw 'Illegal XML document: ' + src;
+      }
+
+      onload(doc);
     });
   }
 
