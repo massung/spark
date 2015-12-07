@@ -4,26 +4,17 @@
 // All rights reserved.
 //
 
-package spark.layer;
+package spark.object;
 
 import spark.collision.*;
 
-class TilemapLayer implements Layer {
-  // TODO:
-
-  public function update(step: Float) {
-    // TODO:
-  }
+class Layer extends Actor {
 
   // called once per frame to add collision shapes to spacial hash
-  public function updateCollision(space: Quadtree) {
-    // TODO:
-  }
+  public function updateCollision(space: Quadtree) return;
 
   // called once per frame to render
-  public function draw() {
-    // TODO:
-  }
+  public function draw() return;
 
   // for debugging, accumulate stats
   public function debugStats(stats: Debug.Stats) {

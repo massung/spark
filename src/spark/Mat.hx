@@ -8,6 +8,8 @@ package spark;
 
 @:expose
 class Mat {
+
+  // position, rotation, and scale vectors
   public var p: Vec;
   public var r: Vec;
   public var s: Vec;
@@ -23,6 +25,13 @@ class Mat {
     this.p = new Vec( x,  y);
     this.r = new Vec(rx, ry);
     this.s = new Vec(sx, sy);
+  }
+
+  // sets this matrix to the identity
+  public function loadIdentity() {
+    this.p.set(0, 0);
+    this.r.set(1, 0);
+    this.s.set(1, 1);
   }
 
   // return the inverse of the matrix

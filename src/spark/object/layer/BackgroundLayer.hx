@@ -4,44 +4,37 @@
 // All rights reserved.
 //
 
-package spark.layer;
+package spark.object.layer;
 
 import spark.collision.*;
 import spark.graphics.*;
 
-class BackgroundLayer implements Layer {
+class BackgroundLayer extends Layer {
   private var frame: Quad;
   private var tiled: Bool;
 
-  // scrolling offset
-  public var x: Float;
-  public var y: Float;
-
   // create a new background layer
   public function new(frame: Quad, ?tiled: Bool = true) {
+    super();
+
+    // initialize
     this.frame = frame;
     this.tiled = tiled;
   }
 
-  // scroll the background
-  public function scroll(dx: Float, dy: Float) {
-    x += dx;
-    y += dy;
-  }
-
   // run behaviors
-  public function update(step: Float) {
+  public override function update(step: Float) {
+    super.update(step);
+
+    // when tiled, wrap the position offset
     if (this.tiled && this.frame != null) {
-      this.x %= this.frame.getRect().getWidth();
-      this.y %= this.frame.getRect().getHeight();
+      this.m.p.x %= this.frame.getRect().getWidth() * this.m.s.x;
+      this.m.p.y %= this.frame.getRect().getHeight() * this.m.s.y;
     }
   }
 
-  // background layers have no collision data
-  public function updateCollision(space: Quadtree) { }
-
   // render the background as a single image or tiles
-  public function draw() {
+  public override function draw() {
     if (this.frame == null) {
       return;
     }
@@ -49,7 +42,7 @@ class BackgroundLayer implements Layer {
     Spark.view.save();
 
     // apply the layer's transform
-    Spark.view.translate(this.x, this.y);
+    this.m.apply();
 
     // cache the image size
     var iw = this.frame.getRect().getWidth();
@@ -88,10 +81,5 @@ class BackgroundLayer implements Layer {
 
     // done
     Spark.view.restore();
-  }
-
-  // update debug statistics
-  public function debugStats(stats: Debug.Stats) {
-    stats.layers++;
   }
 }

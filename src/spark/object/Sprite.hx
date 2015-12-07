@@ -9,9 +9,9 @@ package spark.object;
 import spark.anim.*;
 import spark.collision.*;
 import spark.graphics.*;
+import spark.object.layer.*;
 
 class Sprite extends Actor {
-  public var pivot: Vec;
 
   // dead is a get/set property for resource ref count
   public var dead: Bool;
@@ -24,17 +24,16 @@ class Sprite extends Actor {
   private var quad: Quad;
 
   // the layer this sprite was spawned onto
-  private var layer: Layer;
+  private var layer: SpriteLayer;
 
   // a rigid body for collision
   private var body: Body;
 
   // create a new sprite
-  public function new(layer: Layer) {
+  public function new(layer: SpriteLayer) {
     super();
 
-    // allocate variables
-    this.pivot = new Vec(0.5, 0.5);
+    // one-time allocations
     this.layer = layer;
 
     // reset everything
@@ -89,7 +88,7 @@ class Sprite extends Actor {
 
     // update all the collision shapes
     if (this.body != null) {
-      this.body.updateShapeCache(this.m);
+      this.body.updateShapeCache(this.layer.m.mult(this.m));
     }
   }
 

@@ -20,7 +20,8 @@ spark.Game.main('game/project.xml', proj => {
     asteroidsLayer = scene.newSpriteLayer();
     playerLayer = scene.newSpriteLayer();
 
-    //starsLayer.m.s.set(4, 4);
+    // scale the stars layer so the stars are visible
+    starsLayer.m.s.set(4, 4);
 
     // spawn the player
     player = spawnPlayer();
@@ -80,7 +81,7 @@ function playerControls(sprite, step, data) {
   sprite.m.translate(data.thrust.x * step, data.thrust.y * step);
 
   // scroll the background
-  starsLayer.scroll(data.thrust.x * step * 0.8, data.thrust.y * step * 0.8);
+  starsLayer.m.translate(data.thrust.x * step * 0.8, data.thrust.y * step * 0.8);
 
   // dampen
   data.thrust.x *= 0.98;

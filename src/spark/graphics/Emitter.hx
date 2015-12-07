@@ -6,8 +6,8 @@
 
 package spark.graphics;
 
-import spark.layer.*;
 import spark.object.*;
+import spark.object.layer.*;
 
 typedef ParticleData = {
   age: Float,

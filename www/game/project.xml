@@ -4,6 +4,7 @@
 
     <!-- background images -->
     <asset id="stars" src="background.png" class="spark.graphics.Texture" />
+    <asset id="pattern" src="pattern.jpg" class="spark.graphics.Texture" />
 
     <!-- player images -->
     <asset id="spaceship" src="player.png" class="spark.graphics.Texture" />

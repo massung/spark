@@ -4,12 +4,11 @@
 // All rights reserved.
 //
 
-package spark.layer;
+package spark.object.layer;
 
 import spark.collision.*;
-import spark.object.*;
 
-class SpriteLayer implements Layer {
+class SpriteLayer extends Layer {
   private var sprites: Array<Sprite>;
   private var pool: Array<Sprite>;
 
@@ -23,7 +22,7 @@ class SpriteLayer implements Layer {
 
   // create a new sprite layer with a pool of sprites to draw from
   public function new(?n: Int = 100) {
-    var i;
+    super();
 
     // allocate the lists
     this.sprites = [];
@@ -72,8 +71,11 @@ class SpriteLayer implements Layer {
   }
 
   // update sprites, remove dead sprites
-  public function update(step: Float) {
+  public override function update(step: Float) {
     var i = 0;
+
+    // update all animations and behaviors on the layer
+    super.update(step);
 
     // add all the pending sprites from the previous frame
     this.count += this.pending;
@@ -107,22 +109,33 @@ class SpriteLayer implements Layer {
   }
 
   // add sprites to the spacial hash
-  public function updateCollision(space: Quadtree) {
+  public override function updateCollision(space: Quadtree) {
     for(i in 0...this.count) {
       this.sprites[i].addToQuadtree(space);
     }
   }
 
   // render the layer
-  public function draw() {
+  public override function draw() {
+    Spark.view.save();
+
+    // first transform by the layer
+    this.m.apply();
+
+    // render all the sprites on the layer
     for (i in 0...this.count) {
       this.sprites[i].draw();
     }
+
+    // done
+    Spark.view.restore();
   }
 
   // add to any debug stats when debugging
-  public function debugStats(stats: Debug.Stats) {
+  public override function debugStats(stats: Debug.Stats) {
+    super.debugStats(stats);
+
+    // tally all the sprites on this layer
     stats.sprites += this.count;
-    stats.layers++;
   }
 }

@@ -26,6 +26,9 @@ class Actor extends Rig {
   public function new() {
     super();
 
+    // one time initializations
+    this.m = Mat.identity();
+
     // reset transform and behaviors
     this.init();
   }
@@ -35,7 +38,7 @@ class Actor extends Rig {
     this.behaviors = [];
 
     // reset transform
-    this.m = Mat.identity();
+    this.m.loadIdentity();
   }
 
   // add a behavior callback and optional data to the sprite
