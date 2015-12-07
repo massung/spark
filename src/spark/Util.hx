@@ -6,8 +6,6 @@
 
 package spark;
 
-import haxe.ds.Option;
-
 @:expose
 class Util {
 

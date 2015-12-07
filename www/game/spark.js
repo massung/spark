@@ -1208,12 +1208,6 @@ haxe_ds_ObjectMap.prototype = {
 	}
 	,__class__: haxe_ds_ObjectMap
 };
-var haxe_ds_Option = $hxClasses["haxe.ds.Option"] = { __ename__ : ["haxe","ds","Option"], __constructs__ : ["Some","None"] };
-haxe_ds_Option.Some = function(v) { var $x = ["Some",0,v]; $x.__enum__ = haxe_ds_Option; $x.toString = $estr; return $x; };
-haxe_ds_Option.None = ["None",1];
-haxe_ds_Option.None.toString = $estr;
-haxe_ds_Option.None.__enum__ = haxe_ds_Option;
-haxe_ds_Option.__empty_constructs__ = [haxe_ds_Option.None];
 var haxe_ds__$StringMap_StringMapIterator = function(map,keys) {
 	this.map = map;
 	this.keys = keys;
