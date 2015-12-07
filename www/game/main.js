@@ -37,14 +37,14 @@ spark.Game.main('game/project.xml', proj => {
 
 function spawnPlayer() {
   var sprite = playerLayer.newSprite();
-  var body = sprite.addBody('player', c => { });
+  var body = sprite.newBody('player', c => { });
 
   sprite.setQuad(spark.Game.project.get('spaceship'));
 
   var thrust = new spark.Vec(0, 0);
 
-  sprite.addBehavior(playerControls, { thrust: new spark.Vec(0, 0) });
-  sprite.addBehavior(wrap);
+  sprite.newBehavior(playerControls, { thrust: new spark.Vec(0, 0) });
+  sprite.newBehavior(wrap);
 
   body.addCircleShape(0, 0, 30);
 
@@ -89,7 +89,7 @@ function playerControls(sprite, step, data) {
 
 function shoot(layer, m) {
   var bullet = layer.newSprite();
-  var body = bullet.addBody('bullet');
+  var body = bullet.newBody('bullet');
 
   bullet.m.p = m.transform(new spark.Vec(0, -60));
   bullet.m.r = m.r.copy();
@@ -99,7 +99,7 @@ function shoot(layer, m) {
   body.addSegmentShape(0, -10, 0, 10);
 
   // create movement behavior
-  bullet.addBehavior((sprite, step, data) => {
+  bullet.newBehavior((sprite, step, data) => {
     sprite.m.translate(0, -800 * step, true);
     sprite.dead = (data.age += step) > 1;
   }, {
@@ -111,7 +111,7 @@ function shoot(layer, m) {
 
 function spawnAsteroid() {
   var asteroid = asteroidsLayer.newSprite();
-  var body = asteroid.addBody('asteroid', (a, b) => {
+  var body = asteroid.newBody('asteroid', (a, b) => {
     if (b.filter === 'bullet') {
       a.getObject().dead = true;
       b.getObject().dead = true;
@@ -132,7 +132,7 @@ function spawnAsteroid() {
   var h = asteroid.getHeight();
 
   // add a box shape to the asteroid
-  body.addBoxShape(-w / 4, - h / 4, w / 2, h / 2);
+  body.addBoxShape(-w * 3 / 8, - h * 3 / 8, w * 3 / 4, h * 3 / 4);
 
   // spawn at a random position
   asteroid.m.p.set(
@@ -146,8 +146,8 @@ function spawnAsteroid() {
   var v = spark.Vec.axis(r, s);
   var w = spark.Util.rand(-180, 180);
 
-  asteroid.addBehavior(wrap);
-  asteroid.addBehavior((sprite, step) => {
+  asteroid.newBehavior(wrap);
+  asteroid.newBehavior((sprite, step) => {
     sprite.m.translate(v.x * step, v.y * step);
     sprite.m.rotate(w * step);
   });

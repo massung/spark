@@ -57,7 +57,7 @@ class Sprite extends Actor {
   public function getLayer(): Layer return layer;
 
   // add a rigid body for collision detection to the sprite
-  public function addBody(filter: String, ?oncollision: Body.CollisionCallback): Body {
+  public function newBody(filter: String, ?oncollision: Body.CollisionCallback): Body {
     return this.body = new spark.collision.Body(this, filter, oncollision);
   }
 

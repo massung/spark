@@ -317,7 +317,7 @@ we created the sprite and add the behavior on to it.
 
 ```javascript
 player.setQuad(spark.Game.project.get('spaceship'));
-player.addBehavior(playerControls);
+player.newBehavior(playerControls);
 ```
 
 Now, reloading the page, you should be able to turn your sprite.... Great!
@@ -353,7 +353,7 @@ function playerControls(sprite, step, data) {
 Next, let's create the data object when we add the behavior:
 
 ```javascript
-player.addBehavior(playerControls, {thrust: new spark.Vec(0, 0)});
+player.newBehavior(playerControls, {thrust: new spark.Vec(0, 0)});
 ```
 
 There. Now, every frame when `playerControls` is called, it will have data

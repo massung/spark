@@ -3932,7 +3932,7 @@ spark_graphics_Emitter.prototype = $extend(spark_Asset.prototype,{
 			var dx = Math.cos(spark_Util.degToRad(dir + spread));
 			var dy = Math.sin(spark_Util.degToRad(dir + spread));
 			var particle = { age : 0, life : life, w : w, vx : dx * speed, vy : dy * speed};
-			sprite.addBehavior(this.particleBehavior,particle);
+			sprite.newBehavior(this.particleBehavior,particle);
 		}
 	}
 	,__class__: spark_graphics_Emitter
@@ -4276,7 +4276,7 @@ spark_object_Actor.prototype = $extend(spark_anim_Rig.prototype,{
 		this.behaviors = [];
 		this.m = spark_Mat.identity();
 	}
-	,addBehavior: function(callback,data) {
+	,newBehavior: function(callback,data) {
 		this.behaviors.push({ callback : callback, data : data});
 	}
 	,worldToLocal: function(p) {
@@ -4346,7 +4346,7 @@ spark_object_Sprite.prototype = $extend(spark_object_Actor.prototype,{
 	,getLayer: function() {
 		return this.layer;
 	}
-	,addBody: function(filter,oncollision) {
+	,newBody: function(filter,oncollision) {
 		return this.body = new spark_collision_Body(this,filter,oncollision);
 	}
 	,setQuad: function(quad) {

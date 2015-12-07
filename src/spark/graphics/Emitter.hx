@@ -171,7 +171,7 @@ class Emitter extends Asset {
       };
 
       // add the particle behavior, bound to particle instance data
-      sprite.addBehavior(this.particleBehavior, particle);
+      sprite.newBehavior(this.particleBehavior, particle);
     }
   }
 }

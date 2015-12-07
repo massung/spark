@@ -39,7 +39,7 @@ class Actor extends Rig {
   }
 
   // add a behavior callback and optional data to the sprite
-  public function addBehavior(callback: BehaviorCallback, ?data: Dynamic) {
+  public function newBehavior(callback: BehaviorCallback, ?data: Dynamic) {
     this.behaviors.push({
       callback: callback,
       data: data,

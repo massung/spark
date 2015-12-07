@@ -10,6 +10,7 @@ import spark.collision.*;
 
 interface Layer {
 
+  // called once per frame to update simulation
   public function update(step: Float): Void;
 
   // called once per frame to add collision shapes to spacial hash
