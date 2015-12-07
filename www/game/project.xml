@@ -11,11 +11,7 @@
     <asset src="thrust.png" class="spark.graphics.Texture" />
 
     <!-- asteroid images -->
-    <asset src="asteroid_big_1.png" class="spark.graphics.Texture" />
-    <asset src="asteroid_big_2.png" class="spark.graphics.Texture" />
-    <asset src="asteroid_big_3.png" class="spark.graphics.Texture" />
-    <asset src="asteroid_big_4.png" class="spark.graphics.Texture" />
-    <asset src="asteroid_particle_1.png" class="spark.graphics.Texture" />
+    <asset src="asteroids.xml" class="spark.graphics.Atlas" />
 
     <!-- fonts -->
     <asset src="BulletproofBB.otf" class="spark.graphics.Font" />

@@ -78,29 +78,30 @@ class Project {
   }
 
   // create a new asset instance and add it to the load queue
-  private function load(id: String, src: String, ?classRef: Class<Asset>): Asset {
+  public function load(id: String, src: String, ?classRef: Class<Asset>): Asset {
     if (classRef == null) {
       classRef = Asset.classOfExt(src.split('/').pop().split('.').pop());
 
       // no class reference given, and not deduced from the filename
       if (classRef == null) {
-        trace('Unknown asset type "' + src + '"; skipping...');
-        return null;
+        throw 'Unknown asset type "' + src;
       }
     }
 
-    // if an asset already exists with that name, don't overwrite it
+    // create and register the asset
+    return this.register(id, Type.createInstance(classRef, [src]));
+  }
+
+  // register an asset by name
+  public function register(id: String, asset: Asset): Asset {
     if (this.assets.exists(id)) {
-      trace('Asset "' + id + '" already loaded; skipping...');
-      return null;
+      trace('Asset "' + id + '" already exists; skipping...');
+    } else {
+      this.assets.set(id, asset);
+
+      // ensure that the game isn't ready until the asset is loaded
+      this.loadQueue.push(asset);
     }
-
-    // create an instance of the asset
-    var asset: Asset = Type.createInstance(classRef, [src]);
-
-    // save the asset and track the load
-    this.assets.set(id, asset);
-    this.loadQueue.push(asset);
 
     return asset;
   }

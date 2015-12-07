@@ -20,15 +20,14 @@ class Sprite extends Actor {
   public var alpha: Float;
   public var blend: String;
 
+  // how this sprite renders
+  private var quad: Quad;
+
   // the layer this sprite was spawned onto
   private var layer: Layer;
 
   // a rigid body for collision
   private var body: Body;
-
-  // how this sprite renders
-  private var texture: Texture;
-  private var quad: Rect;
 
   // create a new sprite
   public function new(layer: Layer) {
@@ -43,13 +42,12 @@ class Sprite extends Actor {
   }
 
   // initialize the sprite resource
-  public function init() {
-    this.m = Mat.identity();
-    this.behaviors = [];
-    this.pivot.set(0.5, 0.5);
+  public override function init() {
+    super.init();
+
+    // reset data
     this.dead = false;
     this.body = null;
-    this.texture = null;
     this.quad = null;
     this.alpha = 1.0;
     this.blend = 'source-over';
@@ -63,33 +61,19 @@ class Sprite extends Actor {
     return this.body = new spark.collision.Body(this, filter, oncollision);
   }
 
-  // set the texture image to render with
-  public function setTexture(texture: Texture, ?quad: Rect) {
-    this.texture = texture;
-    this.quad = quad;
-  }
-
-  // set the quad to render
-  public function setQuad(quad: Rect) {
+  // set the sprite quad to render with
+  public function setQuad(quad: Quad) {
     this.quad = quad;
   }
 
   // return the width of the sprite in pixels
   public function getWidth(): Float {
-    if (this.texture == null) {
-      return 0;
-    }
-
-    return (this.quad != null) ? this.quad.getWidth() : this.texture.getWidth();
+    return (this.quad != null) ? this.quad.getRect().getWidth() : 0;
   }
 
   // return the height of the sprite in pixels
   public function getHeight(): Float {
-    if (this.texture == null) {
-      return 0;
-    }
-
-    return (this.quad != null) ? this.quad.getHeight() : this.texture.getHeight();
+    return (this.quad != null) ? this.quad.getRect().getHeight() : 0;
   }
 
   // add all collision shapes on this sprite into the spacial hash
@@ -99,7 +83,7 @@ class Sprite extends Actor {
     }
   }
 
-  // called once a frame to update the sprite
+  // called once a quad to update the sprite
   public override function update(step: Float) {
     super.update(step);
 
@@ -109,9 +93,9 @@ class Sprite extends Actor {
     }
   }
 
-  // called once a frame to render the sprite
-  public override function draw() {
-    if (this.texture == null) {
+  // called once a quad to render the sprite
+  public function draw() {
+    if (this.quad == null) {
       return;
     }
 
@@ -125,11 +109,7 @@ class Sprite extends Actor {
     Spark.view.globalCompositeOperation = this.blend;
 
     // render the texture/quad
-    if (this.quad == null) {
-      this.texture.draw(this.pivot);
-    } else {
-      this.texture.drawq(this.quad, this.pivot);
-    }
+    this.quad.draw();
 
     // done
     Spark.view.restore();

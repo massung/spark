@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <emitter
-  texture="asteroid_particle_1.png"
+  sprite="asteroid_particle_1.png"
   blend="screen"
   minLife="0.3"
   maxLife="0.5"

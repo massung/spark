@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <emitter
-  texture="thrust.png"
+  sprite="thrust.png"
   blend="source-over"
   spread="5.0"
   angle="0"

@@ -4,11 +4,12 @@
 // All rights reserved.
 //
 
-package spark.object.layer;
+package spark.layer;
 
 import spark.collision.*;
+import spark.object.*;
 
-class SpriteLayer extends Layer {
+class SpriteLayer implements Layer {
   private var sprites: Array<Sprite>;
   private var pool: Array<Sprite>;
 
@@ -23,12 +24,6 @@ class SpriteLayer extends Layer {
   // create a new sprite layer with a pool of sprites to draw from
   public function new(?n: Int = 100) {
     var i;
-
-    // default z-ordering
-    super();
-
-    // identity transform
-    this.m = Mat.identity();
 
     // allocate the lists
     this.sprites = [];
@@ -46,7 +41,6 @@ class SpriteLayer extends Layer {
   public inline function get_length(): Int return this.count;
 
   // access into the sprite list
-  @:arrayAccess
   public inline function get(i: Int): Sprite return this.sprites[i];
 
   // allocate a new sprite from the pool
@@ -78,7 +72,7 @@ class SpriteLayer extends Layer {
   }
 
   // update sprites, remove dead sprites
-  override public function update(step: Float) {
+  public function update(step: Float) {
     var i = 0;
 
     // add all the pending sprites from the previous frame
@@ -113,29 +107,22 @@ class SpriteLayer extends Layer {
   }
 
   // add sprites to the spacial hash
-  override public function updateCollision(space: Quadtree) {
-    var i;
-
+  public function updateCollision(space: Quadtree) {
     for(i in 0...this.count) {
       this.sprites[i].addToQuadtree(space);
     }
   }
 
   // render the layer
-  override public function draw() {
-    var i;
-
-    // render all the sprites
+  public function draw() {
     for (i in 0...this.count) {
       this.sprites[i].draw();
     }
   }
 
   // add to any debug stats when debugging
-  override public function debugStats(stats: Debug.Stats) {
-    super.debugStats(stats);
-
-    // accumulate sprites
+  public function debugStats(stats: Debug.Stats) {
     stats.sprites += this.count;
+    stats.layers++;
   }
 }

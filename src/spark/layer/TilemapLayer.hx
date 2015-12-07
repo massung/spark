@@ -4,30 +4,25 @@
 // All rights reserved.
 //
 
-package spark.object;
+package spark.layer;
 
 import spark.collision.*;
-import spark.graphics.*;
 
-class Layer extends Actor {
-  public var z: Float;
+class TilemapLayer implements Layer {
+  // TODO:
 
-  // create a new layer
-  public function new(?z: Float = 0.0) {
-    super();
-
-    // initialize properties
-    this.z = z;
+  public function update(step: Float) {
+    // TODO:
   }
 
   // called once per frame to add collision shapes to spacial hash
   public function updateCollision(space: Quadtree) {
-    // subclass responsibility
+    // TODO:
   }
 
   // called once per frame to render
-  public override function draw() {
-    // subclass responsibility
+  public function draw() {
+    // TODO:
   }
 
   // for debugging, accumulate stats

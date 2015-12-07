@@ -6,6 +6,10 @@
 
 package spark;
 
+import spark.anim.*;
+import spark.audio.*;
+import spark.graphics.*;
+
 @:expose
 class Game {
   static public var project: Project;
@@ -16,14 +20,4 @@ class Game {
     project = new Project(projectFile, onload);
     scene = null;
   }
-
-  // project accessor function
-  static public function getProject(): Project return project;
-
-  // quick lookups of various asset types in the project
-  static public function getEmitter(src: String): spark.graphics.Emitter return cast project.get(src);
-  static public function getFont(src: String): spark.graphics.Font return cast project.get(src);
-  static public function getSound(src: String): spark.audio.Sound return cast project.get(src);
-  static public function getTexture(src: String): spark.graphics.Texture return cast project.get(src);
-  static public function getTimeline(src: String): spark.anim.Timeline return cast project.get(src);
 }

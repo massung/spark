@@ -6,8 +6,8 @@
 
 package spark.graphics;
 
+import spark.layer.*;
 import spark.object.*;
-import spark.object.layer.*;
 
 typedef ParticleData = {
   age: Float,
@@ -18,8 +18,8 @@ typedef ParticleData = {
 }
 
 typedef EmitterData = {
-  texture: String,
   blend: String,
+  sprite: String,
   startAlpha: Float,
   endAlpha: Float,
   minLife: Float,
@@ -38,8 +38,7 @@ class Emitter extends Asset {
   private var data: EmitterData;
 
   // how each particle sprite will render
-  private var texture: Texture;
-  private var quad: Rect;
+  private var quad: Quad;
 
   // created behavior function for this emitter
   private var particleBehavior: Actor.BehaviorCallback;
@@ -50,8 +49,8 @@ class Emitter extends Asset {
 
     // default source values
     this.data = {
-      texture: null,
       blend: 'screen',
+      sprite: null,
       startAlpha: 1.0,
       endAlpha: 1.0,
       minLife: 1.0,
@@ -67,7 +66,7 @@ class Emitter extends Asset {
     };
 
     // crunched data
-    this.texture = null;
+    this.quad = null;
 
     // issue the load
     Spark.loadXML(src, function(doc) {
@@ -78,7 +77,7 @@ class Emitter extends Asset {
       }
 
       // get all the emitter properties and override defaults
-      Util.mergeAtt(this.data, 'texture', emitter);
+      Util.mergeAtt(this.data, 'sprite', emitter);
       Util.mergeAtt(this.data, 'blend', emitter);
       Util.mergeAtt(this.data, 'startAlpha', emitter, TFloat);
       Util.mergeAtt(this.data, 'endAlpha', emitter, TFloat);
@@ -94,8 +93,11 @@ class Emitter extends Asset {
       Util.mergeAtt(this.data, 'maxAngularVelocity', emitter, TFloat);
 
       // if the texture was set, look it up in the project
-      if (this.data.texture != null) {
-        this.texture = Game.getTexture(this.data.texture);
+      if (this.data.sprite != null) {
+        var asset = Game.project.get(this.data.sprite);
+
+        // attempt to cast the asset to a renderable quad
+        this.quad = cast(asset, Quad);
       }
 
       // create a custom behavior for all particles this emitter spawns
@@ -135,8 +137,8 @@ class Emitter extends Asset {
     for (i in 0...n) {
       var sprite: Sprite = layer.newSprite();
 
-      // set the texture to use
-      sprite.setTexture(this.texture);
+      // set the sprite frame to use
+      sprite.setQuad(this.quad);
 
       // set the composite operation from the source
       sprite.blend = this.data.blend;

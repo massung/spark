@@ -74,6 +74,11 @@ class Util {
     return p + (q - p) * k / max;
   }
 
+  // a filename relative to the current filename's path
+  static public function relativePath(file: String, src: String): String {
+    return file.split('/').slice(0, -1).join('/') + '/' + src;
+  }
+
   // there's no Std.parseBool...
   static public function parseBool(s: String): Bool {
     switch(s.toLowerCase()) {

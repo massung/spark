@@ -6,8 +6,11 @@
 
 package spark.graphics;
 
-class Texture extends Asset {
+class Texture extends Asset implements Quad {
   private var img: js.html.Image;
+
+  // dimensions of the image as a rectangle
+  private var r: Rect;
 
   // load a new texture image
   public function new(src: String) {
@@ -18,6 +21,9 @@ class Texture extends Asset {
 
     // resolve the request when done
     img.onload = function() {
+      this.r = new Rect(0, 0, this.img.width, this.img.height);
+
+      // asset ready
       this.loaded = true;
     }
 
@@ -26,42 +32,23 @@ class Texture extends Asset {
   }
 
   // the width of the texture in pixels
-  public function getWidth(): Float {
-    return this.loaded ? this.img.width : 0;
-  }
-
-  // the height of the texture in pixels
-  public function getHeight(): Float {
-    return this.loaded ? this.img.height : 0;
-  }
+  public function getRect(): Rect return this.r;
 
   // blit the entire texture to the view
-  public function draw(?pivot: Vec) {
-    if (this.loaded) {
-      var w = this.img.width;
-      var h = this.img.height;
-
-      // calculate the offset
-      var x = pivot == null ? 0 : -w * pivot.x;
-      var y = pivot == null ? 0 : -h * pivot.y;
-
-      // blit the image
-      Spark.view.drawImage(this.img, 0, 0, w, h, x, y, w, h);
-    }
+  public function draw() {
+    Spark.view.drawImage(this.img, -this.img.width * 0.5, -this.img.height * 0.5);
   }
 
   // blit a portion of the texture to the view
-  public function drawq(quad: Rect, ?pivot: Vec) {
-    if (this.loaded) {
-      var w = quad.getWidth();
-      var h = quad.getHeight();
+  public function drawq(r: Rect, p: Vec) {
+    var w = r.getWidth();
+    var h = r.getHeight();
 
-      // calculate the offset
-      var x = pivot == null ? 0 : -w * pivot.x;
-      var y = pivot == null ? 0 : -h * pivot.y;
+    // offset from the origin
+    var x = -w * p.x;
+    var y = -h * p.y;
 
-      // blit a portion of the image
-      Spark.view.drawImage(this.img, quad.getLeft(), quad.getBottom(), w, h, x, y, w, h);
-    }
+    // blit a portion of the image
+    Spark.view.drawImage(this.img, r.getLeft(), r.getTop(), w, h, x, y, w, h);
   }
 }

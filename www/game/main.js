@@ -16,11 +16,11 @@ spark.Game.main('game/project.xml', proj => {
     scene = new spark.Scene('middle', 1400, 1400);
     scene.setViewport(1400, 1400);
 
-    starsLayer = scene.newBackgroundLayer(spark.Game.getTexture('stars'));
+    starsLayer = scene.newBackgroundLayer(spark.Game.project.get('stars'));
     asteroidsLayer = scene.newSpriteLayer();
     playerLayer = scene.newSpriteLayer();
 
-    starsLayer.m.s.set(4, 4);
+    //starsLayer.m.s.set(4, 4);
 
     // spawn the player
     player = spawnPlayer();
@@ -39,7 +39,7 @@ function spawnPlayer() {
   var sprite = playerLayer.newSprite();
   var body = sprite.addBody('player', c => { });
 
-  sprite.setTexture(spark.Game.getTexture('spaceship'));
+  sprite.setQuad(spark.Game.project.get('spaceship'));
 
   var thrust = new spark.Vec(0, 0);
 
@@ -54,14 +54,6 @@ function spawnPlayer() {
 function playerControls(sprite, step, data) {
   if (spark.Key.down(spark.Key.LEFT)) sprite.m.rotate(-180 * step);
   if (spark.Key.down(spark.Key.RIGHT)) sprite.m.rotate(180 * step);
-
-  // rotate and translate the background manually (test)
-  if (spark.Key.down(spark.Key.Q)) starsLayer.m.rotate(-180 * step);
-  if (spark.Key.down(spark.Key.E)) starsLayer.m.rotate(180 * step);
-  if (spark.Key.down(spark.Key.A)) starsLayer.m.translate(-600 * step, 0);
-  if (spark.Key.down(spark.Key.D)) starsLayer.m.translate(600 * step, 0);
-  if (spark.Key.down(spark.Key.W)) starsLayer.m.translate(0, 600 * step);
-  if (spark.Key.down(spark.Key.S)) starsLayer.m.translate(0, -600 * step);
 
   // spawn bullets
   for(var i = 0;i < spark.Key.hits(spark.Key.SPACE);i++) {
@@ -79,7 +71,7 @@ function playerControls(sprite, step, data) {
     data.thrust.y += d.y;
 
     // emit some particles
-    spark.Game.getEmitter('thrust.xml').emit(sprite.getLayer(), p.x, p.y, sprite.m.r.angle(), r);
+    spark.Game.project.get('thrust.xml').emit(sprite.getLayer(), p.x, p.y, sprite.m.r.angle(), r);
   } else {
     // TODO: stop the sound
   }
@@ -88,7 +80,7 @@ function playerControls(sprite, step, data) {
   sprite.m.translate(data.thrust.x * step, data.thrust.y * step);
 
   // scroll the background
-  starsLayer.m.translate(data.thrust.x * step * 0.8, data.thrust.y * step * 0.8);
+  starsLayer.scroll(data.thrust.x * step * 0.8, data.thrust.y * step * 0.8);
 
   // dampen
   data.thrust.x *= 0.98;
@@ -103,7 +95,7 @@ function shoot(layer, m) {
   bullet.m.r = m.r.copy();
 
   // texture
-  bullet.setTexture(spark.Game.getTexture('laser.png'));
+  bullet.setQuad(spark.Game.project.get('laser.png'));
   body.addSegmentShape(0, -10, 0, 10);
 
   // create movement behavior
@@ -114,7 +106,7 @@ function shoot(layer, m) {
     age: 0.0
   });
 
-  spark.Game.getSound('laser.mp3').woof();
+  spark.Game.project.get('laser.mp3').woof();
 }
 
 function spawnAsteroid() {
@@ -129,11 +121,11 @@ function spawnAsteroid() {
   });
 
   // pick a random image to use
-  asteroid.setTexture(spark.Util.arand([
-    spark.Game.getTexture('asteroid_big_1.png'),
-    spark.Game.getTexture('asteroid_big_2.png'),
-    spark.Game.getTexture('asteroid_big_3.png'),
-    spark.Game.getTexture('asteroid_big_4.png'),
+  asteroid.setQuad(spark.Util.arand([
+    spark.Game.project.get('asteroid_big_1.png'),
+    spark.Game.project.get('asteroid_big_2.png'),
+    spark.Game.project.get('asteroid_big_3.png'),
+    spark.Game.project.get('asteroid_big_4.png'),
   ]));
 
   var w = asteroid.getWidth();
@@ -160,7 +152,7 @@ function spawnAsteroid() {
     sprite.m.rotate(w * step);
   });
 
-  spark.Game.getTimeline('spawn.xml').playOn(asteroid);
+  spark.Game.project.get('spawn.xml').playOn(asteroid);
 }
 
 function wrap(sprite) {
@@ -178,7 +170,7 @@ function wrap(sprite) {
 }
 
 function explodeAsteroid(sprite) {
-  spark.Game.getTimeline('shake.xml').playOn(scene.camera);
-  spark.Game.getSound('explosion.mp3').woof();
-  spark.Game.getEmitter('explosion.xml').emit(sprite.getLayer(), sprite.m.p.x, sprite.m.p.y, sprite.m.r.angle(), 0, 20);
+  spark.Game.project.get('shake.xml').playOn(scene.camera);
+  spark.Game.project.get('explosion.mp3').woof();
+  spark.Game.project.get('explosion.xml').emit(sprite.getLayer(), sprite.m.p.x, sprite.m.p.y, sprite.m.r.angle(), 0, 20);
 }

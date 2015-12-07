@@ -22,7 +22,7 @@ class Camera extends Actor {
   }
 
   // set the world to camera (<-1,-1> - <+1,+1>) to transform
-  public override function draw() {
+  public function applyProjection() {
     Spark.view.scale(1 / this.m.s.x, 1 / this.m.s.y);
     Spark.view.transform(this.m.r.x, -this.m.r.y, this.m.r.y, this.m.r.x, 0, 0);
     Spark.view.translate(-this.m.p.x, -this.m.p.y);

@@ -220,7 +220,7 @@ class Scene {
     // reset context settings for the view
     Spark.view.globalAlpha = 1.0;
     Spark.view.globalCompositeOperation = 'source-over';
-    Spark.view.shadowBlur = 0.0;
+    Spark.view.shadowBlur = 0;
     Spark.view.lineWidth = 1;
     Spark.view.fillStyle = '#000';
     Spark.view.strokeStyle = '#fff';
@@ -240,7 +240,7 @@ class Scene {
     Spark.view.setTransform(w2, 0, 0, h2, w2, h2);
 
     // set the playfield -> camera transform
-    this.camera.draw();
+    this.camera.applyProjection();
 
     // offset to origin of playfield
     Spark.view.translate(-mx, -my);

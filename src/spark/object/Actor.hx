@@ -16,19 +16,25 @@ typedef Behavior = {
   data: Dynamic,
 }
 
-class Actor {
+class Actor extends Rig {
   public var m: Mat;
 
   // update functions
   private var behaviors: Array<Behavior>;
 
-  // actors have a rig and can be animated
-  private var rig: Rig;
-
   // create an actor
   public function new() {
-    this.rig = new Rig();
-    this.behaviors = new Array<Behavior>();
+    super();
+
+    // reset transform and behaviors
+    this.init();
+  }
+
+  // actors can be pooled, so reset data
+  public function init() {
+    this.behaviors = [];
+
+    // reset transform
     this.m = Mat.identity();
   }
 
@@ -61,20 +67,15 @@ class Actor {
   }
 
   // called once a frame to update the sprite
-  public function update(step: Float) {
+  public override function update(step: Float) {
     var i: Int;
 
     // play any animations on this actor
-    this.rig.update(step);
+    super.update(step);
 
     // execute all the behaviors
     for(i in 0...this.behaviors.length) {
       this.behaviors[i].callback(this, step, this.behaviors[i].data);
     }
-  }
-
-  // called once per frame to render
-  public function draw() {
-    // subclass responsibility
   }
 }

@@ -6,13 +6,7 @@
 
 package spark.anim;
 
-// an animation is just a function that is called with a step and returns
-// true once the animation has played to completion
-//
 typedef Anim = Float -> Bool;
-
-// any object with a rig is considered to be a rigging
-typedef Rigging = { private var rig: Rig; }
 
 class Rig {
   private var anims: Array<Anim>;

@@ -9,7 +9,7 @@ Spark is a 2D, HTML5, game engine. It has the following features:
 * GUI controls and skinning
 * Audio clips
 
-Once you've gone over the Quickstart and Tutorial, head on over to the
+Once you've gone over the Quickstart tutorial, head on over to the
 [documentation](https://github.com/massung/spark/doc/) section and learn how
 to do even more!
 
@@ -135,7 +135,7 @@ spark.Game.main('game/project.xml', proj => {
   proj.launch(() => {
     scene = new spark.Scene('middle', 1400, 1400);
 
-    // setup the camera and projection transfrorms
+    // setup the camera and projection transforms
     scene.setViewport(1400, 1400);
 
     // start the main game loop
@@ -264,7 +264,7 @@ texture was already loaded by the `project.xml` file. Looking inside, the
 image we want has the `id` of `spaceship`. So let's look it up and use it.
 
 ```javascript
-player.setTexture(spark.Game.getTexture('spaceship'));
+player.setQuad(spark.Game.project.get('spaceship'));
 ```
 
 There. Now, if you load up our web page, you should see this:
@@ -316,7 +316,7 @@ Still, we have to add this behavior to the sprite. Let's go back up to where
 we created the sprite and add the behavior on to it.
 
 ```javascript
-player.setTexture(spark.Game.getTexture('spaceship'));
+player.setQuad(spark.Game.project.get('spaceship'));
 player.addBehavior(playerControls);
 ```
 

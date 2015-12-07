@@ -114,13 +114,13 @@ class Tween {
   }
 
   // create an animation instance for a specific property
-  public function playOn(obj: Rig.Rigging, property: String, ?loop: Bool = false) {
+  public function playOn(obj: Rig, property: String, ?loop: Bool = false) {
     var path = property.split('.');
     var key = path.pop();
-    var rig = obj.rig;
+    var rig = obj;
 
     // traverse the rest of the path to get the final object
-    while (path.length > 0) {
+    while(path.length > 0) {
       obj = Reflect.field(obj, path.shift());
 
       if (obj == null) {
