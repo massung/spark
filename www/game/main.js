@@ -38,18 +38,14 @@ spark.Game.main('game/project.xml', proj => {
 
 function spawnPlayer() {
   var sprite = playerLayer.newSprite();
-  var body = sprite.newBody('player', c => { });
 
-  sprite.setQuad(spark.Game.project.get('spaceship'));
-
-  var thrust = new spark.Vec(0, 0);
-
-  sprite.newBehavior(playerControls, { thrust: new spark.Vec(0, 0) });
-  sprite.newBehavior(wrap);
-
-  body.addCircleShape(0, 0, 30);
+  spark.Game.project.get('player').instantiate(sprite, { thrust: new spark.Vec(0, 0) });
 
   return sprite;
+}
+
+function setupPlayer(sprite) {
+  sprite.setQuad(spark.Game.project.get('player'));
 }
 
 function playerControls(sprite, step, data) {

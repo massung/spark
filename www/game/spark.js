@@ -2944,6 +2944,17 @@ spark_Util.lerp = function(p,q,k,max) {
 spark_Util.relativePath = function(file,src) {
 	return file.split("/").slice(0,-1).join("/") + "/" + src;
 };
+spark_Util.lookupFunction = function(name) {
+	var obj = window;
+	var _g = 0;
+	var _g1 = name.split(".");
+	while(_g < _g1.length) {
+		var n = _g1[_g];
+		++_g;
+		if((obj = Reflect.field(obj,n)) == null) break;
+	}
+	return obj;
+};
 spark_Util.parseBool = function(s) {
 	var _g = s.toLowerCase();
 	switch(_g) {
@@ -2992,6 +3003,9 @@ spark_Util.mergeAtt = function(obj,field,xml,valType) {
 		case 6:
 			var c = valType[2];
 			if(Type.getClassName(c) != "String") throw new js__$Boot_HaxeError("Expected attribute class of String, got " + Type.getClassName(c));
+			break;
+		case 5:
+			val = spark_Util.lookupFunction(val);
 			break;
 		case 0:
 			break;
@@ -4170,6 +4184,66 @@ spark_object_Layer.prototype = $extend(spark_object_Actor.prototype,{
 		stats.layers++;
 	}
 	,__class__: spark_object_Layer
+});
+var spark_object_Prefab = function(src) {
+	var _g = this;
+	spark_Asset.call(this,src);
+	this.x = 0;
+	this.y = 0;
+	this.angle = 0;
+	this.quad = null;
+	this.behaviors = [];
+	Spark.loadXML(src,function(doc) {
+		var prefab = doc.firstElement();
+		if(prefab == null || (function($this) {
+			var $r;
+			if(prefab.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element but found " + prefab.nodeType);
+			$r = prefab.nodeName;
+			return $r;
+		}(this)) != "prefab") throw new js__$Boot_HaxeError("Invalid prefab XML: " + src);
+		spark_Util.mergeAtt(_g,"init",prefab,ValueType.TFunction);
+		if(prefab.exists("quad")) {
+			var quad = spark_Game.project.get(prefab.get("quad"));
+			if(quad != null) _g.quad = js_Boot.__cast(quad , spark_graphics_Quad);
+		}
+		var $it0 = prefab.elementsNamed("behaviors");
+		while( $it0.hasNext() ) {
+			var behaviors = $it0.next();
+			var $it1 = behaviors.elementsNamed("behavior");
+			while( $it1.hasNext() ) {
+				var behavior = $it1.next();
+				if(behavior.exists("name")) {
+					var name = behavior.get("name");
+					var func = spark_Util.lookupFunction(name);
+					if(func != null) _g.behaviors.push(func);
+				}
+			}
+		}
+		_g.loaded = true;
+	});
+};
+$hxClasses["spark.object.Prefab"] = spark_object_Prefab;
+spark_object_Prefab.__name__ = ["spark","object","Prefab"];
+spark_object_Prefab.__super__ = spark_Asset;
+spark_object_Prefab.prototype = $extend(spark_Asset.prototype,{
+	x: null
+	,y: null
+	,angle: null
+	,init: null
+	,quad: null
+	,behaviors: null
+	,instantiate: function(sprite,data) {
+		sprite.setQuad(this.quad);
+		var _g = 0;
+		var _g1 = this.behaviors;
+		while(_g < _g1.length) {
+			var behavior = _g1[_g];
+			++_g;
+			sprite.newBehavior(behavior,data);
+		}
+		if(this.init != null) this.init(sprite,data);
+	}
+	,__class__: spark_object_Prefab
 });
 var spark_object_Sprite = function(layer) {
 	spark_object_Actor.call(this);

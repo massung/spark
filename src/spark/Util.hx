@@ -6,6 +6,8 @@
 
 package spark;
 
+import js.Browser;
+
 @:expose
 class Util {
 
@@ -77,6 +79,18 @@ class Util {
     return file.split('/').slice(0, -1).join('/') + '/' + src;
   }
 
+  // find a function by name in the global space
+  static public function lookupFunction(name: String): Dynamic {
+    var obj: Dynamic = js.Browser.window;
+
+    for(n in name.split('.')) {
+      if ((obj = Reflect.field(obj, n)) == null) break;
+    }
+
+    // may be null if not found!
+    return obj;
+  }
+
   // there's no Std.parseBool...
   static public function parseBool(s: String): Bool {
     switch(s.toLowerCase()) {
@@ -120,6 +134,10 @@ class Util {
           if (Type.getClassName(c) != 'String') {
             throw 'Expected attribute class of String, got ' + Type.getClassName(c);
           }
+
+        // functions are strings looked up in the global space
+        case TFunction:
+          val = lookupFunction(val);
 
         // null values are assumed to just be null strings
         case TNull, null: { /* do nothing */ }

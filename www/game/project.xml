@@ -6,6 +6,9 @@
     <asset id="stars" src="background.png" class="spark.graphics.Texture" />
     <asset id="pattern" src="pattern.jpg" class="spark.graphics.Texture" />
 
+    <!-- prefabs -->
+    <asset id="player" src="player.xml" class="spark.object.Prefab" />
+
     <!-- player images -->
     <asset id="spaceship" src="player.png" class="spark.graphics.Texture" />
     <asset src="laser.png" class="spark.graphics.Texture" />
