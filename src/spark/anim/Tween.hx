@@ -114,7 +114,7 @@ class Tween {
   }
 
   // create an animation instance for a specific property
-  public function playOn(obj: Rig, property: String, ?loop: Bool = false) {
+  public function play(obj: Rig, property: String, ?loop: Bool = false) {
     var path = property.split('.');
     var key = path.pop();
     var rig = obj;
@@ -159,6 +159,6 @@ class Tween {
     };
 
     // play it on the rigging
-    rig.play(anim);
+    rig.newAnim(anim);
   }
 }

@@ -16,7 +16,7 @@ spark.Game.main('game/project.xml', proj => {
     scene = new spark.Scene('middle', 1400, 1400);
     scene.setViewport(1400, 1400);
 
-    starsLayer = scene.newBackgroundLayer(spark.Game.project.get('stars'));
+    starsLayer = scene.newBackgroundLayer(spark.Game.project.getQuad('stars'));
     asteroidsLayer = scene.newSpriteLayer();
     playerLayer = scene.newSpriteLayer();
 
@@ -39,13 +39,14 @@ spark.Game.main('game/project.xml', proj => {
 function spawnPlayer() {
   var sprite = playerLayer.newSprite();
 
-  spark.Game.project.get('player').instantiate(sprite, { thrust: new spark.Vec(0, 0) });
+  sprite.newBehavior(playerControls, { thrust: new spark.Vec(0, 0), });
+  sprite.newBehavior(wrap);
+
+  sprite.newBody().newCircleShape(0, 0, 30);
+
+  sprite.quad = spark.Game.project.getQuad('spaceship');
 
   return sprite;
-}
-
-function setupPlayer(sprite) {
-  sprite.setQuad(spark.Game.project.get('player'));
 }
 
 function playerControls(sprite, step, data) {
@@ -68,7 +69,7 @@ function playerControls(sprite, step, data) {
     data.thrust.y += d.y;
 
     // emit some particles
-    spark.Game.project.get('thrust.xml').emit(sprite.getLayer(), p.x, p.y, sprite.m.r.angle(), r);
+    spark.Game.project.getEmitter('thrust.xml').emit(sprite.getLayer(), p.x, p.y, sprite.m.r.angle(), r);
   } else {
     // TODO: stop the sound
   }
@@ -92,8 +93,8 @@ function shoot(layer, m) {
   bullet.m.r = m.r.copy();
 
   // texture
-  bullet.setQuad(spark.Game.project.get('laser.png'));
-  body.addSegmentShape(0, -10, 0, 10);
+  bullet.quad = spark.Game.project.getQuad('laser.png');
+  body.newSegmentShape(0, -10, 0, 10);
 
   // create movement behavior
   bullet.newBehavior((sprite, step, data) => {
@@ -103,7 +104,7 @@ function shoot(layer, m) {
     age: 0.0
   });
 
-  spark.Game.project.get('laser.mp3').woof();
+  spark.Game.project.getSound('laser.mp3').woof();
 }
 
 function spawnAsteroid() {
@@ -118,18 +119,18 @@ function spawnAsteroid() {
   });
 
   // pick a random image to use
-  asteroid.setQuad(spark.Util.arand([
-    spark.Game.project.get('asteroid_big_1.png'),
-    spark.Game.project.get('asteroid_big_2.png'),
-    spark.Game.project.get('asteroid_big_3.png'),
-    spark.Game.project.get('asteroid_big_4.png'),
-  ]));
+  asteroid.quad = spark.Util.arand([
+    spark.Game.project.getQuad('asteroid_big_1.png'),
+    spark.Game.project.getQuad('asteroid_big_2.png'),
+    spark.Game.project.getQuad('asteroid_big_3.png'),
+    spark.Game.project.getQuad('asteroid_big_4.png'),
+  ]);
 
   var w = asteroid.getWidth();
   var h = asteroid.getHeight();
 
   // add a box shape to the asteroid
-  body.addBoxShape(-w * 3 / 8, - h * 3 / 8, w * 3 / 4, h * 3 / 4);
+  body.newBoxShape(-w * 3 / 8, - h * 3 / 8, w * 3 / 4, h * 3 / 4);
 
   // spawn at a random position
   asteroid.m.p.set(
@@ -149,7 +150,7 @@ function spawnAsteroid() {
     sprite.m.rotate(w * step);
   });
 
-  spark.Game.project.get('spawn.xml').playOn(asteroid);
+  spark.Game.project.getTimeline('spawn.xml').play(asteroid);
 }
 
 function wrap(sprite) {
@@ -167,7 +168,7 @@ function wrap(sprite) {
 }
 
 function explodeAsteroid(sprite) {
-  spark.Game.project.get('shake.xml').playOn(scene.camera);
-  spark.Game.project.get('explosion.mp3').woof();
-  spark.Game.project.get('explosion.xml').emit(sprite.getLayer(), sprite.m.p.x, sprite.m.p.y, sprite.m.r.angle(), 0, 20);
+  spark.Game.project.getTimeline('shake.xml').play(scene.camera);
+  spark.Game.project.getSound('explosion.mp3').woof();
+  spark.Game.project.getEmitter('explosion.xml').emit(sprite.getLayer(), sprite.m.p.x, sprite.m.p.y, 0, 0, 20);
 }

@@ -8,6 +8,8 @@ package spark.object.layer;
 
 import spark.collision.*;
 
+typedef SpriteCallback = Sprite -> Dynamic -> Void;
+
 class SpriteLayer extends Layer {
   private var sprites: Array<Sprite>;
   private var pool: Array<Sprite>;
@@ -43,7 +45,7 @@ class SpriteLayer extends Layer {
   public inline function get(i: Int): Sprite return this.sprites[i];
 
   // allocate a new sprite from the pool
-  public function newSprite(): Sprite {
+  public function newSprite(?init: SpriteCallback, ?data: Dynamic): Sprite {
     var sprite: Sprite;
 
     if (this.sp > 0) {
@@ -66,6 +68,11 @@ class SpriteLayer extends Layer {
 
     // tally pending sprites
     this.pending++;
+
+    // initialize the sprite with the prefab if one was passed in
+    if (init != null) {
+      init(sprite, data);
+    }
 
     return sprite;
   }

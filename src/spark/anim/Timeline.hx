@@ -115,13 +115,13 @@ class Timeline extends Asset {
   }
 
   // create an instance of the timeline for a given object
-  public function playOn(obj: Rig, ?onevent: String -> Void) {
+  public function play(obj: Rig, ?onevent: String -> Void) {
     var rig = new Rig();
     var prop;
 
     // spawn all the tracks on the same rig
     for(track in this.data.tracks) {
-      track.tween.playOn(obj, track.field, this.data.loop);
+      track.tween.play(obj, track.field, this.data.loop);
     }
 
     // lexical data for the animation
@@ -151,6 +151,6 @@ class Timeline extends Asset {
     }
 
     // play the animation
-    obj.play(anim);
+    obj.newAnim(anim);
   }
 }

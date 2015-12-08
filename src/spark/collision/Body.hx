@@ -6,6 +6,8 @@
 
 package spark.collision;
 
+import spark.collision.shape.*;
+
 typedef CollisionCallback = Body -> Body -> Void;
 
 class Body {
@@ -44,19 +46,29 @@ class Body {
     }
   }
 
+  // create a new shape and track it
+  public function newShape(classRef: Class<Shape>, initargs: Array<Dynamic>): Shape {
+    var shape = Type.createInstance(classRef, initargs);
+
+    // add the shape to the list
+    this.shapes.push(shape);
+
+    return shape;
+  }
+
   // create a new segment shape and attach it
-  public function addSegmentShape(x1: Float, y1: Float, x2: Float, y2: Float) {
-    this.shapes.push(new spark.collision.shape.Segment(this, x1, y1, x2, y2));
+  public function newSegmentShape(x1: Float, y1: Float, x2: Float, y2: Float): Segment {
+    return cast newShape(Segment, [this, x1, y1, x2, y2]);
   }
 
   // create a new circle shape and attach it
-  public function addCircleShape(x: Float, y: Float, radius: Float) {
-    this.shapes.push(new spark.collision.shape.Circle(this, x, y, radius));
+  public function newCircleShape(x: Float, y: Float, radius: Float) {
+    return cast newShape(Circle, [this, x, y, radius]);
   }
 
   // create a new box shape and attach it
-  public function addBoxShape(x: Float, y: Float, width: Float, height: Float) {
-    this.shapes.push(new spark.collision.shape.Box(this, x, y, width, height));
+  public function newBoxShape(x: Float, y: Float, width: Float, height: Float) {
+    return cast newShape(Box, [this, x, y, width, height]);
   }
 
   // process a collision

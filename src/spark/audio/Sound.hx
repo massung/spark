@@ -37,7 +37,7 @@ class Sound extends Asset {
   }
 
   // play a single instance of the sound
-  public function woof(): js.html.audio.AudioBufferSourceNode {
+  public function woof(id: String): js.html.audio.AudioBufferSourceNode {
     var source = this.createSource();
 
     if (source != null) {
@@ -48,7 +48,7 @@ class Sound extends Asset {
   }
 
   // play a looping version of the source
-  public function loop(): js.html.audio.AudioBufferSourceNode {
+  public function loop(id: String): js.html.audio.AudioBufferSourceNode {
     var source = this.createSource();
 
     if (source != null) {

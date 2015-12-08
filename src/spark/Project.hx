@@ -8,6 +8,11 @@ package spark;
 
 import haxe.ds.StringMap;
 
+import spark.anim.*;
+import spark.audio.*;
+import spark.graphics.*;
+import spark.object.*;
+
 typedef ProjectInfo = {
   title: String,
   version: String,
@@ -108,6 +113,12 @@ class Project {
 
   // lookup a loaded asset by id
   public function get(id: String): Asset return this.assets.get(id);
+
+  // lookup assets by type (fail if cast fails)
+  public function getEmitter(id: String): Emitter return cast(get(id), Emitter);
+  public function getQuad(id: String): Quad return cast(get(id), Quad);
+  public function getSound(id: String): Sound return cast(get(id), Sound);
+  public function getTimeline(id: String): Timeline return cast(get(id), Timeline);
 
   // waits until all loading is complete, then call onload
   public function launch(onload: Void -> Void) {

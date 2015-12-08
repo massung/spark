@@ -2320,6 +2320,9 @@ spark_Game.main = function(projectFile,onload) {
 	spark_Game.project = new spark_Project(projectFile,onload);
 	spark_Game.scene = null;
 };
+spark_Game.getScene = function() {
+	return spark_Game.scene;
+};
 var spark_Joystick = $hx_exports.spark.Joystick = function() { };
 $hxClasses["spark.Joystick"] = spark_Joystick;
 spark_Joystick.__name__ = ["spark","Joystick"];
@@ -2624,7 +2627,7 @@ spark_Project.prototype = {
 		return this.register(id,Type.createInstance(classRef,[src]));
 	}
 	,register: function(id,asset) {
-		if(this.assets.exists(id)) haxe_Log.trace("Asset \"" + id + "\" already exists; skipping...",{ fileName : "Project.hx", lineNumber : 98, className : "spark.Project", methodName : "register"}); else {
+		if(this.assets.exists(id)) haxe_Log.trace("Asset \"" + id + "\" already exists; skipping...",{ fileName : "Project.hx", lineNumber : 103, className : "spark.Project", methodName : "register"}); else {
 			this.assets.set(id,asset);
 			this.loadQueue.push(asset);
 		}
@@ -2632,6 +2635,18 @@ spark_Project.prototype = {
 	}
 	,get: function(id) {
 		return this.assets.get(id);
+	}
+	,getEmitter: function(id) {
+		return js_Boot.__cast(this.get(id) , spark_graphics_Emitter);
+	}
+	,getQuad: function(id) {
+		return js_Boot.__cast(this.get(id) , spark_graphics_Quad);
+	}
+	,getSound: function(id) {
+		return js_Boot.__cast(this.get(id) , spark_audio_Sound);
+	}
+	,getTimeline: function(id) {
+		return js_Boot.__cast(this.get(id) , spark_anim_Timeline);
 	}
 	,launch: function(onload) {
 		var _g = this;
@@ -3136,7 +3151,7 @@ $hxClasses["spark.anim.Rig"] = spark_anim_Rig;
 spark_anim_Rig.__name__ = ["spark","anim","Rig"];
 spark_anim_Rig.prototype = {
 	anims: null
-	,play: function(anim) {
+	,newAnim: function(anim) {
 		this.anims.push(anim);
 	}
 	,stop: function(anim) {
@@ -3215,7 +3230,7 @@ spark_anim_Timeline.__name__ = ["spark","anim","Timeline"];
 spark_anim_Timeline.__super__ = spark_Asset;
 spark_anim_Timeline.prototype = $extend(spark_Asset.prototype,{
 	data: null
-	,playOn: function(obj,onevent) {
+	,play: function(obj,onevent) {
 		var rig = new spark_anim_Rig();
 		var prop;
 		var _g = 0;
@@ -3223,7 +3238,7 @@ spark_anim_Timeline.prototype = $extend(spark_Asset.prototype,{
 		while(_g < _g1.length) {
 			var track = _g1[_g];
 			++_g;
-			track.tween.playOn(obj,track.field,this.data.loop);
+			track.tween.play(obj,track.field,this.data.loop);
 		}
 		var timeline = this;
 		var eventIndex = 0;
@@ -3239,7 +3254,7 @@ spark_anim_Timeline.prototype = $extend(spark_Asset.prototype,{
 			}
 			if(timeline.data.loop) return false; else return time > timeline.data.fps * timeline.data.duration;
 		};
-		obj.play(anim);
+		obj.newAnim(anim);
 	}
 	,__class__: spark_anim_Timeline
 });
@@ -3324,7 +3339,7 @@ spark_anim_Tween.prototype = {
 	fps: null
 	,duration: null
 	,keys: null
-	,playOn: function(obj,property,loop) {
+	,play: function(obj,property,loop) {
 		if(loop == null) loop = false;
 		var path = property.split(".");
 		var key = path.pop();
@@ -3348,7 +3363,7 @@ spark_anim_Tween.prototype = {
 			Reflect.setProperty(obj,key,tween.keys[frame]);
 			return shouldStop;
 		};
-		rig.play(anim);
+		rig.newAnim(anim);
 	}
 	,__class__: spark_anim_Tween
 };
@@ -3374,12 +3389,12 @@ spark_audio_Sound.prototype = $extend(spark_Asset.prototype,{
 		source.connect(Spark.audio.destination);
 		return source;
 	}
-	,woof: function() {
+	,woof: function(id) {
 		var source = this.createSource();
 		if(source != null) source.start();
 		return source;
 	}
-	,loop: function() {
+	,loop: function(id) {
 		var source = this.createSource();
 		if(source != null) {
 			source.loop = true;
@@ -3426,14 +3441,19 @@ spark_collision_Body.prototype = {
 			space.addShape(this.shapes[i1]);
 		}
 	}
-	,addSegmentShape: function(x1,y1,x2,y2) {
-		this.shapes.push(new spark_collision_shape_Segment(this,x1,y1,x2,y2));
+	,newShape: function(classRef,initargs) {
+		var shape = Type.createInstance(classRef,initargs);
+		this.shapes.push(shape);
+		return shape;
 	}
-	,addCircleShape: function(x,y,radius) {
-		this.shapes.push(new spark_collision_shape_Circle(this,x,y,radius));
+	,newSegmentShape: function(x1,y1,x2,y2) {
+		return this.newShape(spark_collision_shape_Segment,[this,x1,y1,x2,y2]);
 	}
-	,addBoxShape: function(x,y,width,height) {
-		this.shapes.push(new spark_collision_shape_Box(this,x,y,width,height));
+	,newCircleShape: function(x,y,radius) {
+		return this.newShape(spark_collision_shape_Circle,[this,x,y,radius]);
+	}
+	,newBoxShape: function(x,y,width,height) {
+		return this.newShape(spark_collision_shape_Box,[this,x,y,width,height]);
 	}
 	,collide: function(body) {
 		if(this.oncollision != null && body.filter != null) this.oncollision(this,body);
@@ -3867,7 +3887,6 @@ var spark_graphics_Emitter = function(src) {
 	var _g = this;
 	spark_Asset.call(this,src);
 	this.data = { blend : "screen", sprite : null, startAlpha : 1.0, endAlpha : 1.0, minLife : 1.0, maxLife : 1.5, startScale : 1.0, endScale : 1.0, spread : 180.0, minSpeed : 50.0, maxSpeed : 100.0, angle : 0.0, minAngularVelocity : -90.0, maxAngularVelocity : 90.0};
-	this.quad = null;
 	Spark.loadXML(src,function(doc) {
 		var emitter = doc.firstElement();
 		if(emitter == null || (function($this) {
@@ -3890,10 +3909,7 @@ var spark_graphics_Emitter = function(src) {
 		spark_Util.mergeAtt(_g.data,"angle",emitter,ValueType.TFloat);
 		spark_Util.mergeAtt(_g.data,"minAngularVelocity",emitter,ValueType.TFloat);
 		spark_Util.mergeAtt(_g.data,"maxAngularVelocity",emitter,ValueType.TFloat);
-		if(_g.data.sprite != null) {
-			var asset = spark_Game.project.get(_g.data.sprite);
-			_g.quad = js_Boot.__cast(asset , spark_graphics_Quad);
-		}
+		if(_g.data.sprite != null) _g.quad = spark_Game.project.getQuad(_g.data.sprite);
 		_g.particleBehavior = function(actor,step,data) {
 			var s = actor;
 			var p = data;
@@ -4185,66 +4201,6 @@ spark_object_Layer.prototype = $extend(spark_object_Actor.prototype,{
 	}
 	,__class__: spark_object_Layer
 });
-var spark_object_Prefab = function(src) {
-	var _g = this;
-	spark_Asset.call(this,src);
-	this.x = 0;
-	this.y = 0;
-	this.angle = 0;
-	this.quad = null;
-	this.behaviors = [];
-	Spark.loadXML(src,function(doc) {
-		var prefab = doc.firstElement();
-		if(prefab == null || (function($this) {
-			var $r;
-			if(prefab.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element but found " + prefab.nodeType);
-			$r = prefab.nodeName;
-			return $r;
-		}(this)) != "prefab") throw new js__$Boot_HaxeError("Invalid prefab XML: " + src);
-		spark_Util.mergeAtt(_g,"init",prefab,ValueType.TFunction);
-		if(prefab.exists("quad")) {
-			var quad = spark_Game.project.get(prefab.get("quad"));
-			if(quad != null) _g.quad = js_Boot.__cast(quad , spark_graphics_Quad);
-		}
-		var $it0 = prefab.elementsNamed("behaviors");
-		while( $it0.hasNext() ) {
-			var behaviors = $it0.next();
-			var $it1 = behaviors.elementsNamed("behavior");
-			while( $it1.hasNext() ) {
-				var behavior = $it1.next();
-				if(behavior.exists("name")) {
-					var name = behavior.get("name");
-					var func = spark_Util.lookupFunction(name);
-					if(func != null) _g.behaviors.push(func);
-				}
-			}
-		}
-		_g.loaded = true;
-	});
-};
-$hxClasses["spark.object.Prefab"] = spark_object_Prefab;
-spark_object_Prefab.__name__ = ["spark","object","Prefab"];
-spark_object_Prefab.__super__ = spark_Asset;
-spark_object_Prefab.prototype = $extend(spark_Asset.prototype,{
-	x: null
-	,y: null
-	,angle: null
-	,init: null
-	,quad: null
-	,behaviors: null
-	,instantiate: function(sprite,data) {
-		sprite.setQuad(this.quad);
-		var _g = 0;
-		var _g1 = this.behaviors;
-		while(_g < _g1.length) {
-			var behavior = _g1[_g];
-			++_g;
-			sprite.newBehavior(behavior,data);
-		}
-		if(this.init != null) this.init(sprite,data);
-	}
-	,__class__: spark_object_Prefab
-});
 var spark_object_Sprite = function(layer) {
 	spark_object_Actor.call(this);
 	this.layer = layer;
@@ -4274,14 +4230,14 @@ spark_object_Sprite.prototype = $extend(spark_object_Actor.prototype,{
 	,newBody: function(filter,oncollision) {
 		return this.body = new spark_collision_Body(this,filter,oncollision);
 	}
-	,setQuad: function(quad) {
-		this.quad = quad;
-	}
 	,getWidth: function() {
 		if(this.quad != null) return this.quad.getRect().getWidth(); else return 0;
 	}
 	,getHeight: function() {
 		if(this.quad != null) return this.quad.getRect().getHeight(); else return 0;
+	}
+	,setQuad: function(quad) {
+		this.quad = quad;
 	}
 	,addToQuadtree: function(space) {
 		if(this.body != null) this.body.addToQuadtree(space);
@@ -4327,10 +4283,10 @@ spark_object_layer_BackgroundLayer.prototype = $extend(spark_object_Layer.protot
 		var iw = this.frame.getRect().getWidth();
 		var ih = this.frame.getRect().getHeight();
 		if(this.tiled == false) this.frame.draw(); else {
-			var l = spark_Game.scene.rect.getLeft();
-			var t = spark_Game.scene.rect.getTop();
-			var w = spark_Game.scene.rect.getWidth();
-			var h = spark_Game.scene.rect.getHeight();
+			var l = spark_Game.getScene().rect.getLeft();
+			var t = spark_Game.getScene().rect.getTop();
+			var w = spark_Game.getScene().rect.getWidth();
+			var h = spark_Game.getScene().rect.getHeight();
 			var x = -iw;
 			while(x < w) {
 				var y = -ih;
@@ -4379,7 +4335,7 @@ spark_object_layer_SpriteLayer.prototype = $extend(spark_object_Layer.prototype,
 	,get: function(i) {
 		return this.sprites[i];
 	}
-	,newSprite: function() {
+	,newSprite: function(init,data) {
 		var sprite;
 		if(this.sp > 0) {
 			sprite = this.pool[--this.sp];
@@ -4387,6 +4343,7 @@ spark_object_layer_SpriteLayer.prototype = $extend(spark_object_Layer.prototype,
 		} else sprite = new spark_object_Sprite(this);
 		if(this.count + this.pending < this.sprites.length) this.sprites[this.count + this.pending] = sprite; else this.sprites.push(sprite);
 		this.pending++;
+		if(init != null) init(sprite,data);
 		return sprite;
 	}
 	,update: function(step) {

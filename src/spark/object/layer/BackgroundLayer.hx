@@ -52,10 +52,10 @@ class BackgroundLayer extends Layer {
     if (this.tiled == false) {
       this.frame.draw();
     } else {
-      var l = Game.scene.rect.getLeft();
-      var t = Game.scene.rect.getTop();
-      var w = Game.scene.rect.getWidth();
-      var h = Game.scene.rect.getHeight();
+      var l = Game.getScene().rect.getLeft();
+      var t = Game.getScene().rect.getTop();
+      var w = Game.getScene().rect.getWidth();
+      var h = Game.getScene().rect.getHeight();
 
       // loop until the entire scene is covered
       var x = -iw;

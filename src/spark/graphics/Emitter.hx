@@ -65,9 +65,6 @@ class Emitter extends Asset {
       maxAngularVelocity: 90.0,
     };
 
-    // crunched data
-    this.quad = null;
-
     // issue the load
     Spark.loadXML(src, function(doc) {
       var emitter: Xml = doc.firstElement();
@@ -92,12 +89,9 @@ class Emitter extends Asset {
       Util.mergeAtt(this.data, 'minAngularVelocity', emitter, TFloat);
       Util.mergeAtt(this.data, 'maxAngularVelocity', emitter, TFloat);
 
-      // if the texture was set, look it up in the project
+      // lookup the sprite quad if set
       if (this.data.sprite != null) {
-        var asset = Game.project.get(this.data.sprite);
-
-        // attempt to cast the asset to a renderable quad
-        this.quad = cast(asset, Quad);
+        this.quad = Game.project.getQuad(this.data.sprite);
       }
 
       // create a custom behavior for all particles this emitter spawns

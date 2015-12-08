@@ -60,11 +60,6 @@ class Sprite extends Actor {
     return this.body = new spark.collision.Body(this, filter, oncollision);
   }
 
-  // set the sprite quad to render with
-  public function setQuad(quad: Quad) {
-    this.quad = quad;
-  }
-
   // return the width of the sprite in pixels
   public function getWidth(): Float {
     return (this.quad != null) ? this.quad.getRect().getWidth() : 0;
@@ -74,6 +69,9 @@ class Sprite extends Actor {
   public function getHeight(): Float {
     return (this.quad != null) ? this.quad.getRect().getHeight() : 0;
   }
+
+  // set the quad this sprite renders with
+  public function setQuad(quad: Quad) this.quad = quad;
 
   // add all collision shapes on this sprite into the spacial hash
   public function addToQuadtree(space: Quadtree) {

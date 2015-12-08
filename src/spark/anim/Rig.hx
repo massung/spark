@@ -17,7 +17,8 @@ class Rig {
   }
 
   // add an animation instance to the rig
-  public function play(anim: Anim) {
+  @:allow(spark.anim)
+  private function newAnim(anim: Anim) {
     this.anims.push(anim);
   }
 
