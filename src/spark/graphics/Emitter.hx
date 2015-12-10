@@ -17,28 +17,25 @@ typedef ParticleData = {
   vy: Float,
 }
 
-typedef EmitterData = {
-  blend: String,
-  sprite: String,
-  startAlpha: Float,
-  endAlpha: Float,
-  minLife: Float,
-  maxLife: Float,
-  startScale: Float,
-  endScale: Float,
-  spread: Float,
-  minSpeed: Float,
-  maxSpeed: Float,
-  angle: Float,
-  minAngularVelocity: Float,
-  maxAngularVelocity: Float,
-}
-
 class Emitter extends Asset {
-  private var data: EmitterData;
-
-  // how each particle sprite will render
   private var quad: Quad;
+
+  // determines the behavior of spawned particle sprites
+  private var blend: String;
+  private var sprite: String;
+  private var startAlpha: Float;
+  private var endAlpha: Float;
+  private var minLife: Float;
+  private var maxLife: Float;
+  private var startScale: Float;
+  private var endScale: Float;
+  private var spread: Float;
+  private var minSpeed: Float;
+  private var maxSpeed: Float;
+  private var angle: Float;
+  private var minAngularVelocity: Float;
+  private var maxAngularVelocity: Float;
+  private var damping: Float;
 
   // created behavior function for this emitter
   private var particleBehavior: Actor.BehaviorCallback;
@@ -48,22 +45,21 @@ class Emitter extends Asset {
     super(src);
 
     // default source values
-    this.data = {
-      blend: 'screen',
-      sprite: null,
-      startAlpha: 1.0,
-      endAlpha: 1.0,
-      minLife: 1.0,
-      maxLife: 1.5,
-      startScale: 1.0,
-      endScale: 1.0,
-      spread: 180.0,
-      minSpeed: 50.0,
-      maxSpeed: 100.0,
-      angle: 0.0,
-      minAngularVelocity: -90.0,
-      maxAngularVelocity: 90.0,
-    };
+    this.blend = 'screen';
+    this.sprite = null;
+    this.startAlpha = 1.0;
+    this.endAlpha = 1.0;
+    this.minLife = 1.0;
+    this.maxLife = 1.5;
+    this.startScale = 1.0;
+    this.endScale = 1.0;
+    this.spread = 180.0;
+    this.minSpeed = 50.0;
+    this.maxSpeed = 100.0;
+    this.angle = 0.0;
+    this.minAngularVelocity = -90.0;
+    this.maxAngularVelocity = 90.0;
+    this.damping = 1.0;
 
     // issue the load
     Spark.loadXML(src, function(doc) {
@@ -74,24 +70,25 @@ class Emitter extends Asset {
       }
 
       // get all the emitter properties and override defaults
-      Util.mergeAtt(this.data, 'sprite', emitter);
-      Util.mergeAtt(this.data, 'blend', emitter);
-      Util.mergeAtt(this.data, 'startAlpha', emitter, TFloat);
-      Util.mergeAtt(this.data, 'endAlpha', emitter, TFloat);
-      Util.mergeAtt(this.data, 'minLife', emitter, TFloat);
-      Util.mergeAtt(this.data, 'maxLife', emitter, TFloat);
-      Util.mergeAtt(this.data, 'startScale', emitter, TFloat);
-      Util.mergeAtt(this.data, 'endScale', emitter, TFloat);
-      Util.mergeAtt(this.data, 'spread', emitter, TFloat);
-      Util.mergeAtt(this.data, 'minSpeed', emitter, TFloat);
-      Util.mergeAtt(this.data, 'maxSpeed', emitter, TFloat);
-      Util.mergeAtt(this.data, 'angle', emitter, TFloat);
-      Util.mergeAtt(this.data, 'minAngularVelocity', emitter, TFloat);
-      Util.mergeAtt(this.data, 'maxAngularVelocity', emitter, TFloat);
+      Util.mergeAtt(this, 'sprite', emitter);
+      Util.mergeAtt(this, 'blend', emitter);
+      Util.mergeAtt(this, 'startAlpha', emitter, TFloat);
+      Util.mergeAtt(this, 'endAlpha', emitter, TFloat);
+      Util.mergeAtt(this, 'minLife', emitter, TFloat);
+      Util.mergeAtt(this, 'maxLife', emitter, TFloat);
+      Util.mergeAtt(this, 'startScale', emitter, TFloat);
+      Util.mergeAtt(this, 'endScale', emitter, TFloat);
+      Util.mergeAtt(this, 'spread', emitter, TFloat);
+      Util.mergeAtt(this, 'minSpeed', emitter, TFloat);
+      Util.mergeAtt(this, 'maxSpeed', emitter, TFloat);
+      Util.mergeAtt(this, 'angle', emitter, TFloat);
+      Util.mergeAtt(this, 'minAngularVelocity', emitter, TFloat);
+      Util.mergeAtt(this, 'maxAngularVelocity', emitter, TFloat);
+      Util.mergeAtt(this, 'damping', emitter, TFloat);
 
       // lookup the sprite quad if set
-      if (this.data.sprite != null) {
-        this.quad = Game.project.getQuad(this.data.sprite);
+      if (this.sprite != null) {
+        this.quad = Game.project.getQuad(this.sprite);
       }
 
       // create a custom behavior for all particles this emitter spawns
@@ -108,15 +105,19 @@ class Emitter extends Asset {
         }
 
         // calculate the new scale
-        var scale = Util.lerp(this.data.startScale, this.data.endScale, p.age, p.life);
+        var scale = Util.lerp(this.startScale, this.endScale, p.age, p.life);
 
         // translate, rotate, and scale
         s.m.translate(p.vx * step, p.vy * step);
         s.m.rotate(p.w * step);
         s.m.s.set(scale, scale);
 
+        // apply damping
+        p.vx *= 1 - (this.damping * step);
+        p.vy *= 1 - (this.damping * step);
+
         // linearly interpolate the alpha
-        s.alpha = Util.lerp(this.data.startAlpha, this.data.endAlpha, p.age, p.life);
+        s.alpha = Util.lerp(this.startAlpha, this.endAlpha, p.age, p.life);
       };
 
       // asset is now ready for use
@@ -135,21 +136,21 @@ class Emitter extends Asset {
       sprite.setQuad(this.quad);
 
       // set the composite operation from the source
-      sprite.blend = this.data.blend;
+      sprite.blend = this.blend;
 
       // random linear speed and spread in the direction of travel
-      var speed = Util.rand(this.data.minSpeed, this.data.maxSpeed);
-      var spread = Util.rand(-this.data.spread, this.data.spread);
+      var speed = Util.rand(this.minSpeed, this.maxSpeed);
+      var spread = Util.rand(-this.spread, this.spread);
 
       // initialize the sprite transform
       sprite.m.p.set(x, y);
-      sprite.m.angle = this.data.angle + r;
+      sprite.m.angle = this.angle + r;
 
       // pick a random age
-      var life = Util.rand(this.data.minLife, this.data.maxLife);
+      var life = Util.rand(this.minLife, this.maxLife);
 
       // randomize the angular velocity
-      var w = Util.rand(this.data.minAngularVelocity, this.data.maxAngularVelocity);
+      var w = Util.rand(this.minAngularVelocity, this.maxAngularVelocity);
 
       // get the direction of travel unit vector
       var dx = Math.cos(Util.degToRad(dir + spread));

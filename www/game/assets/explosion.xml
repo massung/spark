@@ -11,4 +11,5 @@
   endScale="0.6"
   startAlpha="1.0"
   endAlpha="0.5"
+  damping="0.5"
 />

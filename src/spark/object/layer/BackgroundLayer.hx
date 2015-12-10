@@ -10,15 +10,15 @@ import spark.collision.*;
 import spark.graphics.*;
 
 class BackgroundLayer extends Layer {
-  private var frame: Quad;
+  private var quad: Quad;
   private var tiled: Bool;
 
   // create a new background layer
-  public function new(frame: Quad, ?tiled: Bool = true) {
+  public function new(quad: Quad, ?tiled: Bool = true) {
     super();
 
     // initialize
-    this.frame = frame;
+    this.quad = quad;
     this.tiled = tiled;
   }
 
@@ -27,15 +27,15 @@ class BackgroundLayer extends Layer {
     super.update(step);
 
     // when tiled, wrap the position offset
-    if (this.tiled && this.frame != null) {
-      this.m.p.x %= this.frame.getRect().getWidth() * this.m.s.x;
-      this.m.p.y %= this.frame.getRect().getHeight() * this.m.s.y;
+    if (this.tiled && this.quad != null) {
+      this.m.p.x %= this.quad.getRect().getWidth() * this.m.s.x;
+      this.m.p.y %= this.quad.getRect().getHeight() * this.m.s.y;
     }
   }
 
   // render the background as a single image or tiles
   public override function draw() {
-    if (this.frame == null) {
+    if (this.quad == null) {
       return;
     }
 
@@ -45,12 +45,12 @@ class BackgroundLayer extends Layer {
     this.m.apply();
 
     // cache the image size
-    var iw = this.frame.getRect().getWidth();
-    var ih = this.frame.getRect().getHeight();
+    var iw = this.quad.getRect().getWidth();
+    var ih = this.quad.getRect().getHeight();
 
     // render once or tiled?
     if (this.tiled == false) {
-      this.frame.draw();
+      this.quad.draw();
     } else {
       var l = Game.getScene().rect.getLeft();
       var t = Game.getScene().rect.getTop();
@@ -68,7 +68,7 @@ class BackgroundLayer extends Layer {
             Spark.view.translate(l + x, t + y);
 
             // render the quad
-            this.frame.draw();
+            this.quad.draw();
           }
           Spark.view.restore();
 

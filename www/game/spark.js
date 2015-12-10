@@ -3886,7 +3886,21 @@ spark_graphics_Atlas.prototype = $extend(spark_Asset.prototype,{
 var spark_graphics_Emitter = function(src) {
 	var _g = this;
 	spark_Asset.call(this,src);
-	this.data = { blend : "screen", sprite : null, startAlpha : 1.0, endAlpha : 1.0, minLife : 1.0, maxLife : 1.5, startScale : 1.0, endScale : 1.0, spread : 180.0, minSpeed : 50.0, maxSpeed : 100.0, angle : 0.0, minAngularVelocity : -90.0, maxAngularVelocity : 90.0};
+	this.blend = "screen";
+	this.sprite = null;
+	this.startAlpha = 1.0;
+	this.endAlpha = 1.0;
+	this.minLife = 1.0;
+	this.maxLife = 1.5;
+	this.startScale = 1.0;
+	this.endScale = 1.0;
+	this.spread = 180.0;
+	this.minSpeed = 50.0;
+	this.maxSpeed = 100.0;
+	this.angle = 0.0;
+	this.minAngularVelocity = -90.0;
+	this.maxAngularVelocity = 90.0;
+	this.damping = 1.0;
 	Spark.loadXML(src,function(doc) {
 		var emitter = doc.firstElement();
 		if(emitter == null || (function($this) {
@@ -3895,21 +3909,22 @@ var spark_graphics_Emitter = function(src) {
 			$r = emitter.nodeName;
 			return $r;
 		}(this)) != "emitter") throw new js__$Boot_HaxeError("Invalid emitter XML: " + src);
-		spark_Util.mergeAtt(_g.data,"sprite",emitter);
-		spark_Util.mergeAtt(_g.data,"blend",emitter);
-		spark_Util.mergeAtt(_g.data,"startAlpha",emitter,ValueType.TFloat);
-		spark_Util.mergeAtt(_g.data,"endAlpha",emitter,ValueType.TFloat);
-		spark_Util.mergeAtt(_g.data,"minLife",emitter,ValueType.TFloat);
-		spark_Util.mergeAtt(_g.data,"maxLife",emitter,ValueType.TFloat);
-		spark_Util.mergeAtt(_g.data,"startScale",emitter,ValueType.TFloat);
-		spark_Util.mergeAtt(_g.data,"endScale",emitter,ValueType.TFloat);
-		spark_Util.mergeAtt(_g.data,"spread",emitter,ValueType.TFloat);
-		spark_Util.mergeAtt(_g.data,"minSpeed",emitter,ValueType.TFloat);
-		spark_Util.mergeAtt(_g.data,"maxSpeed",emitter,ValueType.TFloat);
-		spark_Util.mergeAtt(_g.data,"angle",emitter,ValueType.TFloat);
-		spark_Util.mergeAtt(_g.data,"minAngularVelocity",emitter,ValueType.TFloat);
-		spark_Util.mergeAtt(_g.data,"maxAngularVelocity",emitter,ValueType.TFloat);
-		if(_g.data.sprite != null) _g.quad = spark_Game.project.getQuad(_g.data.sprite);
+		spark_Util.mergeAtt(_g,"sprite",emitter);
+		spark_Util.mergeAtt(_g,"blend",emitter);
+		spark_Util.mergeAtt(_g,"startAlpha",emitter,ValueType.TFloat);
+		spark_Util.mergeAtt(_g,"endAlpha",emitter,ValueType.TFloat);
+		spark_Util.mergeAtt(_g,"minLife",emitter,ValueType.TFloat);
+		spark_Util.mergeAtt(_g,"maxLife",emitter,ValueType.TFloat);
+		spark_Util.mergeAtt(_g,"startScale",emitter,ValueType.TFloat);
+		spark_Util.mergeAtt(_g,"endScale",emitter,ValueType.TFloat);
+		spark_Util.mergeAtt(_g,"spread",emitter,ValueType.TFloat);
+		spark_Util.mergeAtt(_g,"minSpeed",emitter,ValueType.TFloat);
+		spark_Util.mergeAtt(_g,"maxSpeed",emitter,ValueType.TFloat);
+		spark_Util.mergeAtt(_g,"angle",emitter,ValueType.TFloat);
+		spark_Util.mergeAtt(_g,"minAngularVelocity",emitter,ValueType.TFloat);
+		spark_Util.mergeAtt(_g,"maxAngularVelocity",emitter,ValueType.TFloat);
+		spark_Util.mergeAtt(_g,"damping",emitter,ValueType.TFloat);
+		if(_g.sprite != null) _g.quad = spark_Game.project.getQuad(_g.sprite);
 		_g.particleBehavior = function(actor,step,data) {
 			var s = actor;
 			var p = data;
@@ -3917,11 +3932,13 @@ var spark_graphics_Emitter = function(src) {
 				p.age = p.life;
 				s.dead = true;
 			}
-			var scale = spark_Util.lerp(_g.data.startScale,_g.data.endScale,p.age,p.life);
+			var scale = spark_Util.lerp(_g.startScale,_g.endScale,p.age,p.life);
 			s.m.translate(p.vx * step,p.vy * step);
 			s.m.rotate(p.w * step);
 			s.m.s.set(scale,scale);
-			s.alpha = spark_Util.lerp(_g.data.startAlpha,_g.data.endAlpha,p.age,p.life);
+			p.vx *= 1 - _g.damping * step;
+			p.vy *= 1 - _g.damping * step;
+			s.alpha = spark_Util.lerp(_g.startAlpha,_g.endAlpha,p.age,p.life);
 		};
 		_g.loaded = true;
 	});
@@ -3930,8 +3947,22 @@ $hxClasses["spark.graphics.Emitter"] = spark_graphics_Emitter;
 spark_graphics_Emitter.__name__ = ["spark","graphics","Emitter"];
 spark_graphics_Emitter.__super__ = spark_Asset;
 spark_graphics_Emitter.prototype = $extend(spark_Asset.prototype,{
-	data: null
-	,quad: null
+	quad: null
+	,blend: null
+	,sprite: null
+	,startAlpha: null
+	,endAlpha: null
+	,minLife: null
+	,maxLife: null
+	,startScale: null
+	,endScale: null
+	,spread: null
+	,minSpeed: null
+	,maxSpeed: null
+	,angle: null
+	,minAngularVelocity: null
+	,maxAngularVelocity: null
+	,damping: null
 	,particleBehavior: null
 	,emit: function(layer,x,y,r,dir,n) {
 		if(n == null) n = 1;
@@ -3941,13 +3972,13 @@ spark_graphics_Emitter.prototype = $extend(spark_Asset.prototype,{
 			var i1 = _g++;
 			var sprite = layer.newSprite();
 			sprite.setQuad(this.quad);
-			sprite.blend = this.data.blend;
-			var speed = spark_Util.rand(this.data.minSpeed,this.data.maxSpeed);
-			var spread = spark_Util.rand(-this.data.spread,this.data.spread);
+			sprite.blend = this.blend;
+			var speed = spark_Util.rand(this.minSpeed,this.maxSpeed);
+			var spread = spark_Util.rand(-this.spread,this.spread);
 			sprite.m.p.set(x,y);
-			sprite.m.set_angle(this.data.angle + r);
-			var life = spark_Util.rand(this.data.minLife,this.data.maxLife);
-			var w = spark_Util.rand(this.data.minAngularVelocity,this.data.maxAngularVelocity);
+			sprite.m.set_angle(this.angle + r);
+			var life = spark_Util.rand(this.minLife,this.maxLife);
+			var w = spark_Util.rand(this.minAngularVelocity,this.maxAngularVelocity);
 			var dx = Math.cos(spark_Util.degToRad(dir + spread));
 			var dy = Math.sin(spark_Util.degToRad(dir + spread));
 			var particle = { age : 0, life : life, w : w, vx : dx * speed, vy : dy * speed};
@@ -4231,10 +4262,10 @@ spark_object_Sprite.prototype = $extend(spark_object_Actor.prototype,{
 		return this.body = new spark_collision_Body(this,filter,oncollision);
 	}
 	,getWidth: function() {
-		if(this.quad != null) return this.quad.getRect().getWidth(); else return 0;
+		return this.m.s.x * (this.quad != null?this.quad.getRect().getWidth():0);
 	}
 	,getHeight: function() {
-		if(this.quad != null) return this.quad.getRect().getHeight(); else return 0;
+		return this.m.s.y * (this.quad != null?this.quad.getRect().getHeight():0);
 	}
 	,setQuad: function(quad) {
 		this.quad = quad;
@@ -4257,32 +4288,32 @@ spark_object_Sprite.prototype = $extend(spark_object_Actor.prototype,{
 	}
 	,__class__: spark_object_Sprite
 });
-var spark_object_layer_BackgroundLayer = function(frame,tiled) {
+var spark_object_layer_BackgroundLayer = function(quad,tiled) {
 	if(tiled == null) tiled = true;
 	spark_object_Layer.call(this);
-	this.frame = frame;
+	this.quad = quad;
 	this.tiled = tiled;
 };
 $hxClasses["spark.object.layer.BackgroundLayer"] = spark_object_layer_BackgroundLayer;
 spark_object_layer_BackgroundLayer.__name__ = ["spark","object","layer","BackgroundLayer"];
 spark_object_layer_BackgroundLayer.__super__ = spark_object_Layer;
 spark_object_layer_BackgroundLayer.prototype = $extend(spark_object_Layer.prototype,{
-	frame: null
+	quad: null
 	,tiled: null
 	,update: function(step) {
 		spark_object_Layer.prototype.update.call(this,step);
-		if(this.tiled && this.frame != null) {
-			this.m.p.x %= this.frame.getRect().getWidth() * this.m.s.x;
-			this.m.p.y %= this.frame.getRect().getHeight() * this.m.s.y;
+		if(this.tiled && this.quad != null) {
+			this.m.p.x %= this.quad.getRect().getWidth() * this.m.s.x;
+			this.m.p.y %= this.quad.getRect().getHeight() * this.m.s.y;
 		}
 	}
 	,draw: function() {
-		if(this.frame == null) return;
+		if(this.quad == null) return;
 		Spark.view.save();
 		this.m.apply();
-		var iw = this.frame.getRect().getWidth();
-		var ih = this.frame.getRect().getHeight();
-		if(this.tiled == false) this.frame.draw(); else {
+		var iw = this.quad.getRect().getWidth();
+		var ih = this.quad.getRect().getHeight();
+		if(this.tiled == false) this.quad.draw(); else {
 			var l = spark_Game.getScene().rect.getLeft();
 			var t = spark_Game.getScene().rect.getTop();
 			var w = spark_Game.getScene().rect.getWidth();
@@ -4293,7 +4324,7 @@ spark_object_layer_BackgroundLayer.prototype = $extend(spark_object_Layer.protot
 				while(y < h) {
 					Spark.view.save();
 					Spark.view.translate(l + x,t + y);
-					this.frame.draw();
+					this.quad.draw();
 					Spark.view.restore();
 					y += ih - 1;
 				}
@@ -4400,6 +4431,21 @@ spark_object_layer_TilemapLayer.__name__ = ["spark","object","layer","TilemapLay
 spark_object_layer_TilemapLayer.__super__ = spark_object_Layer;
 spark_object_layer_TilemapLayer.prototype = $extend(spark_object_Layer.prototype,{
 	__class__: spark_object_layer_TilemapLayer
+});
+var spark_ui_Element = function() {
+	spark_anim_Rig.call(this);
+	this.x = 0;
+	this.y = 0;
+};
+$hxClasses["spark.ui.Element"] = spark_ui_Element;
+spark_ui_Element.__name__ = ["spark","ui","Element"];
+spark_ui_Element.__super__ = spark_anim_Rig;
+spark_ui_Element.prototype = $extend(spark_anim_Rig.prototype,{
+	x: null
+	,y: null
+	,draw: function() {
+	}
+	,__class__: spark_ui_Element
 });
 function $iterator(o) { if( o instanceof Array ) return function() { return HxOverrides.iter(o); }; return typeof(o.iterator) == 'function' ? $bind(o,o.iterator) : o.iterator; }
 var $_, $fid = 0;

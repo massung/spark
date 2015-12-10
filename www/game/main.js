@@ -98,10 +98,11 @@ function shoot(layer, m) {
 
   // create movement behavior
   bullet.newBehavior((sprite, step, data) => {
-    sprite.m.translate(0, -800 * step, true);
+    sprite.m.translate(0, -data.speed * step, true);
     sprite.dead = (data.age += step) > 1;
   }, {
-    age: 0.0
+    speed: 800,
+    age: 0.0,
   });
 
   spark.Game.project.getSound('laser.mp3').woof();

@@ -12,4 +12,5 @@
   maxLife="0.3"
   startAlpha="1.0"
   endAlpha="0.4"
+  damping="0.2"
 />
