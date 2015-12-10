@@ -55,7 +55,7 @@ class Atlas extends Asset {
         if (py == null) py = px;
 
         // create the frame
-        var frame = new SpriteFrame(this.texture, x, y, w, h, px, py);
+        var frame = new Spriteframe(this.texture, x, y, w, h, px, py);
 
         // register the sprite as an asset
         Game.project.register(sprite.get('n'), frame);

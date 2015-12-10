@@ -151,7 +151,7 @@ function spawnAsteroid() {
     sprite.m.rotate(w * step);
   });
 
-  spark.Game.project.getTimeline('spawn.xml').play(asteroid);
+  asteroid.play(spark.Game.project.getTimeline('spawn.xml').newSequence(asteroid));
 }
 
 function wrap(sprite) {
@@ -169,7 +169,8 @@ function wrap(sprite) {
 }
 
 function explodeAsteroid(sprite) {
-  spark.Game.project.getTimeline('shake.xml').play(scene.camera);
+  scene.camera.play(spark.Game.project.getTimeline('shake.xml').newSequence(scene.camera));
+  
   spark.Game.project.getSound('explosion.mp3').woof();
   spark.Game.project.getEmitter('explosion.xml').emit(sprite.getLayer(), sprite.m.p.x, sprite.m.p.y, 0, 0, 20);
 }

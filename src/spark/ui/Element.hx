@@ -8,7 +8,7 @@ package spark.ui;
 
 import spark.anim.*;
 
-class Element extends Rig {
+class Element {
 
   // position and size of the element
   private var x: Float;
@@ -16,9 +16,6 @@ class Element extends Rig {
 
   // create a new UI element
   public function new() {
-    super();
-
-    // initialize members
     this.x = 0;
     this.y = 0;
   }

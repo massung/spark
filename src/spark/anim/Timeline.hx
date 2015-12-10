@@ -8,40 +8,34 @@ package spark.anim;
 
 import haxe.ds.StringMap;
 
-typedef TimelineData = {
-  fps: Int,
-  duration: Int,
-  loop: Bool,
+typedef Event = {
+  frame: Int,
+  event: String,
+}
 
-  // timed event callbacks
-  events: Array<{
-    frame: Int,
-    event: String,
-  }>,
-
-  // tweens to crunch
-  tracks: Array<{
-    field: String,
-    keys: Array<Tween.Key>,
-    tween: Tween,
-  }>,
+typedef Track = {
+  field: String,
+  keys: Array<Curve.Key>,
+  curve: Curve,
 }
 
 class Timeline extends Asset {
-  private var data: TimelineData;
+  private var fps: Int;
+  private var duration: Int;
+  private var loop: Bool;
+  private var events: Array<Event>;
+  private var tracks: Array<Track>;
 
   // load a new timeline asset
   public function new(src: String) {
     super(src);
 
     // default settings
-    this.data = {
-      fps: 30,
-      duration: 30,
-      loop: false,
-      tracks: [],
-      events: [],
-    }
+    this.fps = 30;
+    this.duration = 30;
+    this.loop = false;
+    this.tracks = [];
+    this.events = [];
 
     // load the JSON document with all the settings and tracks
     Spark.loadXML(src, function(doc: Xml) {
@@ -52,9 +46,9 @@ class Timeline extends Asset {
       }
 
       // merge the timeline settings
-      Util.mergeAtt(this.data, 'fps', timeline, TInt);
-      Util.mergeAtt(this.data, 'duration', timeline, TInt);
-      Util.mergeAtt(this.data, 'loop', timeline, TBool);
+      Util.mergeAtt(this, 'fps', timeline, TInt);
+      Util.mergeAtt(this, 'duration', timeline, TInt);
+      Util.mergeAtt(this, 'loop', timeline, TBool);
 
       // find all the events
       for(events in timeline.elementsNamed('events')) {
@@ -68,12 +62,12 @@ class Timeline extends Asset {
           }
 
           // add the event to the timeline
-          this.data.events.push({ frame: Std.parseInt(frame), event: name });
+          this.events.push({ frame: Std.parseInt(frame), event: name });
         }
       }
 
       // sort all the events by their frame #
-      this.data.events.sort(function(a, b) return a.frame - b.frame);
+      this.events.sort(function(a, b) return a.frame - b.frame);
 
       // find all the tracks and keys
       for(tracks in timeline.elementsNamed('tracks')) {
@@ -101,10 +95,10 @@ class Timeline extends Asset {
           }
 
           // crunch the tween and add it to the track list
-          this.data.tracks.push({
+          this.tracks.push({
             field: field,
             keys: keys,
-            tween: new Tween(keys, this.data.fps, this.data.duration, method),
+            curve: new Curve(keys, this.fps, this.duration, method),
           });
         }
       }
@@ -115,42 +109,31 @@ class Timeline extends Asset {
   }
 
   // create an instance of the timeline for a given object
-  public function play(obj: Rig, ?onevent: String -> Void) {
-    var rig = new Rig();
-    var prop;
-
-    // spawn all the tracks on the same rig
-    for(track in this.data.tracks) {
-      track.tween.play(obj, track.field, this.data.loop);
-    }
+  public function newSequence(obj: Dynamic, ?onevent: String -> Void): Sequence {
+    var seqs = [for(track in this.tracks) track.curve.newSequence(obj, track.field, this.loop)];
 
     // lexical data for the animation
     var timeline = this;
     var eventIndex = 0;
-    var time = 0.0;
 
-    // create an animation
-    var anim = function(step: Float): Bool {
-      var frame = Math.floor((time += step) * timeline.data.fps % timeline.data.duration);
+    // create the sequence
+    return new Sequence(this.fps, this.duration, Forward, this.loop, function(frame: Int, step: Float) {
+      for(seq in seqs) {
+        seq.update(step);
+      }
 
       // signal events that have been passed
-      if (timeline.data.events.length > 0) {
-        while (timeline.data.events[eventIndex].frame <= frame + 1) {
-          onevent(timeline.data.events[eventIndex++].event);
+      if (this.events.length > 0) {
+        while (this.events[eventIndex].frame <= frame + 1) {
+          onevent(this.events[eventIndex++].event);
 
           // wrap if at the last event
-          if (eventIndex == timeline.data.events.length) {
+          if (eventIndex == this.events.length) {
             eventIndex = 0;
             break;
           }
         }
       }
-
-      // stop when not looping and past the end time
-      return (timeline.data.loop) ? false : time > timeline.data.fps * timeline.data.duration;
-    }
-
-    // play the animation
-    obj.newAnim(anim);
+    });
   }
 }

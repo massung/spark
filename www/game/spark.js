@@ -2203,6 +2203,9 @@ spark_Asset.prototype = {
 	,isLoaded: function() {
 		return this.loaded;
 	}
+	,onload: function() {
+		return;
+	}
 	,__class__: spark_Asset
 };
 var spark_Debug = $hx_exports.spark.Debug = function() { };
@@ -3144,132 +3147,7 @@ spark_Vec.prototype = {
 	}
 	,__class__: spark_Vec
 };
-var spark_anim_Rig = function() {
-	this.anims = [];
-};
-$hxClasses["spark.anim.Rig"] = spark_anim_Rig;
-spark_anim_Rig.__name__ = ["spark","anim","Rig"];
-spark_anim_Rig.prototype = {
-	anims: null
-	,newAnim: function(anim) {
-		this.anims.push(anim);
-	}
-	,stop: function(anim) {
-		var i = HxOverrides.indexOf(this.anims,anim,0);
-		if(i >= 0) {
-			var last = this.anims.pop();
-			if(i < this.anims.length) this.anims[i] = last;
-		}
-	}
-	,update: function(step) {
-		var i = 0;
-		while(i < this.anims.length) if(this.anims[i](step)) {
-			var last = this.anims.pop();
-			if(i < this.anims.length) this.anims[i] = last;
-		} else i++;
-	}
-	,__class__: spark_anim_Rig
-};
-var spark_anim_Timeline = function(src) {
-	var _g = this;
-	spark_Asset.call(this,src);
-	this.data = { fps : 30, duration : 30, loop : false, tracks : [], events : []};
-	Spark.loadXML(src,function(doc) {
-		var timeline = doc.firstElement();
-		if(timeline == null || (function($this) {
-			var $r;
-			if(timeline.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element but found " + timeline.nodeType);
-			$r = timeline.nodeName;
-			return $r;
-		}(this)) != "timeline") throw new js__$Boot_HaxeError("Invalid timeline XML: " + src);
-		spark_Util.mergeAtt(_g.data,"fps",timeline,ValueType.TInt);
-		spark_Util.mergeAtt(_g.data,"duration",timeline,ValueType.TInt);
-		spark_Util.mergeAtt(_g.data,"loop",timeline,ValueType.TBool);
-		var $it0 = timeline.elementsNamed("events");
-		while( $it0.hasNext() ) {
-			var events = $it0.next();
-			var $it1 = events.elementsNamed("event");
-			while( $it1.hasNext() ) {
-				var event = $it1.next();
-				var frame = event.get("frame");
-				var name = event.get("name");
-				if(frame == null || name == null) continue;
-				_g.data.events.push({ frame : Std.parseInt(frame), event : name});
-			}
-		}
-		_g.data.events.sort(function(a,b) {
-			return a.frame - b.frame;
-		});
-		var $it2 = timeline.elementsNamed("tracks");
-		while( $it2.hasNext() ) {
-			var tracks = $it2.next();
-			var $it3 = tracks.elementsNamed("track");
-			while( $it3.hasNext() ) {
-				var track = $it3.next();
-				var field = track.get("field");
-				var method = track.get("method");
-				var keys = [];
-				if(field == null) continue;
-				if(method == null) method = "cubic";
-				var $it4 = track.elementsNamed("key");
-				while( $it4.hasNext() ) {
-					var key = $it4.next();
-					var frame1 = key.get("frame");
-					var value = key.get("value");
-					if(frame1 == null || value == null) continue;
-					keys.push({ frame : Std.parseInt(frame1), value : parseFloat(value)});
-				}
-				_g.data.tracks.push({ field : field, keys : keys, tween : new spark_anim_Tween(keys,_g.data.fps,_g.data.duration,method)});
-			}
-		}
-		_g.loaded = true;
-	});
-};
-$hxClasses["spark.anim.Timeline"] = spark_anim_Timeline;
-spark_anim_Timeline.__name__ = ["spark","anim","Timeline"];
-spark_anim_Timeline.__super__ = spark_Asset;
-spark_anim_Timeline.prototype = $extend(spark_Asset.prototype,{
-	data: null
-	,play: function(obj,onevent) {
-		var rig = new spark_anim_Rig();
-		var prop;
-		var _g = 0;
-		var _g1 = this.data.tracks;
-		while(_g < _g1.length) {
-			var track = _g1[_g];
-			++_g;
-			track.tween.play(obj,track.field,this.data.loop);
-		}
-		var timeline = this;
-		var eventIndex = 0;
-		var time = 0.0;
-		var anim = function(step) {
-			var frame = Math.floor((time += step) * (timeline.data.fps % timeline.data.duration));
-			if(timeline.data.events.length > 0) while(timeline.data.events[eventIndex].frame <= frame + 1) {
-				onevent(timeline.data.events[eventIndex++].event);
-				if(eventIndex == timeline.data.events.length) {
-					eventIndex = 0;
-					break;
-				}
-			}
-			if(timeline.data.loop) return false; else return time > timeline.data.fps * timeline.data.duration;
-		};
-		obj.newAnim(anim);
-	}
-	,__class__: spark_anim_Timeline
-});
-var spark_anim_InterpMethod = $hxClasses["spark.anim.InterpMethod"] = { __ename__ : ["spark","anim","InterpMethod"], __constructs__ : ["Step","Linear","Cubic"] };
-spark_anim_InterpMethod.Step = ["Step",0];
-spark_anim_InterpMethod.Step.toString = $estr;
-spark_anim_InterpMethod.Step.__enum__ = spark_anim_InterpMethod;
-spark_anim_InterpMethod.Linear = ["Linear",1];
-spark_anim_InterpMethod.Linear.toString = $estr;
-spark_anim_InterpMethod.Linear.__enum__ = spark_anim_InterpMethod;
-spark_anim_InterpMethod.Cubic = ["Cubic",2];
-spark_anim_InterpMethod.Cubic.toString = $estr;
-spark_anim_InterpMethod.Cubic.__enum__ = spark_anim_InterpMethod;
-spark_anim_InterpMethod.__empty_constructs__ = [spark_anim_InterpMethod.Step,spark_anim_InterpMethod.Linear,spark_anim_InterpMethod.Cubic];
-var spark_anim_Tween = function(keys,fps,duration,method) {
+var spark_anim_Curve = function(keys,fps,duration,method) {
 	if(method == null) method = "cubic";
 	var i = 0;
 	var k;
@@ -3333,40 +3211,254 @@ var spark_anim_Tween = function(keys,fps,duration,method) {
 		}
 	}
 };
-$hxClasses["spark.anim.Tween"] = spark_anim_Tween;
-spark_anim_Tween.__name__ = ["spark","anim","Tween"];
-spark_anim_Tween.prototype = {
+$hxClasses["spark.anim.Curve"] = spark_anim_Curve;
+spark_anim_Curve.__name__ = ["spark","anim","Curve"];
+spark_anim_Curve.prototype = {
 	fps: null
 	,duration: null
 	,keys: null
-	,play: function(obj,property,loop) {
+	,newSequence: function(obj,property,loop) {
 		if(loop == null) loop = false;
+		var _g = this;
 		var path = property.split(".");
 		var key = path.pop();
-		var rig = obj;
 		while(path.length > 0) {
 			obj = Reflect.field(obj,path.shift());
 			if(obj == null) throw new js__$Boot_HaxeError("Cannot find property \"" + property + "\" on object");
 		}
-		var tween = this;
-		var time = 0.0;
-		var anim = function(step) {
-			var frame = Math.floor((time += step) * tween.fps);
-			var shouldStop = false;
-			if(frame >= tween.duration) {
-				shouldStop = !loop;
-				if(!shouldStop) {
-					time %= js_Boot.__cast(tween.duration , Float) / tween.fps;
-					frame = Math.floor(time * tween.fps);
-				} else frame = tween.duration - 1;
-			}
-			Reflect.setProperty(obj,key,tween.keys[frame]);
-			return shouldStop;
-		};
-		rig.newAnim(anim);
+		return new spark_anim_Sequence(this.fps,this.duration,spark_anim_PlayMode.Forward,loop,function(frame,step) {
+			Reflect.setProperty(obj,key,_g.keys[frame]);
+		});
 	}
-	,__class__: spark_anim_Tween
+	,__class__: spark_anim_Curve
 };
+var spark_anim_Flipbook = function(src) {
+	var _g = this;
+	spark_Asset.call(this,src);
+	this.border = 0;
+	Spark.loadXML(src,function(doc) {
+		var sheet = doc.firstElement();
+		if(sheet == null || (function($this) {
+			var $r;
+			if(sheet.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element but found " + sheet.nodeType);
+			$r = sheet.nodeName;
+			return $r;
+		}(this)) != "flipbook") throw new js__$Boot_HaxeError("Invalid Flipbook XML: " + src);
+		if(!sheet.exists("texture")) throw new js__$Boot_HaxeError("No texture for sprite sheet: " + src);
+		if(!sheet.exists("width")) throw new js__$Boot_HaxeError("No width in sprite sheet: " + src);
+		if(!sheet.exists("height")) throw new js__$Boot_HaxeError("No height in sprite sheet: " + src);
+		var textureFile = sheet.get("texture");
+		var texturePath = spark_Util.relativePath(src,textureFile);
+		_g.texture = spark_Game.project.load(textureFile,texturePath,spark_graphics_Texture);
+		_g.spriteWidth = Std.parseInt(sheet.get("width"));
+		_g.spriteHeight = Std.parseInt(sheet.get("height"));
+		if(sheet.exists("border")) _g.border = Std.parseInt(sheet.get("border")); else _g.border = 0;
+		var $it0 = sheet.elementsNamed("anim");
+		while( $it0.hasNext() ) {
+			var anim = $it0.next();
+			var name = anim.get("name");
+			var frame = anim.get("frame");
+			var length = anim.get("length");
+			var fps = anim.get("fps");
+			if(name == null) continue;
+			if(frame == null) continue;
+			if(length == null) continue;
+			_g.anims.set(name,{ frame : Std.parseInt(frame), length : Std.parseInt(length), fps : fps == null?30:Std.parseInt(fps)});
+		}
+		_g.loaded = true;
+	});
+};
+$hxClasses["spark.anim.Flipbook"] = spark_anim_Flipbook;
+spark_anim_Flipbook.__name__ = ["spark","anim","Flipbook"];
+spark_anim_Flipbook.__super__ = spark_Asset;
+spark_anim_Flipbook.prototype = $extend(spark_Asset.prototype,{
+	texture: null
+	,spriteWidth: null
+	,spriteHeight: null
+	,border: null
+	,anims: null
+	,frames: null
+	,onload: function() {
+		var iw;
+		iw = js_Boot.__cast(this.texture.getRect().getWidth() , Int);
+		var ih;
+		ih = js_Boot.__cast(this.texture.getRect().getHeight() , Int);
+		var spritesWide = Math.floor((iw - this.border) / (this.spriteWidth + this.border * 2));
+		var spritesHigh = Math.floor((ih - this.border) / (this.spriteHeight + this.border * 2));
+		var this1;
+		this1 = new Array(spritesWide * spritesHigh);
+		this.frames = this1;
+		var w = this.spriteWidth + this.border;
+		var h = this.spriteHeight + this.border;
+		var _g = 0;
+		while(_g < spritesHigh) {
+			var y = _g++;
+			var _g1 = 0;
+			while(_g1 < spritesWide) {
+				var x = _g1++;
+				var ox = this.spriteWidth * x + this.border * (x + 1);
+				var oy = this.spriteHeight * y + this.border * (y + 1);
+				var val = new spark_graphics_Spriteframe(this.texture,ox,oy,this.spriteWidth,this.spriteHeight,0.5,0.5);
+				this.frames[y * spritesWide + x] = val;
+			}
+		}
+	}
+	,newSequence: function(sprite,n,loop) {
+		if(loop == null) loop = false;
+		var _g = this;
+		var anim = this.anims.get(n);
+		if(anim == null) return null;
+		return new spark_anim_Sequence(anim.fps,anim.length,spark_anim_PlayMode.Forward,loop,function(frame,step) {
+			sprite.setQuad(_g.frames[frame]);
+		});
+	}
+	,__class__: spark_anim_Flipbook
+});
+var spark_anim_PlayMode = $hxClasses["spark.anim.PlayMode"] = { __ename__ : ["spark","anim","PlayMode"], __constructs__ : ["Forward","Pingpong","Reverse"] };
+spark_anim_PlayMode.Forward = ["Forward",0];
+spark_anim_PlayMode.Forward.toString = $estr;
+spark_anim_PlayMode.Forward.__enum__ = spark_anim_PlayMode;
+spark_anim_PlayMode.Pingpong = ["Pingpong",1];
+spark_anim_PlayMode.Pingpong.toString = $estr;
+spark_anim_PlayMode.Pingpong.__enum__ = spark_anim_PlayMode;
+spark_anim_PlayMode.Reverse = ["Reverse",2];
+spark_anim_PlayMode.Reverse.toString = $estr;
+spark_anim_PlayMode.Reverse.__enum__ = spark_anim_PlayMode;
+spark_anim_PlayMode.__empty_constructs__ = [spark_anim_PlayMode.Forward,spark_anim_PlayMode.Pingpong,spark_anim_PlayMode.Reverse];
+var spark_anim_Sequence = function(fps,duration,mode,loop,onframe) {
+	this.fps = fps;
+	this.duration = duration;
+	this.loop = loop;
+	this.mode = mode;
+	this.onframe = onframe;
+	this.time = 0;
+	this.stop = false;
+};
+$hxClasses["spark.anim.Sequence"] = spark_anim_Sequence;
+spark_anim_Sequence.__name__ = ["spark","anim","Sequence"];
+spark_anim_Sequence.prototype = {
+	time: null
+	,stop: null
+	,fps: null
+	,duration: null
+	,loop: null
+	,mode: null
+	,onframe: null
+	,getTime: function() {
+		return this.time;
+	}
+	,getFrame: function() {
+		var frame = Math.floor(this.time * this.fps);
+		if(this.loop) return frame % this.duration;
+		return Math.floor(Math.min(frame,this.duration - 1));
+	}
+	,update: function(step) {
+		this.time += step;
+		if(!this.loop && this.time > this.duration / this.fps) this.stop = true;
+		if(!this.stop) this.onframe(this.getFrame(),step);
+	}
+	,__class__: spark_anim_Sequence
+};
+var spark_anim_Timeline = function(src) {
+	var _g = this;
+	spark_Asset.call(this,src);
+	this.fps = 30;
+	this.duration = 30;
+	this.loop = false;
+	this.tracks = [];
+	this.events = [];
+	Spark.loadXML(src,function(doc) {
+		var timeline = doc.firstElement();
+		if(timeline == null || (function($this) {
+			var $r;
+			if(timeline.nodeType != Xml.Element) throw new js__$Boot_HaxeError("Bad node type, expected Element but found " + timeline.nodeType);
+			$r = timeline.nodeName;
+			return $r;
+		}(this)) != "timeline") throw new js__$Boot_HaxeError("Invalid timeline XML: " + src);
+		spark_Util.mergeAtt(_g,"fps",timeline,ValueType.TInt);
+		spark_Util.mergeAtt(_g,"duration",timeline,ValueType.TInt);
+		spark_Util.mergeAtt(_g,"loop",timeline,ValueType.TBool);
+		var $it0 = timeline.elementsNamed("events");
+		while( $it0.hasNext() ) {
+			var events = $it0.next();
+			var $it1 = events.elementsNamed("event");
+			while( $it1.hasNext() ) {
+				var event = $it1.next();
+				var frame = event.get("frame");
+				var name = event.get("name");
+				if(frame == null || name == null) continue;
+				_g.events.push({ frame : Std.parseInt(frame), event : name});
+			}
+		}
+		_g.events.sort(function(a,b) {
+			return a.frame - b.frame;
+		});
+		var $it2 = timeline.elementsNamed("tracks");
+		while( $it2.hasNext() ) {
+			var tracks = $it2.next();
+			var $it3 = tracks.elementsNamed("track");
+			while( $it3.hasNext() ) {
+				var track = $it3.next();
+				var field = track.get("field");
+				var method = track.get("method");
+				var keys = [];
+				if(field == null) continue;
+				if(method == null) method = "cubic";
+				var $it4 = track.elementsNamed("key");
+				while( $it4.hasNext() ) {
+					var key = $it4.next();
+					var frame1 = key.get("frame");
+					var value = key.get("value");
+					if(frame1 == null || value == null) continue;
+					keys.push({ frame : Std.parseInt(frame1), value : parseFloat(value)});
+				}
+				_g.tracks.push({ field : field, keys : keys, curve : new spark_anim_Curve(keys,_g.fps,_g.duration,method)});
+			}
+		}
+		_g.loaded = true;
+	});
+};
+$hxClasses["spark.anim.Timeline"] = spark_anim_Timeline;
+spark_anim_Timeline.__name__ = ["spark","anim","Timeline"];
+spark_anim_Timeline.__super__ = spark_Asset;
+spark_anim_Timeline.prototype = $extend(spark_Asset.prototype,{
+	fps: null
+	,duration: null
+	,loop: null
+	,events: null
+	,tracks: null
+	,newSequence: function(obj,onevent) {
+		var _g1 = this;
+		var seqs;
+		var _g = [];
+		var _g11 = 0;
+		var _g2 = this.tracks;
+		while(_g11 < _g2.length) {
+			var track = _g2[_g11];
+			++_g11;
+			_g.push(track.curve.newSequence(obj,track.field,this.loop));
+		}
+		seqs = _g;
+		var timeline = this;
+		var eventIndex = 0;
+		return new spark_anim_Sequence(this.fps,this.duration,spark_anim_PlayMode.Forward,this.loop,function(frame,step) {
+			var _g12 = 0;
+			while(_g12 < seqs.length) {
+				var seq = seqs[_g12];
+				++_g12;
+				seq.update(step);
+			}
+			if(_g1.events.length > 0) while(_g1.events[eventIndex].frame <= frame + 1) {
+				onevent(_g1.events[eventIndex++].event);
+				if(eventIndex == _g1.events.length) {
+					eventIndex = 0;
+					break;
+				}
+			}
+		});
+	}
+	,__class__: spark_anim_Timeline
+});
 var spark_audio_Sound = function(src) {
 	var _g = this;
 	spark_Asset.call(this,src);
@@ -3870,7 +3962,7 @@ var spark_graphics_Atlas = function(src) {
 			var py = Std.parseFloat(sprite.get("pY"));
 			if(px == null) px = 0.5;
 			if(py == null) py = px;
-			var frame = new spark_graphics_SpriteFrame(_g.texture,x,y,w,h,px,py);
+			var frame = new spark_graphics_Spriteframe(_g.texture,x,y,w,h,px,py);
 			spark_Game.project.register(sprite.get("n"),frame);
 		}
 		_g.loaded = true;
@@ -4012,18 +4104,18 @@ spark_graphics_Quad.prototype = {
 	,draw: null
 	,__class__: spark_graphics_Quad
 };
-var spark_graphics_SpriteFrame = function(texture,x,y,w,h,px,py) {
+var spark_graphics_Spriteframe = function(texture,x,y,w,h,px,py) {
 	spark_Asset.call(this,texture.source);
 	this.texture = texture;
 	this.r = new spark_Rect(x,y,w,h);
 	this.p = new spark_Vec(px,py);
 	this.loaded = true;
 };
-$hxClasses["spark.graphics.SpriteFrame"] = spark_graphics_SpriteFrame;
-spark_graphics_SpriteFrame.__name__ = ["spark","graphics","SpriteFrame"];
-spark_graphics_SpriteFrame.__interfaces__ = [spark_graphics_Quad];
-spark_graphics_SpriteFrame.__super__ = spark_Asset;
-spark_graphics_SpriteFrame.prototype = $extend(spark_Asset.prototype,{
+$hxClasses["spark.graphics.Spriteframe"] = spark_graphics_Spriteframe;
+spark_graphics_Spriteframe.__name__ = ["spark","graphics","Spriteframe"];
+spark_graphics_Spriteframe.__interfaces__ = [spark_graphics_Quad];
+spark_graphics_Spriteframe.__super__ = spark_Asset;
+spark_graphics_Spriteframe.prototype = $extend(spark_Asset.prototype,{
 	r: null
 	,p: null
 	,texture: null
@@ -4036,7 +4128,7 @@ spark_graphics_SpriteFrame.prototype = $extend(spark_Asset.prototype,{
 	,getPivot: function() {
 		return this.p;
 	}
-	,__class__: spark_graphics_SpriteFrame
+	,__class__: spark_graphics_Spriteframe
 });
 var spark_graphics_Texture = function(src) {
 	var _g = this;
@@ -4158,18 +4250,18 @@ spark_input_Device.prototype = {
 	,__class__: spark_input_Device
 };
 var spark_object_Actor = function() {
-	spark_anim_Rig.call(this);
 	this.m = spark_Mat.identity();
 	this.init();
 };
 $hxClasses["spark.object.Actor"] = spark_object_Actor;
 spark_object_Actor.__name__ = ["spark","object","Actor"];
-spark_object_Actor.__super__ = spark_anim_Rig;
-spark_object_Actor.prototype = $extend(spark_anim_Rig.prototype,{
+spark_object_Actor.prototype = {
 	m: null
 	,behaviors: null
+	,anims: null
 	,init: function() {
 		this.behaviors = [];
+		this.anims = [];
 		this.m.loadIdentity();
 	}
 	,newBehavior: function(callback,data) {
@@ -4187,18 +4279,43 @@ spark_object_Actor.prototype = $extend(spark_anim_Rig.prototype,{
 	,localToWorldAngle: function(angle) {
 		return this.m.get_angle() + angle;
 	}
+	,play: function(seq) {
+		this.anims.push(seq);
+	}
+	,stop: function(seq) {
+		seq.stop = true;
+	}
 	,update: function(step) {
-		var i;
-		spark_anim_Rig.prototype.update.call(this,step);
-		var _g1 = 0;
-		var _g = this.behaviors.length;
-		while(_g1 < _g) {
-			var i1 = _g1++;
-			this.behaviors[i1].callback(this,step,this.behaviors[i1].data);
+		var stopped = false;
+		var _g = 0;
+		var _g1 = this.anims;
+		while(_g < _g1.length) {
+			var seq = _g1[_g];
+			++_g;
+			seq.update(step);
+			stopped = stopped || seq.stop;
+		}
+		if(stopped) {
+			var _g2 = [];
+			var _g11 = 0;
+			var _g21 = this.anims;
+			while(_g11 < _g21.length) {
+				var seq1 = _g21[_g11];
+				++_g11;
+				if(seq1.stop == false) _g2.push(seq1);
+			}
+			this.anims = _g2;
+		}
+		var _g3 = 0;
+		var _g12 = this.behaviors;
+		while(_g3 < _g12.length) {
+			var behavior = _g12[_g3];
+			++_g3;
+			behavior.callback(this,step,behavior.data);
 		}
 	}
 	,__class__: spark_object_Actor
-});
+};
 var spark_object_Camera = function(width,height) {
 	spark_object_Actor.call(this);
 	this.m.s.set(width / 2,height / 2);
@@ -4433,20 +4550,18 @@ spark_object_layer_TilemapLayer.prototype = $extend(spark_object_Layer.prototype
 	__class__: spark_object_layer_TilemapLayer
 });
 var spark_ui_Element = function() {
-	spark_anim_Rig.call(this);
 	this.x = 0;
 	this.y = 0;
 };
 $hxClasses["spark.ui.Element"] = spark_ui_Element;
 spark_ui_Element.__name__ = ["spark","ui","Element"];
-spark_ui_Element.__super__ = spark_anim_Rig;
-spark_ui_Element.prototype = $extend(spark_anim_Rig.prototype,{
+spark_ui_Element.prototype = {
 	x: null
 	,y: null
 	,draw: function() {
 	}
 	,__class__: spark_ui_Element
-});
+};
 function $iterator(o) { if( o instanceof Array ) return function() { return HxOverrides.iter(o); }; return typeof(o.iterator) == 'function' ? $bind(o,o.iterator) : o.iterator; }
 var $_, $fid = 0;
 function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $fid++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = function(){ return f.method.apply(f.scope, arguments); }; f.scope = o; f.method = m; o.hx__closures__[m.__id__] = f; } return f; }

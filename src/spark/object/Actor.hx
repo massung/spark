@@ -16,17 +16,17 @@ typedef Behavior = {
   data: Dynamic,
 }
 
-class Actor extends Rig {
+class Actor {
   public var m: Mat;
 
   // update functions
   private var behaviors: Array<Behavior>;
 
+  // animation sequences
+  private var anims: Array<Sequence>;
+
   // create an actor
   public function new() {
-    super();
-
-    // one time initializations
     this.m = Mat.identity();
 
     // reset transform and behaviors
@@ -36,6 +36,7 @@ class Actor extends Rig {
   // actors can be pooled, so reset data
   public function init() {
     this.behaviors = [];
+    this.anims = [];
 
     // reset transform
     this.m.loadIdentity();
@@ -69,16 +70,36 @@ class Actor extends Rig {
     return this.m.angle + angle;
   }
 
+  // play an animation sequence on this actor
+  public function play(seq: Sequence) {
+    this.anims.push(seq);
+  }
+
+  // stop an animation sequence on this actor
+  public function stop(seq: Sequence) {
+    seq.stop = true;
+  }
+
   // called once a frame to update the sprite
-  public override function update(step: Float) {
-    var i: Int;
+  public function update(step: Float) {
+    var stopped = false;
 
     // play any animations on this actor
-    super.update(step);
+    for(seq in this.anims) {
+      seq.update(step);
+
+      // if this sequence stopped, then it needs to be removed
+      stopped = stopped || seq.stop;
+    }
+
+    // remove sequences if any stopped
+    if (stopped) {
+      this.anims = [for (seq in this.anims) if (seq.stop == false) seq];
+    }
 
     // execute all the behaviors
-    for(i in 0...this.behaviors.length) {
-      this.behaviors[i].callback(this, step, this.behaviors[i].data);
+    for(behavior in this.behaviors) {
+      behavior.callback(this, step, behavior.data);
     }
   }
 }

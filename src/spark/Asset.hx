@@ -17,9 +17,10 @@ class Asset {
   }
 
   // true once the loaded flag has been set
-  public function isLoaded(): Bool {
-    return this.loaded;
-  }
+  public function isLoaded() return this.loaded;
+
+  // called once all assets are loaded
+  public function onload() return;
 
   // return an asset class reference from a filename using its extension
   static public function classOfExt(ext: String): Class<Asset> {

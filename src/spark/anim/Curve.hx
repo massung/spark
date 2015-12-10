@@ -14,13 +14,7 @@ typedef Key = {
   ?tangent: Float,
 };
 
-enum InterpMethod {
-  Step;
-  Linear;
-  Cubic;
-}
-
-class Tween {
+class Curve {
   private var fps: Int;
   private var duration: Int;
   private var keys: Vector<Float>;
@@ -114,10 +108,9 @@ class Tween {
   }
 
   // create an animation instance for a specific property
-  public function play(obj: Rig, property: String, ?loop: Bool = false) {
+  public function newSequence(obj: Dynamic, property: String, ?loop: Bool = false): Sequence {
     var path = property.split('.');
     var key = path.pop();
-    var rig = obj;
 
     // traverse the rest of the path to get the final object
     while(path.length > 0) {
@@ -128,37 +121,9 @@ class Tween {
       }
     }
 
-    // lexical data for the animation
-    var tween = this;
-    var time = 0.0;
-
-    // create the animation function
-    var anim = function(step: Float): Bool {
-      var frame = Math.floor((time += step) * tween.fps);
-      var shouldStop = false;
-
-      // clamp or wrap the frame
-      if (frame >= tween.duration) {
-        shouldStop = !loop;
-
-        if (!shouldStop) {
-          time %= cast(tween.duration, Float) / tween.fps;
-
-          // wrap the frame
-          frame = Math.floor(time * tween.fps);
-        }
-
-        // clamp on the last frame
-        else frame = tween.duration - 1;
-      }
-
-      // update the property to the current frame
-      Reflect.setProperty(obj, key, tween.keys[frame]);
-
-      return shouldStop;
-    };
-
-    // play it on the rigging
-    rig.newAnim(anim);
+    // create the sequence
+    return new Sequence(this.fps, this.duration, Forward, loop, function(frame: Int, step: Float) {
+      Reflect.setProperty(obj, key, this.keys[frame]);
+    });
   }
 }

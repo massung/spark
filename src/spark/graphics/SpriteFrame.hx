@@ -6,7 +6,7 @@
 
 package spark.graphics;
 
-class SpriteFrame extends Asset implements Quad {
+class Spriteframe extends Asset implements Quad {
   private var r: Rect;
   private var p: Vec;
 
