@@ -131,7 +131,7 @@ class Flipbook extends Asset {
 
     // create the animation
     return new Sequence(this.fps, anim.length, Forward, loop, function(frame: Int, step: Float) {
-      sprite.setQuad(this.frames[frame]);
+      sprite.setQuad(this.frames[frame], false);
     });
   }
 }

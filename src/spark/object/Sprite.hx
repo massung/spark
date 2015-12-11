@@ -74,8 +74,14 @@ class Sprite extends Actor {
     return this.m.s.y * ((this.quad != null) ? this.quad.getRect().getHeight() : 0);
   }
 
-  // set the quad this sprite renders with
-  public function setQuad(quad: Quad) this.quad = quad;
+  // set the quad this sprite renders with, cancel any flip animation
+  public function setQuad(quad: Quad, ?clearAnim: Bool = true) {
+    this.quad = quad;
+
+    if (clearAnim) {
+      this.flipAnim = null;
+    }
+  }
 
   // add all collision shapes on this sprite into the spacial hash
   public function addToQuadtree(space: Quadtree) {

@@ -3306,7 +3306,7 @@ spark_anim_Flipbook.prototype = $extend(spark_Asset.prototype,{
 		var anim = this.anims.get(n);
 		if(anim == null) return null;
 		return new spark_anim_Sequence(this.fps,anim.length,spark_anim_PlayMode.Forward,loop,function(frame,step) {
-			sprite.setQuad(_g.frames[frame]);
+			sprite.setQuad(_g.frames[frame],false);
 		});
 	}
 	,__class__: spark_anim_Flipbook
@@ -4385,8 +4385,10 @@ spark_object_Sprite.prototype = $extend(spark_object_Actor.prototype,{
 	,getHeight: function() {
 		return this.m.s.y * (this.quad != null?this.quad.getRect().getHeight():0);
 	}
-	,setQuad: function(quad) {
+	,setQuad: function(quad,clearAnim) {
+		if(clearAnim == null) clearAnim = true;
 		this.quad = quad;
+		if(clearAnim) this.flipAnim = null;
 	}
 	,addToQuadtree: function(space) {
 		if(this.body != null) this.body.addToQuadtree(space);
