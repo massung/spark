@@ -23,6 +23,9 @@ class Sprite extends Actor {
   // how this sprite renders
   private var quad: Quad;
 
+  // special animation for the quad
+  private var flipAnim: Sequence;
+
   // the layer this sprite was spawned onto
   private var layer: SpriteLayer;
 
@@ -48,6 +51,7 @@ class Sprite extends Actor {
     this.dead = false;
     this.body = null;
     this.quad = null;
+    this.flipAnim = null;
     this.alpha = 1.0;
     this.blend = 'source-over';
   }
@@ -80,9 +84,31 @@ class Sprite extends Actor {
     }
   }
 
+  // add a flipbook animation to this sprite
+  public function playAnim(flipbook: Flipbook, n: String, ?loop: Bool = true): Sequence {
+    var seq = flipbook.newSequence(this, n, loop);
+
+    // overwrite the current flip animation
+    if (seq != null) {
+      this.flipAnim = seq;
+    }
+
+    return seq;
+  }
+
   // called once a quad to update the sprite
   public override function update(step: Float) {
     super.update(step);
+
+    // update the flip animation (if any)
+    if (this.flipAnim != null) {
+      this.flipAnim.update(step);
+
+      // stop the flip anim? hold the last frame
+      if (this.flipAnim.stop) {
+        this.flipAnim = null;
+      }
+    }
 
     // update all the collision shapes
     if (this.body != null) {

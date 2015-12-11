@@ -3152,7 +3152,6 @@ var spark_anim_Curve = function(keys,fps,duration,method) {
 	var i = 0;
 	var k;
 	this.fps = fps;
-	this.duration = duration;
 	var this1;
 	this1 = new Array(duration);
 	this.keys = this1;
@@ -3181,7 +3180,7 @@ var spark_anim_Curve = function(keys,fps,duration,method) {
 	var p;
 	if(hks[0].frame < 1) p = hks.shift(); else p = hks[0];
 	var _g11 = 1;
-	var _g2 = this.duration + 1;
+	var _g2 = duration + 1;
 	while(_g11 < _g2) {
 		var i2 = _g11++;
 		var n = hks[0];
@@ -3217,17 +3216,13 @@ spark_anim_Curve.prototype = {
 	fps: null
 	,duration: null
 	,keys: null
-	,newSequence: function(obj,property,loop) {
-		if(loop == null) loop = false;
+	,newSequence: function(obj,property,mode,loop) {
 		var _g = this;
 		var path = property.split(".");
-		var key = path.pop();
-		while(path.length > 0) {
-			obj = Reflect.field(obj,path.shift());
-			if(obj == null) throw new js__$Boot_HaxeError("Cannot find property \"" + property + "\" on object");
-		}
-		return new spark_anim_Sequence(this.fps,this.duration,spark_anim_PlayMode.Forward,loop,function(frame,step) {
-			Reflect.setProperty(obj,key,_g.keys[frame]);
+		var field = path.pop();
+		while(path.length > 0) if((obj = Reflect.field(obj,path.shift())) == null) return null;
+		return new spark_anim_Sequence(this.fps,this.keys.length,mode,loop,function(frame,step) {
+			obj[field] = _g.keys[frame];
 		});
 	}
 	,__class__: spark_anim_Curve
@@ -3236,6 +3231,7 @@ var spark_anim_Flipbook = function(src) {
 	var _g = this;
 	spark_Asset.call(this,src);
 	this.border = 0;
+	this.fps = 30;
 	Spark.loadXML(src,function(doc) {
 		var sheet = doc.firstElement();
 		if(sheet == null || (function($this) {
@@ -3252,18 +3248,18 @@ var spark_anim_Flipbook = function(src) {
 		_g.texture = spark_Game.project.load(textureFile,texturePath,spark_graphics_Texture);
 		_g.spriteWidth = Std.parseInt(sheet.get("width"));
 		_g.spriteHeight = Std.parseInt(sheet.get("height"));
-		if(sheet.exists("border")) _g.border = Std.parseInt(sheet.get("border")); else _g.border = 0;
+		spark_Util.mergeAtt(_g,"border",sheet,ValueType.TInt);
+		spark_Util.mergeAtt(_g,"fps",sheet,ValueType.TInt);
 		var $it0 = sheet.elementsNamed("anim");
 		while( $it0.hasNext() ) {
 			var anim = $it0.next();
 			var name = anim.get("name");
 			var frame = anim.get("frame");
 			var length = anim.get("length");
-			var fps = anim.get("fps");
 			if(name == null) continue;
 			if(frame == null) continue;
 			if(length == null) continue;
-			_g.anims.set(name,{ frame : Std.parseInt(frame), length : Std.parseInt(length), fps : fps == null?30:Std.parseInt(fps)});
+			_g.anims.set(name,{ frame : Std.parseInt(frame), length : Std.parseInt(length)});
 		}
 		_g.loaded = true;
 	});
@@ -3276,6 +3272,7 @@ spark_anim_Flipbook.prototype = $extend(spark_Asset.prototype,{
 	,spriteWidth: null
 	,spriteHeight: null
 	,border: null
+	,fps: null
 	,anims: null
 	,frames: null
 	,onload: function() {
@@ -3308,7 +3305,7 @@ spark_anim_Flipbook.prototype = $extend(spark_Asset.prototype,{
 		var _g = this;
 		var anim = this.anims.get(n);
 		if(anim == null) return null;
-		return new spark_anim_Sequence(anim.fps,anim.length,spark_anim_PlayMode.Forward,loop,function(frame,step) {
+		return new spark_anim_Sequence(this.fps,anim.length,spark_anim_PlayMode.Forward,loop,function(frame,step) {
 			sprite.setQuad(_g.frames[frame]);
 		});
 	}
@@ -3364,7 +3361,6 @@ var spark_anim_Timeline = function(src) {
 	spark_Asset.call(this,src);
 	this.fps = 30;
 	this.duration = 30;
-	this.loop = false;
 	this.tracks = [];
 	this.events = [];
 	Spark.loadXML(src,function(doc) {
@@ -3377,7 +3373,6 @@ var spark_anim_Timeline = function(src) {
 		}(this)) != "timeline") throw new js__$Boot_HaxeError("Invalid timeline XML: " + src);
 		spark_Util.mergeAtt(_g,"fps",timeline,ValueType.TInt);
 		spark_Util.mergeAtt(_g,"duration",timeline,ValueType.TInt);
-		spark_Util.mergeAtt(_g,"loop",timeline,ValueType.TBool);
 		var $it0 = timeline.elementsNamed("events");
 		while( $it0.hasNext() ) {
 			var events = $it0.next();
@@ -3412,7 +3407,7 @@ var spark_anim_Timeline = function(src) {
 					if(frame1 == null || value == null) continue;
 					keys.push({ frame : Std.parseInt(frame1), value : parseFloat(value)});
 				}
-				_g.tracks.push({ field : field, keys : keys, curve : new spark_anim_Curve(keys,_g.fps,_g.duration,method)});
+				_g.tracks.push({ field : field, curve : new spark_anim_Curve(keys,_g.fps,_g.duration,method)});
 			}
 		}
 		_g.loaded = true;
@@ -3424,10 +3419,9 @@ spark_anim_Timeline.__super__ = spark_Asset;
 spark_anim_Timeline.prototype = $extend(spark_Asset.prototype,{
 	fps: null
 	,duration: null
-	,loop: null
 	,events: null
 	,tracks: null
-	,newSequence: function(obj,onevent) {
+	,newSequence: function(obj,onevent,mode,loop) {
 		var _g1 = this;
 		var seqs;
 		var _g = [];
@@ -3436,19 +3430,18 @@ spark_anim_Timeline.prototype = $extend(spark_Asset.prototype,{
 		while(_g11 < _g2.length) {
 			var track = _g2[_g11];
 			++_g11;
-			_g.push(track.curve.newSequence(obj,track.field,this.loop));
+			_g.push(track.curve.newSequence(obj,track.field,mode,loop));
 		}
 		seqs = _g;
-		var timeline = this;
 		var eventIndex = 0;
-		return new spark_anim_Sequence(this.fps,this.duration,spark_anim_PlayMode.Forward,this.loop,function(frame,step) {
+		return new spark_anim_Sequence(this.fps,this.duration,spark_anim_PlayMode.Forward,loop,function(frame,step) {
 			var _g12 = 0;
 			while(_g12 < seqs.length) {
 				var seq = seqs[_g12];
 				++_g12;
 				seq.update(step);
 			}
-			if(_g1.events.length > 0) while(_g1.events[eventIndex].frame <= frame + 1) {
+			while(_g1.events.length > 0 && _g1.events[eventIndex].frame <= frame + 1) {
 				onevent(_g1.events[eventIndex++].event);
 				if(eventIndex == _g1.events.length) {
 					eventIndex = 0;
@@ -4279,11 +4272,17 @@ spark_object_Actor.prototype = {
 	,localToWorldAngle: function(angle) {
 		return this.m.get_angle() + angle;
 	}
-	,play: function(seq) {
-		this.anims.push(seq);
+	,play: function(curve,property,loop) {
+		if(loop == null) loop = false;
+		var seq = curve.newSequence(this,property,spark_anim_PlayMode.Forward,loop);
+		if(seq != null) this.anims.push(seq);
+		return seq;
 	}
-	,stop: function(seq) {
-		seq.stop = true;
+	,playTimeline: function(timeline,onevent,loop) {
+		if(loop == null) loop = false;
+		var seq = timeline.newSequence(this,onevent,spark_anim_PlayMode.Forward,loop);
+		if(seq != null) this.anims.push(seq);
+		return seq;
 	}
 	,update: function(step) {
 		var stopped = false;
@@ -4362,6 +4361,7 @@ spark_object_Sprite.prototype = $extend(spark_object_Actor.prototype,{
 	,alpha: null
 	,blend: null
 	,quad: null
+	,flipAnim: null
 	,layer: null
 	,body: null
 	,init: function() {
@@ -4369,6 +4369,7 @@ spark_object_Sprite.prototype = $extend(spark_object_Actor.prototype,{
 		this.dead = false;
 		this.body = null;
 		this.quad = null;
+		this.flipAnim = null;
 		this.alpha = 1.0;
 		this.blend = "source-over";
 	}
@@ -4390,8 +4391,18 @@ spark_object_Sprite.prototype = $extend(spark_object_Actor.prototype,{
 	,addToQuadtree: function(space) {
 		if(this.body != null) this.body.addToQuadtree(space);
 	}
+	,playAnim: function(flipbook,n,loop) {
+		if(loop == null) loop = true;
+		var seq = flipbook.newSequence(this,n,loop);
+		if(seq != null) this.flipAnim = seq;
+		return seq;
+	}
 	,update: function(step) {
 		spark_object_Actor.prototype.update.call(this,step);
+		if(this.flipAnim != null) {
+			this.flipAnim.update(step);
+			if(this.flipAnim.stop) this.flipAnim = null;
+		}
 		if(this.body != null) this.body.updateShapeCache(this.layer.m.mult(this.m));
 	}
 	,draw: function() {

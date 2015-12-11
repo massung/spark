@@ -12,10 +12,9 @@ import haxe.ds.Vector;
 import spark.graphics.*;
 import spark.object.*;
 
-typedef Seq = {
+typedef Anim = {
   frame: Int,
   length: Int,
-  fps: Int,
 }
 
 class Flipbook extends Asset {
@@ -25,11 +24,12 @@ class Flipbook extends Asset {
   private var spriteWidth: Int;
   private var spriteHeight: Int;
 
-  // border size around each sprite
+  // attributes for sheet and animations
   private var border: Int;
+  private var fps: Int;
 
   // animation mapping
-  private var anims: StringMap<Seq>;
+  private var anims: StringMap<Anim>;
 
   // a vector of all the frames in the book
   private var frames: Vector<Spriteframe>;
@@ -40,6 +40,7 @@ class Flipbook extends Asset {
 
     // defaults
     this.border = 0;
+    this.fps = 30;
 
     // load the XML source file, which will issue a load for a texture
     Spark.loadXML(src, function(doc: Xml) {
@@ -65,26 +66,25 @@ class Flipbook extends Asset {
       this.spriteWidth = Std.parseInt(sheet.get('width'));
       this.spriteHeight = Std.parseInt(sheet.get('height'));
 
-      // optional border around each spriteframe
-      this.border = sheet.exists('border') ? Std.parseInt(sheet.get('border')) : 0;
+      // optional attributes
+      Util.mergeAtt(this, 'border', sheet, TInt);
+      Util.mergeAtt(this, 'fps', sheet, TInt);
 
       // loop over all the sprites and create them
       for(anim in sheet.elementsNamed('anim')) {
         var name = anim.get('name');
         var frame = anim.get('frame');
         var length = anim.get('length');
-        var fps = anim.get('fps');
 
         // these fields are required for each animation
         if (name == null) continue;
         if (frame == null) continue;
         if (length == null) continue;
 
-        //
+        // create the new animation
         this.anims.set(name, {
           frame: Std.parseInt(frame),
           length: Std.parseInt(length),
-          fps: (fps == null) ? 30 : Std.parseInt(fps),
         });
       }
 
@@ -130,7 +130,7 @@ class Flipbook extends Asset {
     }
 
     // create the animation
-    return new Sequence(anim.fps, anim.length, Forward, loop, function(frame: Int, step: Float) {
+    return new Sequence(this.fps, anim.length, Forward, loop, function(frame: Int, step: Float) {
       sprite.setQuad(this.frames[frame]);
     });
   }

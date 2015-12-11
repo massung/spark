@@ -8,7 +8,7 @@ package spark.anim;
 
 import haxe.ds.Vector;
 
-typedef FrameCallback = Int -> Float -> Void;
+typedef SequenceCallback = Int -> Float -> Void;
 
 enum PlayMode {
   Forward;
@@ -27,10 +27,10 @@ class Sequence {
   private var duration: Int;
   private var loop: Bool;
   private var mode: PlayMode;
-  private var onframe: FrameCallback;
+  private var onframe: SequenceCallback;
 
   // create a new animation sequence
-  public function new(fps: Int, duration: Int, mode: PlayMode, loop: Bool, onframe: FrameCallback) {
+  public function new(fps: Int, duration: Int, mode: PlayMode, loop: Bool, onframe: SequenceCallback) {
     this.fps = fps;
     this.duration = duration;
     this.loop = loop;

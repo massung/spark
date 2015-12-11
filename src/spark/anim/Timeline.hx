@@ -15,14 +15,12 @@ typedef Event = {
 
 typedef Track = {
   field: String,
-  keys: Array<Curve.Key>,
   curve: Curve,
 }
 
 class Timeline extends Asset {
   private var fps: Int;
   private var duration: Int;
-  private var loop: Bool;
   private var events: Array<Event>;
   private var tracks: Array<Track>;
 
@@ -33,7 +31,6 @@ class Timeline extends Asset {
     // default settings
     this.fps = 30;
     this.duration = 30;
-    this.loop = false;
     this.tracks = [];
     this.events = [];
 
@@ -48,7 +45,6 @@ class Timeline extends Asset {
       // merge the timeline settings
       Util.mergeAtt(this, 'fps', timeline, TInt);
       Util.mergeAtt(this, 'duration', timeline, TInt);
-      Util.mergeAtt(this, 'loop', timeline, TBool);
 
       // find all the events
       for(events in timeline.elementsNamed('events')) {
@@ -95,11 +91,7 @@ class Timeline extends Asset {
           }
 
           // crunch the tween and add it to the track list
-          this.tracks.push({
-            field: field,
-            keys: keys,
-            curve: new Curve(keys, this.fps, this.duration, method),
-          });
+          this.tracks.push({ field: field, curve: new Curve(keys, this.fps, this.duration, method), });
         }
       }
 
@@ -109,29 +101,24 @@ class Timeline extends Asset {
   }
 
   // create an instance of the timeline for a given object
-  public function newSequence(obj: Dynamic, ?onevent: String -> Void): Sequence {
-    var seqs = [for(track in this.tracks) track.curve.newSequence(obj, track.field, this.loop)];
-
-    // lexical data for the animation
-    var timeline = this;
+  public function newSequence(obj: Dynamic, ?onevent: String -> Void, mode: Sequence.PlayMode, loop: Bool): Sequence {
+    var seqs = [for(track in this.tracks) track.curve.newSequence(obj, track.field, mode, loop)];
     var eventIndex = 0;
 
-    // create the sequence
-    return new Sequence(this.fps, this.duration, Forward, this.loop, function(frame: Int, step: Float) {
+    // create the sequence, which updates all the track sequences
+    return new Sequence(this.fps, this.duration, Forward, loop, function(frame: Int, step: Float) {
       for(seq in seqs) {
         seq.update(step);
       }
 
       // signal events that have been passed
-      if (this.events.length > 0) {
-        while (this.events[eventIndex].frame <= frame + 1) {
-          onevent(this.events[eventIndex++].event);
+      while (this.events.length > 0 && this.events[eventIndex].frame <= frame + 1) {
+        onevent(this.events[eventIndex++].event);
 
-          // wrap if at the last event
-          if (eventIndex == this.events.length) {
-            eventIndex = 0;
-            break;
-          }
+        // wrap if at the last event
+        if (eventIndex == this.events.length) {
+          eventIndex = 0;
+          break;
         }
       }
     });

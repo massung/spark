@@ -70,14 +70,28 @@ class Actor {
     return this.m.angle + angle;
   }
 
-  // play an animation sequence on this actor
-  public function play(seq: Sequence) {
-    this.anims.push(seq);
+  // play a single curve animation on this actor
+  public function play(curve: Curve, property: String, ?loop: Bool = false) {
+    var seq = curve.newSequence(this, property, Forward, loop);
+
+    // add the sequence to the list of animations
+    if (seq != null) {
+      this.anims.push(seq);
+    }
+
+    return seq;
   }
 
-  // stop an animation sequence on this actor
-  public function stop(seq: Sequence) {
-    seq.stop = true;
+  // play an animation sequence on this actor
+  public function playTimeline(timeline: Timeline, ?onevent: String -> Void, ?loop: Bool = false): Sequence {
+    var seq = timeline.newSequence(this, onevent, Forward, loop);
+
+    // add the sequence to the list of animations
+    if (seq != null) {
+      this.anims.push(seq);
+    }
+
+    return seq;
   }
 
   // called once a frame to update the sprite

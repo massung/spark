@@ -25,7 +25,6 @@ class Curve {
 
     // copy settings
     this.fps = fps;
-    this.duration = duration;
     this.keys = new Vector<Float>(duration);
 
     // sort the hard keys by frame
@@ -60,7 +59,7 @@ class Curve {
     var p = (hks[0].frame < 1) ? hks.shift() : hks[0];
 
     // loop and calculate the soft keys for the entire tween
-    for(i in 1...this.duration + 1) {
+    for(i in 1...duration + 1) {
       var n = hks[0];
 
       // if this frame has reached the next key, set the value
@@ -107,23 +106,21 @@ class Curve {
     }
   }
 
-  // create an animation instance for a specific property
-  public function newSequence(obj: Dynamic, property: String, ?loop: Bool = false): Sequence {
+  // create a new sequence on a given object
+  public function newSequence(obj: Dynamic, property: String, mode: Sequence.PlayMode, loop: Bool): Sequence {
     var path = property.split('.');
-    var key = path.pop();
+    var field = path.pop();
 
     // traverse the rest of the path to get the final object
     while(path.length > 0) {
-      obj = Reflect.field(obj, path.shift());
-
-      if (obj == null) {
-        throw 'Cannot find property "' + property + '" on object';
+      if ((obj = Reflect.field(obj, path.shift())) == null) {
+        return null;
       }
     }
 
-    // create the sequence
-    return new Sequence(this.fps, this.duration, Forward, loop, function(frame: Int, step: Float) {
-      Reflect.setProperty(obj, key, this.keys[frame]);
+    // create the sequence for this property
+    return new Sequence(this.fps, this.keys.length, mode, loop, function(frame, step) {
+      Reflect.setField(obj, field, this.keys[frame]);
     });
   }
 }
