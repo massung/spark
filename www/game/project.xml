@@ -4,14 +4,15 @@
 
     <!-- background images -->
     <asset id="stars" src="background.png" class="spark.graphics.Texture" />
-    <asset id="pattern" src="pattern.jpg" class="spark.graphics.Texture" />
 
     <!-- player images -->
-    <asset id="spaceship" src="player.png" class="spark.graphics.Texture" />
+    <asset id="player" src="player.png" class="spark.graphics.Texture" />
+    <asset id="thrusting" src="player_thrusting.png" class="spark.graphics.Texture" />
     <asset src="laser.png" class="spark.graphics.Texture" />
-    <asset src="thrust.png" class="spark.graphics.Texture" />
+    <asset src="bullet_small.png" class="spark.graphics.Texture" />
+    <asset src="bullet_big.png" class="spark.graphics.Texture" />
 
-    <!-- asteroid images -->
+    <!-- asteroid quads -->
     <asset src="asteroids.xml" class="spark.graphics.Atlas" />
 
     <!-- fonts -->
@@ -19,7 +20,6 @@
     <asset src="virgo.ttf" class="spark.graphics.Font" />
 
     <!-- particle emitters -->
-    <asset src="thrust.xml" class="spark.graphics.Emitter" />
     <asset src="explosion.xml" class="spark.graphics.Emitter" />
 
     <!-- sounds -->

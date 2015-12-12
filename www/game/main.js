@@ -5,36 +5,58 @@ var scene;
 var playerLayer;
 var asteroidLayer;
 var starsLayer;
+var moonLayer;
 var player;
 
 // create a new game instance
 spark.Game.main('game/project.xml', proj => {
 
-  // TODO: ??
+  // resize the canvas to be fullscreen
+  spark.Game.resize(spark.Platform.getWidth(), spark.Platform.getHeight());
 
   proj.launch(() => {
-    scene = new spark.Scene('middle', 1400, 1400);
-    scene.setViewport(1400, 1400);
+    scene = new spark.Scene('middle');
 
     starsLayer = scene.newBackgroundLayer(spark.Game.project.getQuad('stars'));
     asteroidsLayer = scene.newSpriteLayer();
     playerLayer = scene.newSpriteLayer();
+    moonLayer = scene.newSpriteLayer();
 
     // scale the stars layer so the stars are visible
-    starsLayer.m.s.set(4, 4);
+    starsLayer.m.s.set(3, 3);
 
     // spawn the player
     player = spawnPlayer();
 
-    // spawn some asteroids
-    for(i = 0;i < 10;i++) {
-      spawnAsteroid();
-    }
+    // add a behavior to the asteroids layer
+    asteroidsLayer.newBehavior(spawnAsteroid, {
+      delay: 0.0,
+      increment: 5.0,
+    });
+
+    moon = moonLayer.newSprite();
+    moon.setQuad(spark.Game.project.getQuad('moon_1.png'));
+    moon.newBehavior(moveToSprite, {
+      target: player,
+      v: new spark.Vec(0, 0),
+    });
 
     // go
     scene.run();
   });
 });
+
+function moveToSprite(sprite, step, data) {
+  sprite.m.translate(data.v.x * step, data.v.y * step);
+
+  var dx = data.target.m.p.x - sprite.m.p.x;
+  var dy = data.target.m.p.y - sprite.m.p.y;
+
+  data.v.x += spark.Util.sign(dx) * (dx * dx) * step / 1000;
+  data.v.y += spark.Util.sign(dy) * (dy * dy) * step / 1000;
+
+  data.v = data.v.clamp(100);
+}
 
 function spawnPlayer() {
   var sprite = playerLayer.newSprite();
@@ -42,9 +64,9 @@ function spawnPlayer() {
   sprite.newBehavior(playerControls, { thrust: new spark.Vec(0, 0), });
   sprite.newBehavior(wrap);
 
-  sprite.newBody().newCircleShape(0, 0, 30);
+  sprite.newBody().newCircleShape(0, 0, 14);
 
-  sprite.quad = spark.Game.project.getQuad('spaceship');
+  sprite.quad = spark.Game.project.getQuad('player');
 
   return sprite;
 }
@@ -63,15 +85,15 @@ function playerControls(sprite, step, data) {
     var p = sprite.localToWorld(new spark.Vec(0, 60));
     var r = sprite.localToWorldAngle(90);
 
-    var d = new spark.Vec(0, -600 * step).rotate(sprite.m.r);
+    var d = new spark.Vec(0, -500 * step).rotate(sprite.m.r);
 
     data.thrust.x += d.x;
     data.thrust.y += d.y;
 
-    // emit some particles
-    spark.Game.project.getEmitter('thrust.xml').emit(sprite.getLayer(), p.x, p.y, sprite.m.r.angle(), r);
+    // switch to thrust quad
+    sprite.setQuad(spark.Game.project.getQuad('thrusting'));
   } else {
-    // TODO: stop the sound
+    sprite.setQuad(spark.Game.project.getQuad('player'));
   }
 
   // move based on thrust
@@ -89,69 +111,96 @@ function shoot(layer, m) {
   var bullet = layer.newSprite();
   var body = bullet.newBody('bullet');
 
-  bullet.m.p = m.transform(new spark.Vec(0, -60));
+  bullet.m.p = m.transform(new spark.Vec(0, -10));
   bullet.m.r = m.r.copy();
 
   // texture
-  bullet.quad = spark.Game.project.getQuad('laser.png');
-  body.newSegmentShape(0, -10, 0, 10);
+  bullet.quad = spark.Game.project.getQuad('bullet_big.png');
+  body.newSegmentShape(0, -4, 0, 8);
 
   // create movement behavior
   bullet.newBehavior((sprite, step, data) => {
     sprite.m.translate(0, -data.speed * step, true);
     sprite.dead = (data.age += step) > 1;
   }, {
-    speed: 800,
+    speed: 600,
     age: 0.0,
   });
 
   spark.Game.project.getSound('laser.mp3').woof();
 }
 
-function spawnAsteroid() {
-  var asteroid = asteroidsLayer.newSprite();
-  var body = asteroid.newBody('asteroid', (a, b) => {
-    if (b.filter === 'bullet') {
+function spawnAsteroid(layer, step, data) {
+  if ((data.delay -= step) > 0) {
+    return;
+  }
+
+  // create a new asteroid off screen
+  initAsteroid(layer.newSprite(), 'big', 'small');
+
+  // reset the timer
+  data.delay = data.increment;
+}
+
+function initAsteroid(sprite, s, nextSize, x, y) {
+  var body = sprite.newBody('asteroid', (a, b) => {
+    if (b.filter === 'bullet' && !b.dead) {
       a.getObject().dead = true;
       b.getObject().dead = true;
 
       explodeAsteroid(a.getObject());
+
+      //
+      if (nextSize) {
+        var x = a.getObject().m.p.x;
+        var y = a.getObject().m.p.y;
+
+        initAsteroid(sprite.getLayer().newSprite(), nextSize, null, x, y);
+        initAsteroid(sprite.getLayer().newSprite(), nextSize, null, x, y);
+
+        // possibly spawn 2 more...
+        if (spark.Util.brand()) {
+          initAsteroid(sprite.getLayer().newSprite(), nextSize, null, x, y);
+        }
+        if (spark.Util.brand()) {
+          initAsteroid(sprite.getLayer().newSprite(), nextSize, null, x, y);
+        }
+      }
     }
   });
 
-  // pick a random image to use
-  asteroid.quad = spark.Util.arand([
-    spark.Game.project.getQuad('asteroid_big_1.png'),
-    spark.Game.project.getQuad('asteroid_big_2.png'),
-    spark.Game.project.getQuad('asteroid_big_3.png'),
-    spark.Game.project.getQuad('asteroid_big_4.png'),
+  // pick a random (big) image to use
+  sprite.quad = spark.Util.arand([
+    spark.Game.project.getQuad('asteroid_' + s + '_1.png'),
+    spark.Game.project.getQuad('asteroid_' + s + '_2.png'),
+    spark.Game.project.getQuad('asteroid_' + s + '_3.png'),
   ]);
 
-  var w = asteroid.getWidth();
-  var h = asteroid.getHeight();
+  var w = sprite.getWidth();
+  var h = sprite.getHeight();
 
   // add a box shape to the asteroid
   body.newBoxShape(-w * 3 / 8, - h * 3 / 8, w * 3 / 4, h * 3 / 4);
 
   // spawn at a random position
-  asteroid.m.p.set(
-    spark.Util.rand(scene.rect.getLeft(), scene.rect.getRight()),
-    spark.Util.rand(scene.rect.getTop(), scene.rect.getBottom())
+  sprite.m.p.set(
+    x || spark.Util.rand(scene.rect.getLeft(), scene.rect.getRight()),
+    y || spark.Util.rand(scene.rect.getTop(), scene.rect.getBottom())
   );
 
   // random speed, direction, and angular velocity
-  var s = spark.Util.rand(50, 200);
+  var s = spark.Util.rand(50, 100);
   var r = spark.Util.rand(0, 360);
   var v = spark.Vec.axis(r, s);
   var w = spark.Util.rand(-180, 180);
 
-  asteroid.newBehavior(wrap);
-  asteroid.newBehavior((sprite, step) => {
+  sprite.newBehavior(wrap);
+  sprite.newBehavior((sprite, step) => {
     sprite.m.translate(v.x * step, v.y * step);
     sprite.m.rotate(w * step);
   });
 
-  asteroid.playTimeline(spark.Game.project.getTimeline('spawn.xml'));
+  sprite.playTimeline(spark.Game.project.getTimeline('spawn.xml'));
 }
 
 function wrap(sprite) {
@@ -170,7 +219,6 @@ function wrap(sprite) {
 
 function explodeAsteroid(sprite) {
   scene.camera.playTimeline(spark.Game.project.getTimeline('shake.xml'));
-
   spark.Game.project.getSound('explosion.mp3').woof();
-  spark.Game.project.getEmitter('explosion.xml').emit(sprite.getLayer(), sprite.m.p.x, sprite.m.p.y, 0, 0, 20);
+  spark.Game.project.getEmitter('explosion.xml').emit(sprite.getLayer(), sprite.m.p.x, sprite.m.p.y, 0, 0, 30);
 }

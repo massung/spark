@@ -64,6 +64,11 @@ class Util {
     return Math.floor(rand(min, max));
   }
 
+  // a random boolean
+  static public function brand(): Bool {
+    return Math.random() < 0.5;
+  }
+
   // a random element from an array
   static public function arand(array: Array<Dynamic>): Dynamic {
     return array[irand(0, array.length)];

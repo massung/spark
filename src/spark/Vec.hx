@@ -171,4 +171,20 @@ class Vec {
   public function unrotate(r: Vec): Vec {
     return new Vec((this.x * r.x) + (this.y * r.y), (this.y * r.x) - (this.x * r.y));
   }
+
+  // clamp the magnitude of the vector
+  public function clamp(s: Float): Vec {
+    if (this.magsq() <= s * s) {
+      return this.copy();
+    }
+
+    // normalize the vector
+    var clamped = this.norm();
+
+    // scale the clamped vector
+    clamped.x *= s;
+    clamped.y *= s;
+
+    return clamped;
+  }
 }

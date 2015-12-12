@@ -2323,6 +2323,11 @@ spark_Game.main = function(projectFile,onload) {
 	spark_Game.project = new spark_Project(projectFile,onload);
 	spark_Game.scene = null;
 };
+spark_Game.resize = function(w,h) {
+	Spark.canvas.width = w;
+	Spark.canvas.height = h;
+	Spark.view = Spark.canvas.getContext("2d",null);
+};
 spark_Game.getScene = function() {
 	return spark_Game.scene;
 };
@@ -2578,6 +2583,22 @@ spark_Mouse.onMouseMove = function(event) {
 	var x = event.clientX - Spark.canvas.offsetLeft;
 	var y = event.clientY - Spark.canvas.offsetTop;
 	spark_Mouse.device.move(0,x,y);
+};
+var spark_Platform = $hx_exports.spark.Platform = function() { };
+$hxClasses["spark.Platform"] = spark_Platform;
+spark_Platform.__name__ = ["spark","Platform"];
+spark_Platform.getDevice = function() {
+	if(Reflect.hasField(window,"cordova")) return Reflect.field(window,"cordova");
+	return "browser";
+};
+spark_Platform.isMobile = function() {
+	return spark_Platform.getDevice() != "browser";
+};
+spark_Platform.getWidth = function() {
+	if(spark_Platform.isMobile()) return window.screen.width; else return window.innerWidth;
+};
+spark_Platform.getHeight = function() {
+	if(spark_Platform.isMobile()) return window.screen.height; else return window.innerHeight;
 };
 var spark_Project = function(projectFile,onload) {
 	var _g = this;
@@ -2952,6 +2973,9 @@ spark_Util.rand = function(min,max) {
 spark_Util.irand = function(min,max) {
 	return Math.floor(spark_Util.rand(min,max));
 };
+spark_Util.brand = function() {
+	return Math.random() < 0.5;
+};
 spark_Util.arand = function(array) {
 	return array[spark_Util.irand(0,array.length)];
 };
@@ -3144,6 +3168,13 @@ spark_Vec.prototype = {
 	}
 	,unrotate: function(r) {
 		return new spark_Vec(this.x * r.x + this.y * r.y,this.y * r.x - this.x * r.y);
+	}
+	,clamp: function(s) {
+		if(this.magsq() <= s * s) return this.copy();
+		var clamped = this.norm();
+		clamped.x *= s;
+		clamped.y *= s;
+		return clamped;
 	}
 	,__class__: spark_Vec
 };
@@ -3982,6 +4013,8 @@ var spark_graphics_Emitter = function(src) {
 	this.spread = 180.0;
 	this.minSpeed = 50.0;
 	this.maxSpeed = 100.0;
+	this.accelX = 0.0;
+	this.accelY = 0.0;
 	this.angle = 0.0;
 	this.minAngularVelocity = -90.0;
 	this.maxAngularVelocity = 90.0;
@@ -4005,6 +4038,8 @@ var spark_graphics_Emitter = function(src) {
 		spark_Util.mergeAtt(_g,"spread",emitter,ValueType.TFloat);
 		spark_Util.mergeAtt(_g,"minSpeed",emitter,ValueType.TFloat);
 		spark_Util.mergeAtt(_g,"maxSpeed",emitter,ValueType.TFloat);
+		spark_Util.mergeAtt(_g,"accelX",emitter,ValueType.TFloat);
+		spark_Util.mergeAtt(_g,"accelY",emitter,ValueType.TFloat);
 		spark_Util.mergeAtt(_g,"angle",emitter,ValueType.TFloat);
 		spark_Util.mergeAtt(_g,"minAngularVelocity",emitter,ValueType.TFloat);
 		spark_Util.mergeAtt(_g,"maxAngularVelocity",emitter,ValueType.TFloat);
@@ -4021,6 +4056,8 @@ var spark_graphics_Emitter = function(src) {
 			s.m.translate(p.vx * step,p.vy * step);
 			s.m.rotate(p.w * step);
 			s.m.s.set(scale,scale);
+			p.vx += _g.accelX * step;
+			p.vy += _g.accelY * step;
 			p.vx *= 1 - _g.damping * step;
 			p.vy *= 1 - _g.damping * step;
 			s.alpha = spark_Util.lerp(_g.startAlpha,_g.endAlpha,p.age,p.life);
@@ -4044,6 +4081,8 @@ spark_graphics_Emitter.prototype = $extend(spark_Asset.prototype,{
 	,spread: null
 	,minSpeed: null
 	,maxSpeed: null
+	,accelX: null
+	,accelY: null
 	,angle: null
 	,minAngularVelocity: null
 	,maxAngularVelocity: null

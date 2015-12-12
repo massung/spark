@@ -28,7 +28,7 @@
             </struct>
         </array>
         <key>allowRotation</key>
-        <true/>
+        <false/>
         <key>premultiplyAlpha</key>
         <false/>
         <key>shapeDebug</key>
@@ -38,7 +38,7 @@
         <key>dataFormat</key>
         <string>xml</string>
         <key>textureFileName</key>
-        <filename>asteroids.png</filename>
+        <filename></filename>
         <key>flipPVR</key>
         <false/>
         <key>pvrCompressionQuality</key>
@@ -108,7 +108,7 @@
             <key>freeSizeMode</key>
             <enum type="AlgorithmSettings::AlgorithmFreeSizeMode">Best</enum>
             <key>sizeConstraints</key>
-            <enum type="AlgorithmSettings::SizeConstraints">POT</enum>
+            <enum type="AlgorithmSettings::SizeConstraints">AnySize</enum>
             <key>forceSquared</key>
             <false/>
             <key>forceWordAligned</key>
@@ -195,13 +195,14 @@
             <filename>asteroid_big_1.png</filename>
             <filename>asteroid_big_2.png</filename>
             <filename>asteroid_big_3.png</filename>
-            <filename>asteroid_big_4.png</filename>
-            <filename>asteroid_particle_1.png</filename>
-            <filename>asteroid_particle_2.png</filename>
             <filename>asteroid_small_1.png</filename>
             <filename>asteroid_small_2.png</filename>
+            <filename>asteroid_small_3.png</filename>
             <filename>asteroid_tiny_1.png</filename>
             <filename>asteroid_tiny_2.png</filename>
+            <filename>asteroid_tiny_3.png</filename>
+            <filename>moon_1.png</filename>
+            <filename>moon_2.png</filename>
         </array>
         <key>ignoreFileList</key>
         <array/>

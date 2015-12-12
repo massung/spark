@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with TexturePacker http://www.codeandweb.com/texturepacker-->
-<!-- $TexturePacker:SmartUpdate:039154bd4c22aed85e8242f69acdb995:6c5f98e515b6f44207cc6cf962fa7161:b8997a6ffb68cdb06c44127de0be9d5e$ -->
+<!-- $TexturePacker:SmartUpdate:e0318ff2f08c5aa59e1d324b883c3e2c:9e4fabb173f46682e2d40053467a5242:b8997a6ffb68cdb06c44127de0be9d5e$ -->
 <!--Format:
 n  => name of the sprite
 x  => sprite x pos in texture
@@ -19,15 +19,16 @@ vertices   => points in sprite coordinate system (x0,y0,x1,y1,x2,y2, ...)
 verticesUV => points in sheet coordinate system (x0,y0,x1,y1,x2,y2, ...)
 triangles  => sprite triangulation, 3 vertex indices per triangle
 -->
-<TextureAtlas imagePath="asteroids.png" width="256" height="256">
-    <sprite n="asteroid_big_1.png" x="0" y="0" w="101" h="84" pX="0.5" pY="0.5"/>
-    <sprite n="asteroid_big_2.png" x="101" y="0" w="120" h="98" pX="0.5" pY="0.5"/>
-    <sprite n="asteroid_big_3.png" x="0" y="98" w="89" h="82" pX="0.5" pY="0.5"/>
-    <sprite n="asteroid_big_4.png" x="89" y="98" w="98" h="96" pX="0.5" pY="0.5"/>
-    <sprite n="asteroid_particle_1.png" x="187" y="98" w="18" h="18" pX="0.5" pY="0.5"/>
-    <sprite n="asteroid_particle_2.png" x="205" y="98" w="16" h="15" pX="0.5" pY="0.5"/>
-    <sprite n="asteroid_small_1.png" x="0" y="194" w="43" h="43" pX="0.5" pY="0.5"/>
-    <sprite n="asteroid_small_2.png" x="43" y="194" w="45" h="40" pX="0.5" pY="0.5"/>
-    <sprite n="asteroid_tiny_1.png" x="88" y="194" w="28" h="28" pX="0.5" pY="0.5"/>
-    <sprite n="asteroid_tiny_2.png" x="116" y="194" w="29" h="26" pX="0.5" pY="0.5"/>
+<TextureAtlas imagePath="asteroids.png" width="48" height="215">
+    <sprite n="asteroid_tiny_1.png" x="0" y="0" w="13" h="14" pX="0.5" pY="0.5"/>
+    <sprite n="asteroid_tiny_3.png" x="13" y="0" w="15" h="14" pX="0.5" pY="0.5"/>
+    <sprite n="asteroid_tiny_2.png" x="28" y="0" w="14" h="16" pX="0.5" pY="0.5"/>
+    <sprite n="moon_1.png" x="0" y="16" w="24" h="26" pX="0.5" pY="0.5"/>
+    <sprite n="asteroid_small_1.png" x="24" y="16" w="23" h="28" pX="0.5" pY="0.5"/>
+    <sprite n="asteroid_small_3.png" x="0" y="44" w="27" h="24" pX="0.5" pY="0.5"/>
+    <sprite n="asteroid_small_2.png" x="0" y="68" w="23" h="28" pX="0.5" pY="0.5"/>
+    <sprite n="moon_2.png" x="23" y="68" w="25" h="27" pX="0.5" pY="0.5"/>
+    <sprite n="asteroid_big_2.png" x="0" y="96" w="41" h="36" pX="0.5" pY="0.5"/>
+    <sprite n="asteroid_big_1.png" x="0" y="132" w="41" h="41" pX="0.5" pY="0.5"/>
+    <sprite n="asteroid_big_3.png" x="0" y="173" w="48" h="42" pX="0.5" pY="0.5"/>
 </TextureAtlas>

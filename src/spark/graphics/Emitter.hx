@@ -32,6 +32,8 @@ class Emitter extends Asset {
   private var spread: Float;
   private var minSpeed: Float;
   private var maxSpeed: Float;
+  private var accelX: Float;
+  private var accelY: Float;
   private var angle: Float;
   private var minAngularVelocity: Float;
   private var maxAngularVelocity: Float;
@@ -56,6 +58,8 @@ class Emitter extends Asset {
     this.spread = 180.0;
     this.minSpeed = 50.0;
     this.maxSpeed = 100.0;
+    this.accelX = 0.0;
+    this.accelY = 0.0;
     this.angle = 0.0;
     this.minAngularVelocity = -90.0;
     this.maxAngularVelocity = 90.0;
@@ -81,6 +85,8 @@ class Emitter extends Asset {
       Util.mergeAtt(this, 'spread', emitter, TFloat);
       Util.mergeAtt(this, 'minSpeed', emitter, TFloat);
       Util.mergeAtt(this, 'maxSpeed', emitter, TFloat);
+      Util.mergeAtt(this, 'accelX', emitter, TFloat);
+      Util.mergeAtt(this, 'accelY', emitter, TFloat);
       Util.mergeAtt(this, 'angle', emitter, TFloat);
       Util.mergeAtt(this, 'minAngularVelocity', emitter, TFloat);
       Util.mergeAtt(this, 'maxAngularVelocity', emitter, TFloat);
@@ -111,6 +117,10 @@ class Emitter extends Asset {
         s.m.translate(p.vx * step, p.vy * step);
         s.m.rotate(p.w * step);
         s.m.s.set(scale, scale);
+
+        // apply linear acceleration
+        p.vx += this.accelX * step;
+        p.vy += this.accelY * step;
 
         // apply damping
         p.vx *= 1 - (this.damping * step);
