@@ -34,29 +34,10 @@ spark.Game.main('game/project.xml', proj => {
       increment: 5.0,
     });
 
-    moon = moonLayer.newSprite();
-    moon.setQuad(spark.Game.project.getQuad('moon_1.png'));
-    moon.newBehavior(moveToSprite, {
-      target: player,
-      v: new spark.Vec(0, 0),
-    });
-
     // go
     scene.run();
   });
 });
-
-function moveToSprite(sprite, step, data) {
-  sprite.m.translate(data.v.x * step, data.v.y * step);
-
-  var dx = data.target.m.p.x - sprite.m.p.x;
-  var dy = data.target.m.p.y - sprite.m.p.y;
-
-  data.v.x += spark.Util.sign(dx) * (dx * dx) * step / 1000;
-  data.v.y += spark.Util.sign(dy) * (dy * dy) * step / 1000;
-
-  data.v = data.v.clamp(100);
-}
 
 function spawnPlayer() {
   var sprite = playerLayer.newSprite();
@@ -77,7 +58,7 @@ function playerControls(sprite, step, data) {
 
   // spawn bullets
   for(var i = 0;i < spark.Key.hits(spark.Key.SPACE);i++) {
-    shoot(sprite.getLayer(), sprite.m);
+    shoot(sprite.getLayer(), sprite.m, data.thrust);
   }
 
   // thrust forward
@@ -85,7 +66,7 @@ function playerControls(sprite, step, data) {
     var p = sprite.localToWorld(new spark.Vec(0, 60));
     var r = sprite.localToWorldAngle(90);
 
-    var d = new spark.Vec(0, -500 * step).rotate(sprite.m.r);
+    var d = new spark.Vec(0, -300 * step).rotate(sprite.m.r);
 
     data.thrust.x += d.x;
     data.thrust.y += d.y;
@@ -94,6 +75,10 @@ function playerControls(sprite, step, data) {
     sprite.setQuad(spark.Game.project.getQuad('thrusting'));
   } else {
     sprite.setQuad(spark.Game.project.getQuad('player'));
+
+    // dampen thrusters
+    data.thrust.x *= 0.985;
+    data.thrust.y *= 0.985;
   }
 
   // move based on thrust
@@ -102,12 +87,11 @@ function playerControls(sprite, step, data) {
   // scroll the background
   starsLayer.m.translate(data.thrust.x * step * 0.8, data.thrust.y * step * 0.8);
 
-  // dampen
-  data.thrust.x *= 0.98;
-  data.thrust.y *= 0.98;
+  // clamp speed
+  data.thrust = data.thrust.clamp(400);
 }
 
-function shoot(layer, m) {
+function shoot(layer, m, v) {
   var bullet = layer.newSprite();
   var body = bullet.newBody('bullet');
 
@@ -120,10 +104,10 @@ function shoot(layer, m) {
 
   // create movement behavior
   bullet.newBehavior((sprite, step, data) => {
-    sprite.m.translate(0, -data.speed * step, true);
+    sprite.m.translate(data.v.x * step, data.v.y * step);
     sprite.dead = (data.age += step) > 1;
   }, {
-    speed: 600,
+    v: new spark.Vec(0, -600).rotate(m.r).add(v),
     age: 0.0,
   });
 
